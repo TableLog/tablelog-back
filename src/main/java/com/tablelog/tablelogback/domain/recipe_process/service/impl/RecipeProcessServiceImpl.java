@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -37,5 +38,10 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         RecipeProcess recipeProcess = recipeProcessRepository.findById(id)
                 .orElseThrow();
         return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+    }
+
+    public List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcesses(){
+        List<RecipeProcess> recipeProcesses = recipeProcessRepository.findAll();
+        return recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(recipeProcesses);
     }
 }

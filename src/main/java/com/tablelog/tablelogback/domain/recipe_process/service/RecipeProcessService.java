@@ -4,9 +4,11 @@ import com.tablelog.tablelogback.domain.recipe_process.dto.service.request.Recip
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.response.RecipeProcessReadAllServiceResponseDto;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface RecipeProcessService {
     void createRecipeProcess(RecipeProcessCreateServiceRequestDto recipeProcessRequestDto,
                              Long recipeId) throws IOException;
     RecipeProcessReadAllServiceResponseDto readRecipeProcess(Long id);
+    List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcesses();
 }

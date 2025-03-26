@@ -7,6 +7,8 @@ import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @Mapper(componentModel = SPRING)
@@ -25,4 +27,6 @@ public interface RecipeProcessEntityMapper {
 
 //    @Mapping(source = "user", target = "nickname")
     RecipeProcessReadAllServiceResponseDto toRecipeProcessReadResponseDto(RecipeProcess recipeProcess);
+
+    List<RecipeProcessReadAllServiceResponseDto> toRecipeProcessReadAllResponseDto(List<RecipeProcess> recipeProcessList);
 }

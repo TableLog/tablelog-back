@@ -39,4 +39,10 @@ public class RecipeProcessController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeProcessService.readRecipeProcess(recipeProcessId));
     }
+
+    @GetMapping("/recipe-process/all")
+    public ResponseEntity<?> readAllRecipeProcesses(){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeProcessService.readAllRecipeProcesses());
+    }
 }
