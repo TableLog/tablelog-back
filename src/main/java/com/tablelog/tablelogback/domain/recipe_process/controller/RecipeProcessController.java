@@ -42,13 +42,13 @@ public class RecipeProcessController {
                 .body(recipeProcessService.readRecipeProcess(recipeProcessId));
     }
 
-    @GetMapping("/recipe-process/all")
+    @GetMapping("/recipe-process")
     public ResponseEntity<?> readAllRecipeProcesses(){
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeProcessService.readAllRecipeProcesses());
     }
 
-    @GetMapping("/recipe/{recipeId}")
+    @GetMapping("/recipes/{recipeId}/recipe-process")
     public ResponseEntity<?> readAllRecipeProcessesByRecipeId(
             @PathVariable Long recipeId
     ){
@@ -56,7 +56,7 @@ public class RecipeProcessController {
                 .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
     }
 
-    @PutMapping("/{recipeProcessId}")
+    @PutMapping("/recipe-process/{recipeProcessId}")
     public ResponseEntity<?> updateRecipeProcess(
             @PathVariable Long recipeProcessId,
             @RequestBody RecipeProcessUpdateControllerRequestDto controllerRequestDto
@@ -71,7 +71,7 @@ public class RecipeProcessController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @DeleteMapping("/{recipeProcessId}")
+    @DeleteMapping("/recipe-process/{recipeProcessId}")
     public ResponseEntity<?> deleteRecipeProcess(
             @PathVariable Long recipeProcessId
 //            @AuthenticationPrincipal UserDetailsImpl userDetails
