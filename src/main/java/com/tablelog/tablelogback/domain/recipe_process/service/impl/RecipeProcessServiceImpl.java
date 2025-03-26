@@ -2,7 +2,8 @@ package com.tablelog.tablelogback.domain.recipe_process.service.impl;
 
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.request.RecipeProcessCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.response.RecipeProcessReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
@@ -30,5 +31,11 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         String imgUrl = "";
         RecipeProcess recipeProcess = recipeProcessEntityMapper.toRecipeProcess(requestDto, imgUrl, recipe);
         recipeProcessRepository.save(recipeProcess);
+    }
+
+    public RecipeProcessReadAllServiceResponseDto readRecipeProcess(Long id){
+        RecipeProcess recipeProcess = recipeProcessRepository.findById(id)
+                .orElseThrow();
+        return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
     }
 }
