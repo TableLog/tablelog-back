@@ -70,4 +70,13 @@ public class RecipeProcessController {
         );
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @DeleteMapping("/{recipeProcessId}")
+    public ResponseEntity<?> deleteRecipeProcess(
+            @PathVariable Long recipeProcessId
+//            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeProcessService.deleteRecipeProcess(recipeProcessId); //user
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

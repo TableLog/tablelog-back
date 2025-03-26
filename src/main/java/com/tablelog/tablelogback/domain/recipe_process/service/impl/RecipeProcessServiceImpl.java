@@ -80,4 +80,10 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         return recipeProcessRepository.findById(id) //andUser
                 .orElseThrow();
     }
+
+    public void deleteRecipeProcess(Long id) { //user
+        RecipeProcess recipeProcess = recipeProcessRepository.findById(id)
+                .orElseThrow();
+        recipeProcessRepository.delete(recipeProcess);
+    }
 }
