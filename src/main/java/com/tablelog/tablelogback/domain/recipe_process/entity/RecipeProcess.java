@@ -39,4 +39,12 @@ public class RecipeProcess extends BaseEntity {
         this.imgUrl = imgUrl;
         this.recipe = recipe;
     }
+
+    public void updateRecipeProcess(
+            final short sequence, final String description, final String imgUrl
+    ) {
+        this.sequence = sequence;
+        this.description = description;
+        this.imgUrl = imgUrl;
+    }
 }

@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.recipe_process.service.impl;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.request.RecipeProcessCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.request.RecipeProcessUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.response.RecipeProcessReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
@@ -10,6 +11,7 @@ import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessR
 import com.tablelog.tablelogback.domain.recipe_process.service.RecipeProcessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,5 +50,34 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     public List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcessesByRecipeId(Long id){
         List<RecipeProcess> recipeProcesses = recipeProcessRepository.findAllByRecipeId(id);
         return recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(recipeProcesses);
+    }
+
+    @Transactional
+    public void updateRecipeProcess(Long id, RecipeProcessUpdateServiceRequestDto requestDto
+//                                    , MultipartFile multipartFile , User user
+                                    )
+            throws IOException{
+        RecipeProcess recipeProcess = findRecipeProcess(id); //user
+        Recipe recipe = recipeRepository.findById(recipeProcess.getRecipe().getId())
+                .orElseThrow();
+//        String folderName = recipeProcess.getRecipe().getFolderName();
+        String fileUrl = "";
+        if(!requestDto.imageChange()){
+            recipeProcess.updateRecipeProcess(
+                    requestDto.sequence(),
+                    requestDto.description(),
+                    recipeProcess.getImgUrl()
+            );
+        } else {
+            recipeProcess.updateRecipeProcess(
+                    requestDto.sequence(),
+                    requestDto.description(),
+                    fileUrl
+            );
+        }
+    }
+    private RecipeProcess findRecipeProcess(Long id){ //user
+        return recipeProcessRepository.findById(id) //andUser
+                .orElseThrow();
     }
 }

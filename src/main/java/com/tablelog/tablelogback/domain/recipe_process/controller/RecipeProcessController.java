@@ -1,7 +1,9 @@
 package com.tablelog.tablelogback.domain.recipe_process.controller;
 
 import com.tablelog.tablelogback.domain.recipe_process.dto.controller.RecipeProcessCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.controller.RecipeProcessUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.request.RecipeProcessCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.request.RecipeProcessUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.dto.RecipeProcessDtoMapper;
 import com.tablelog.tablelogback.domain.recipe_process.service.impl.RecipeProcessServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,7 +29,7 @@ public class RecipeProcessController {
             @PathVariable Long recipeId
     ) throws IOException {
         RecipeProcessCreateServiceRequestDto serviceRequestDto =
-                recipeProcessDtoMapper.toRecipeProcessServiceRequestDto(requestDto);
+                recipeProcessDtoMapper.toRecipeProcessCreateServiceRequestDto(requestDto);
         recipeProcessService.createRecipeProcess(serviceRequestDto, recipeId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -52,5 +54,20 @@ public class RecipeProcessController {
     ){
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
+    }
+
+    @PutMapping("/{recipeProcessId}")
+    public ResponseEntity<?> updateRecipeProcess(
+            @PathVariable Long recipeProcessId,
+            @RequestBody RecipeProcessUpdateControllerRequestDto controllerRequestDto
+//            @AuthenticationPrincipal UserDetailsImpl userDetails,
+//            @RequestPart(required = false)MultipartFile multipartFile
+    ) throws IOException {
+        RecipeProcessUpdateServiceRequestDto serviceRequestDto =
+                recipeProcessDtoMapper.toRecipeProcessUpdateServiceRequestDto(controllerRequestDto);
+        recipeProcessService.updateRecipeProcess(recipeProcessId, serviceRequestDto
+//                multipartFile,userDetails.user()
+        );
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
