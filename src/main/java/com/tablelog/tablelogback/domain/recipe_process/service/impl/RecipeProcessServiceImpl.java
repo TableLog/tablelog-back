@@ -44,4 +44,9 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         List<RecipeProcess> recipeProcesses = recipeProcessRepository.findAll();
         return recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(recipeProcesses);
     }
+
+    public List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcessesByRecipeId(Long id){
+        List<RecipeProcess> recipeProcesses = recipeProcessRepository.findAllByRecipeId(id);
+        return recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(recipeProcesses);
+    }
 }

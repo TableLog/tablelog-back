@@ -45,4 +45,12 @@ public class RecipeProcessController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeProcessService.readAllRecipeProcesses());
     }
+
+    @GetMapping("/recipe/{recipeId}")
+    public ResponseEntity<?> readAllRecipeProcessesByRecipeId(
+            @PathVariable Long recipeId
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
+    }
 }

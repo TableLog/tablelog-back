@@ -11,4 +11,5 @@ public interface RecipeProcessService {
                              Long recipeId) throws IOException;
     RecipeProcessReadAllServiceResponseDto readRecipeProcess(Long id);
     List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcesses();
+    List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcessesByRecipeId(Long id);
 }
