@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe.controller;
 
-import com.tablelog.tablelogback.domain.recipe.entity.Category;
+import com.tablelog.tablelogback.global.enums.RecipeCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class RecipeController {
             String title,
             String intro,
             int state,
-            Category category,
+            RecipeCategory recipeCategory,
             @Schema(description = "Start value (Byte)", example = "1", type = "integer", format = "int32")
             Byte star,
             Integer price,
@@ -61,7 +61,7 @@ public class RecipeController {
             String title,
             String intro,
             int state,
-            Category category,
+            RecipeCategory recipeCategory,
             @Schema(description = "Start value (Byte)", example = "1", type = "integer", format = "int32")
             Byte star,
             Integer price,
