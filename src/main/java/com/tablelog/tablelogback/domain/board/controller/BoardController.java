@@ -26,4 +26,14 @@ public class BoardController {
             // @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
     }
+    @PutMapping("/boards/{board_id}")
+    public void updateBoard(
+            String title,
+            String content,
+            BoardCategory category,
+            MultipartFile image_file,
+            String user
+    )throws IOException{
+
+    }
 }
