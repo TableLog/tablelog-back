@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class BoardController {
     }
     @PutMapping("/boards/{board_id}")
     public void updateBoard(
+            @PathVariable Long board_id,
             String title,
             String content,
             BoardCategory category,
@@ -35,5 +40,41 @@ public class BoardController {
             String user
     )throws IOException{
 
+    }
+    @GetMapping("/boards")
+    public List<Map<String, Object>> readAllBoards() {
+        List<Map<String, Object>> boards = new ArrayList<>();
+
+        Map<String, Object> board1 = new HashMap<>();
+        board1.put("title", "첫 번째 게시글");
+        board1.put("content", "이것은 첫 번째 게시글의 내용입니다.");
+        board1.put("category", "공지사항");
+        board1.put("image_url", "https://example.com/image1.jpg");
+        board1.put("user", "admin");
+
+        Map<String, Object> board2 = new HashMap<>();
+        board2.put("title", "두 번째 게시글");
+        board2.put("content", "이것은 두 번째 게시글의 내용입니다.");
+        board2.put("category", "자유게시판");
+        board2.put("image_url", "https://example.com/image2.jpg");
+        board2.put("user", "user1");
+
+        boards.add(board1);
+        boards.add(board2);
+
+        return boards;
+    }
+
+    @GetMapping("/boards/{board_id}")
+    public Map<String, Object> readAllBoards(
+            @PathVariable Long board_id
+    )throws  IOException{
+        Map<String, Object> board1 = new HashMap<>();
+        board1.put("title", "첫 번째 게시글");
+        board1.put("content", "이것은 첫 번째 게시글의 내용입니다.");
+        board1.put("category", "공지사항");
+        board1.put("image_url", "https://example.com/image1.jpg");
+        board1.put("user", "admin");
+        return board1;
     }
 }
