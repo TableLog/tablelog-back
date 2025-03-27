@@ -28,6 +28,7 @@ public class BoardController {
     }
     @PutMapping("/boards/{board_id}")
     public void updateBoard(
+            @PathVariable Long board_id,
             String title,
             String content,
             BoardCategory category,
@@ -36,4 +37,12 @@ public class BoardController {
     )throws IOException{
 
     }
+    @GetMapping("/boards")
+    public void readAllBoards(
+    )throws  IOException{}
+
+    @GetMapping("/boards/{board_id}")
+    public void readAllBoards(
+            @PathVariable Long board_id
+    )throws  IOException{}
 }
