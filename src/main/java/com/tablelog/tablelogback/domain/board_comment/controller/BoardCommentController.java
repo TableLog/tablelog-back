@@ -19,7 +19,8 @@ public class BoardCommentController {
     @PostMapping("boards/{board_id}/create")
     public void createBoard(
             @PathVariable Long board_id,
-            String content
+            String content,
+            String user
             // BoardCreateControllerRequestDto controllerRequestDto
             // @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
