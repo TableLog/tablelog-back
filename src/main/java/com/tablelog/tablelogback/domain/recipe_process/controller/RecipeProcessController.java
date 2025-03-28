@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,17 +27,38 @@ public class RecipeProcessController {
     }
 
     @GetMapping("/recipe-process/{recipeProcessId}")
-    public void readRecipeProcess(
+    public Map<String, Object> readRecipeProcess(
             @PathVariable Long recipeProcessId
     ){
+        Map<String, Object> recipe_process1 = new HashMap<>();
+        recipe_process1.put("sequence", 1);
+        recipe_process1.put("description", "나나나");
+        recipe_process1.put("image_url", "https://example.com/image1.jpg");
+        recipe_process1.put("user", "user");
+        return recipe_process1;
 //        return ResponseEntity.status(HttpStatus.OK)
 //                .body(recipeProcessService.readRecipeProcess(recipeProcessId));
     }
 
     @GetMapping("/recipes/{recipeId}/recipe-process")
-    public void readAllRecipeProcessesByRecipeId(
+    public List<Map<String, Object>> readAllRecipeProcessesByRecipeId(
             @PathVariable Long recipeId
     ){
+        List<Map<String, Object>> recipe_processes = new ArrayList<>();
+        Map<String, Object> recipe_process1 = new HashMap<>();
+        recipe_process1.put("sequence", 1);
+        recipe_process1.put("description", "나나나");
+        recipe_process1.put("image_url", "https://example.com/image1.jpg");
+        recipe_process1.put("user", "user");
+        Map<String, Object> recipe_process2 = new HashMap<>();
+        recipe_process2.put("sequence", 2);
+        recipe_process2.put("description", "나나나");
+        recipe_process2.put("image_url", "https://example.com/image1.jpg");
+        recipe_process2.put("user", "user");
+
+        recipe_processes.add(recipe_process1);
+        recipe_processes.add(recipe_process2);
+        return recipe_processes;
 //        return ResponseEntity.status(HttpStatus.OK)
 //                .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
     }
