@@ -6,6 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,17 +27,32 @@ public class RecipeFoodController {
     }
 
     @GetMapping("/recipe-food/{recipeFoodId}")
-    public void readFood(
+    public Map<String, Object> readRecipeFood(
             @PathVariable Long recipeFoodId
     ){
-
+        Map<String, Object> recipe_food1 = new HashMap<>();
+        recipe_food1.put("foodAmount", "ts");
+        recipe_food1.put("foodName", "사과");
+        recipe_food1.put("user", "user1");
+        return recipe_food1;
     }
 
     @GetMapping("/recipes/{recipeId}/recipe-food")
-    public void readAllRecipeFoodsByRecipeId(
+    public List<Map<String, Object>> readAllRecipeFoodsByRecipeId(
             @PathVariable Long recipeId
     ){
-
+        List<Map<String, Object>> recipe_foods = new ArrayList<>();
+        Map<String, Object> recipe_food1 = new HashMap<>();
+        recipe_food1.put("foodAmount", "ts");
+        recipe_food1.put("foodName", "사과");
+        recipe_food1.put("user", "user1");
+        Map<String, Object> recipe_food2 = new HashMap<>();
+        recipe_food2.put("foodAmount", "ts");
+        recipe_food2.put("foodName", "사과");
+        recipe_food2.put("user", "user1");
+        recipe_foods.add(recipe_food1);;
+        recipe_foods.add(recipe_food2);
+        return recipe_foods;
     }
 
     @PutMapping("/recipe-food/{recipeFoodId}")
