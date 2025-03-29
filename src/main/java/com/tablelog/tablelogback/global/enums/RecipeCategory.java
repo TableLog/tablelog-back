@@ -2,7 +2,7 @@ package com.tablelog.tablelogback.global.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public enum FoodCategory {
+public enum RecipeCategory {
     한식,
     양식,
     중식,
@@ -11,7 +11,7 @@ public enum FoodCategory {
     디저트;
 
     @JsonCreator
-    public static FoodCategory fromString(String inputValue) {
-        return EnumUtils.fromString(FoodCategory.class, inputValue);
+    public static RecipeCategory fromString(String inputValue) {
+        return EnumUtils.fromString(RecipeCategory.class, inputValue);
     }
 }
