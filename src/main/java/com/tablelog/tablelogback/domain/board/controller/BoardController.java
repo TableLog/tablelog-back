@@ -24,6 +24,7 @@ public class BoardController {
     public void createBoard(
             String title,
             String content,
+            String user,
             BoardCategory category,
             MultipartFile image_file
             // BoardCreateControllerRequestDto controllerRequestDto
