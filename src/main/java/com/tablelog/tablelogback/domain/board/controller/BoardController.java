@@ -42,6 +42,14 @@ public class BoardController {
     )throws IOException{
 
     }
+    @DeleteMapping("/boards/{board_id}")
+    public void deleteBoard(
+            @PathVariable Long board_id,
+            String user
+    )throws IOException{
+
+    }
+
     @GetMapping("/boards")
     public List<Map<String, Object>> readAllBoards() {
         List<Map<String, Object>> boards = new ArrayList<>();
