@@ -36,6 +36,9 @@ dependencies {
 
     // Database Connector
     runtimeOnly 'com.mysql:mysql-connector-j'
+    // webSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 
     // Test Dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
