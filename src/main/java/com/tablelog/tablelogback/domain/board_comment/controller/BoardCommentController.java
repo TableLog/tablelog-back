@@ -40,6 +40,14 @@ public class BoardCommentController {
     )throws IOException{
 
     }
+    @DeleteMapping("/boards/{board_id}/board_comments/{board_comment_id}")
+    public void deleteBoardComment(
+            @PathVariable Long board_id,
+            @PathVariable Long board_comment_id,
+            String user
+    )throws IOException{
+
+    }
     @GetMapping("/boards/{board_id}/board_comments")
     public List<Map<String, Object>> readAllBoardComments(
             @PathVariable Long board_id
