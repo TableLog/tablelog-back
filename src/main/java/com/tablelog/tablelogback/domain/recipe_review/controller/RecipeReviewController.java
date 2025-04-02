@@ -21,7 +21,8 @@ public class RecipeReviewController {
             @PathVariable Long recipeId,
             String content,
             @Schema(description = "Start value (Byte)", example = "1", type = "integer", format = "int32")
-            Byte star
+            Byte star,
+            String user
 //            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
 
@@ -79,7 +80,8 @@ public class RecipeReviewController {
             @PathVariable Long recipeReviewId,
             String content,
             @Schema(description = "Start value (Byte)", example = "1", type = "integer", format = "int32")
-            Byte star
+            Byte star,
+            String user
 //            @RequestBody RecipeReviewUpdateControllerRequestDto controllerRequestDto
 //            @AuthenticationPrincipal UserDetailsImpl userDetails,
     ) throws IOException {
