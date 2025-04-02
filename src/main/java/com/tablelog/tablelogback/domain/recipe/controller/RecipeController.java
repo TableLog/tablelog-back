@@ -33,7 +33,8 @@ public class RecipeController {
             MultipartFile recipeImage,
             List<RecipeProcessCreateControllerRequestDto> RecipeProcessCreateControllerRequestDto,
             List<MultipartFile> recipeProcessImage,
-            List<RecipeFoodCreateControllerRequestDto> RecipeFoodCreateControllerRequestDto
+            List<RecipeFoodCreateControllerRequestDto> RecipeFoodCreateControllerRequestDto,
+            String user
 //            @Valid @RequestPart(name = "recipeCreateRequestDto")
 //            @RequestBody RecipeCreateControllerRequestDto controllerRequestDto
 //            @RequestPart(name = "recipeCreateImage",required = false) MultipartFile recipeImage,
@@ -212,14 +213,16 @@ public class RecipeController {
             Integer price,
             String memo,
             Boolean imageChange,
-            MultipartFile multipartFile
+            MultipartFile multipartFile,
+            String user
     ) throws IOException {
 
     }
 
     @DeleteMapping("/recipes/{recipeId}")
     public void deleteRecipe(
-            @PathVariable Long recipeId
+            @PathVariable Long recipeId,
+            String user
 //            @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
 
