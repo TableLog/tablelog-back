@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.global.handler;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -16,25 +15,34 @@ public class StompHandler implements ChannelInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StompHandler.class);
 
     @Override
-    public void postSend(Message<?> message, MessageChannel channel, boolean sent) {
+    public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         StompCommand command = accessor.getCommand();
 
-        if (command == null) {
-            return;
-        }
+        if (command != null) {
+            String sessionId = accessor.getSessionId();
+            LOGGER.debug("🔍 STOMP Command Received: {} | 세션 {}", command, sessionId);
 
-        String sessionId = accessor.getSessionId();
-
-        switch (command) {
-            case CONNECT:
-                LOGGER.info("세션 들어옴 => {}", sessionId);
-                break;
-            case DISCONNECT:
-                LOGGER.info("세션 끊음 => {}", sessionId);
-                break;
-            default:
-                break;
+            switch (command) {
+                case CONNECT:
+                    LOGGER.info("✅ STOMP CONNECTED: 세션 {}", sessionId);
+                    break;
+                case SUBSCRIBE:
+                    String destination = accessor.getDestination();
+                    if (destination != null) {
+                        LOGGER.info("📌 STOMP SUBSCRIBED: 세션 {} -> 구독 {}", sessionId, destination);
+                    } else {
+                        LOGGER.warn("⚠️ STOMP SUBSCRIBE 요청이 왔지만 destination이 없음! 세션 {}", sessionId);
+                    }
+                    break;
+                case DISCONNECT:
+                    LOGGER.info("❌ STOMP DISCONNECTED: 세션 {}", sessionId);
+                    break;
+                default:
+                    LOGGER.debug("📌 처리되지 않은 STOMP 명령어: {} | 세션 {}", command, sessionId);
+                    break;
+            }
         }
+        return message;
     }
 }
