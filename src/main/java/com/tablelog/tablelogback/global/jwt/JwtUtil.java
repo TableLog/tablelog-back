@@ -56,6 +56,17 @@ public class JwtUtil {
                         .compact();
     }
 
+    public String createRefreshToken(String email, UserRole userRole) {
+        Date date = new Date();
+        return Jwts.builder()
+                .subject(email)
+                .claim(AUTHORIZATION_KEY, userRole)
+                .expiration(new Date(date.getTime() + refreshTokenExpirationPeriod))
+                .issuedAt(date)
+                .signWith(key, Jwts.SIG.HS256)
+                .compact();
+    }
+
     public boolean validateToken(String token) {
         if(token.contains("Bearer ")){
             token = token.substring(7);
@@ -71,6 +82,22 @@ public class JwtUtil {
             logger.error("Unsupported JWT Access token");
         } catch (IllegalArgumentException e) {
             logger.error("JWT Access claims is empty");
+        }
+        return false;
+    }
+
+    public boolean validateRefreshToken(String token) {
+        try {
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            return true;
+        } catch (SecurityException | MalformedJwtException e) {
+            logger.error("Invalid JWT Refresh signature");
+        } catch (ExpiredJwtException e) {
+            logger.error("Expired JWT Refresh token");
+        } catch (UnsupportedJwtException e) {
+            logger.error("Unsupported JWT Refresh token");
+        } catch (IllegalArgumentException e) {
+            logger.error("JWT Refresh claims is empty");
         }
         return false;
     }
@@ -94,6 +121,12 @@ public class JwtUtil {
         String token = createAccessToken(user.getEmail(), user.getUserRole());
         logger.info("header에 AccessToken 추가");
         httpServletResponse.addHeader(ACCESS_TOKEN_HEADER, token);
+        return token;
+    }
+
+    public String addRefreshTokenToCookie(final User user, final HttpServletResponse httpServletResponse) {
+        String token = createRefreshToken(user.getEmail(), user.getUserRole());
+        httpServletResponse.addCookie(createCookie("refreshToken", token));
         return token;
     }
 
