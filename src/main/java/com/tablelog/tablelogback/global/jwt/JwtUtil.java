@@ -6,6 +6,7 @@ import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtAccessTokenExcep
 import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -43,12 +44,12 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createAccessToken(String email, UserRole role) {
+    public String createAccessToken(String email, UserRole userRole) {
         Date date = new Date();
         return BEARER_PREFIX +
                 Jwts.builder()
                         .subject(email)
-                        .claim(AUTHORIZATION_KEY, role)
+                        .claim(AUTHORIZATION_KEY, userRole)
                         .expiration(new Date(date.getTime() + accessTokenExpirationPeriod))
                         .issuedAt(date)
                         .signWith(key, Jwts.SIG.HS256)
@@ -63,13 +64,13 @@ public class JwtUtil {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
-            logger.error("Invalid JWT signature");
+            logger.error("Invalid JWT Access signature");
         } catch (ExpiredJwtException e) {
-            logger.error("Expired JWT token");
+            logger.error("Expired JWT Access token");
         } catch (UnsupportedJwtException e) {
-            logger.error("Unsupported JWT token");
+            logger.error("Unsupported JWT Access token");
         } catch (IllegalArgumentException e) {
-            logger.error("JWT claims is empty");
+            logger.error("JWT Access claims is empty");
         }
         return false;
     }
@@ -94,6 +95,21 @@ public class JwtUtil {
         logger.info("header에 AccessToken 추가");
         httpServletResponse.addHeader(ACCESS_TOKEN_HEADER, token);
         return token;
+    }
+
+    public Cookie createCookie(String key, String value) {
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(Math.toIntExact(refreshTokenExpirationPeriod));
+        cookie.setHttpOnly(true);
+        return cookie;
+    }
+
+    public void deleteCookie(String key, final HttpServletResponse httpServletResponse) {
+        Cookie cookie = new Cookie(key, null);
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+        logger.info(cookie.getName());
+        httpServletResponse.addCookie(cookie);
     }
 
     public Boolean isExpiredAccessToken(String token) {
