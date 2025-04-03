@@ -1,10 +1,15 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
-import com.tablelog.tablelogback.global.enums.BoardCategory;
-import com.tablelog.tablelogback.global.enums.FoodUnit;
-import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
+import com.tablelog.tablelogback.domain.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,18 +22,20 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 @Tag(name = "사용자 API", description = "")
 public class UserController {
-    @PostMapping("/users/signup")
-    public void createUser(
-            String email,
-            String password,
-            String confirmPassword,
-            String nickname,
-            UserRole userRole,
-            String profileImgUrl,
-            String kakaoEmail,
-            String googleEmail
-    ) throws IOException {
+    private final UserService userService;
+    private final UserDtoMapper userDtoMapper;
 
+    @Operation(summary = "회원가입")
+    @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> signUp(
+//            @ModelAttribute UserSignUpControllerRequestDto controllerRequestDto,
+            @RequestPart UserSignUpControllerRequestDto controllerRequestDto,
+            @RequestPart(required = false) MultipartFile multipartFile
+    ) throws IOException {
+        UserSignUpServiceRequestDto serviceRequestDto = userDtoMapper
+                .toUserSignUpServiceRequestDto(controllerRequestDto);
+        userService.signUp(serviceRequestDto, multipartFile);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/users/longin")
