@@ -1,0 +1,65 @@
+package com.tablelog.tablelogback.domain.user.entity;
+
+import com.tablelog.tablelogback.global.entity.BaseEntity;
+import com.tablelog.tablelogback.global.enums.UserRole;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "TB_USER")
+@Entity
+public class User extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false, unique = true)
+    private String nickname;
+
+    @Column
+    private String profileImgUrl;
+
+    @Column
+    private String folderName;
+
+    @Column
+    private String kakaoEmail;
+
+    @Column
+    private String googleEmail;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserRole userRole;
+
+    @Builder
+    public User(
+            final String email,
+            final String password,
+            final String nickname,
+            final UserRole userRole,
+            final String profileImgUrl,
+            final String folderName,
+            final String kakaoEmail,
+            final String googleEmail
+    ){
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.userRole = UserRole.USER;
+        this.profileImgUrl = profileImgUrl;
+        this.folderName = folderName;
+        this.kakaoEmail = kakaoEmail;
+        this.googleEmail = googleEmail;
+    }
+}
