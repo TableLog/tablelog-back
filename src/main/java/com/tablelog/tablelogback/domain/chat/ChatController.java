@@ -58,7 +58,6 @@ public class ChatController {
      * @param message 메시지 (JSON 형식)
      */
     @MessageMapping("/chat/send")
-    @SendTo("/sub/chat/room/1")
     public void sendMessage(Map<String, Object> message) {
         try {
             if (!message.containsKey("roomId")) {
@@ -69,7 +68,7 @@ public class ChatController {
             String roomId = message.get("roomId").toString();
             LOGGER.info("📩 Received message in room {}: {}", roomId, message);
 
-            messagingTemplate.convertAndSend("/sub/chat/" + roomId, message);
+            messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
         } catch (Exception e) {
             LOGGER.error("❌ Error processing message: ", e);
         }
