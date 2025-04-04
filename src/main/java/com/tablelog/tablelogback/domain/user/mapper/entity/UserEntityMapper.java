@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user.mapper.entity;
 
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import org.mapstruct.Mapper;
@@ -13,5 +14,8 @@ public interface UserEntityMapper {
     @Mapping(source = "userRole", target = "userRole")
     @Mapping(source = "profileImgUrl",target = "profileImgUrl")
     @Mapping(source = "folderName",target = "folderName")
-    User toUser(UserSignUpServiceRequestDto serviceRequestDto, UserRole userRole, String profileImgUrl, String folderName);
+    User toUser(UserSignUpServiceRequestDto serviceRequestDto, UserRole userRole,
+                String profileImgUrl, String folderName);
+
+    UserLoginResponseDto toUserLoginResponseDto(User user);
 }

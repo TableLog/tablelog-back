@@ -1,18 +1,20 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
+import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
-import com.tablelog.tablelogback.domain.user.exception.AlreadyExistsEmailException;
-import com.tablelog.tablelogback.domain.user.exception.DuplicateNicknameException;
-import com.tablelog.tablelogback.domain.user.exception.NotMatchPasswordException;
-import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
+import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
+import com.tablelog.tablelogback.global.jwt.RefreshToken;
+import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,10 +29,12 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final HttpServletResponse httpServletResponse;
     private final JwtUtil jwtUtil;
-//    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 //    private final RecipeRepository recipeRepository;
 //    private final BoardRepository boardRepository;
 
+    @Value("${spring.jwt.refresh.expiration-period}")
+    private Long timeToLive;
     private final String SEPARATOR = "/";
 
     @Override
@@ -65,5 +69,19 @@ public class UserServiceImpl implements UserService {
 //            s3Provider.createFolder(serviceRequestDto.email());
 //            s3Provider.saveFile(multipartFile, fileUrl);
         }
+    }
+
+    @Override
+    public UserLoginResponseDto login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
+        User user = userRepository.findByEmail(userLoginServiceRequestDto.email())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
+            throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
+        }
+        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+        String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
+        RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
+        refreshTokenRepository.save(refreshToken);
+        return userEntityMapper.toUserLoginResponseDto(user);
     }
 }

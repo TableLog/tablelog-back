@@ -1,6 +1,8 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
+import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.UserService;
@@ -28,7 +30,6 @@ public class UserController {
     @Operation(summary = "회원가입")
     @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> signUp(
-//            @ModelAttribute UserSignUpControllerRequestDto controllerRequestDto,
             @RequestPart UserSignUpControllerRequestDto controllerRequestDto,
             @RequestPart(required = false) MultipartFile multipartFile
     ) throws IOException {
@@ -38,12 +39,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/users/longin")
-    public void login(
-            String email,
-            String password
+    @Operation(summary = "로그인")
+    @PostMapping("/users/login")
+    public ResponseEntity<?> login(
+            @RequestBody UserLoginControllerRequestDto controllerRequestDto
     ) {
-
+        UserLoginServiceRequestDto serviceRequestDto = userDtoMapper
+                .toUserLoginServiceRequestDto(controllerRequestDto);
+        userService.login(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @GetMapping("/users")
