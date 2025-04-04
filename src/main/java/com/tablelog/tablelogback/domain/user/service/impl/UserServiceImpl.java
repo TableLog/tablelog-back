@@ -152,4 +152,16 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
     }
+
+    @Override
+    public void logout(final String token, final HttpServletResponse response){
+        if (jwtUtil.isExpiredAccessToken(token)) {
+            throw new ExpiredJwtAccessTokenException(JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN);
+        }
+        String email = jwtUtil.getUserInfoFromToken(token).getSubject();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        jwtUtil.deleteCookie("refreshToken", response);
+        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
+    }
 }

@@ -5,6 +5,7 @@ import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServic
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -15,4 +16,5 @@ public interface UserService {
     UserLoginResponseDto getUser(String token);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile)throws IOException;
+    void logout(String token, HttpServletResponse httpServletResponse);
 }

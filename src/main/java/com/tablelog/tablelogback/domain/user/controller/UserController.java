@@ -12,6 +12,7 @@ import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -77,11 +78,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "로그아웃")
     @PostMapping("/users/logout")
-    public void logout(
-            @RequestHeader("Authorization") String token
+    public ResponseEntity<?> logout(
+            @RequestHeader("Authorization") String token,
+            HttpServletResponse httpServletResponse
     ){
-
+        userService.logout(token, httpServletResponse);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @DeleteMapping("/users")
