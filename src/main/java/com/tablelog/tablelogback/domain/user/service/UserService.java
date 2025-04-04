@@ -18,4 +18,5 @@ public interface UserService {
                     MultipartFile multipartFile)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
     void deleteUser(User user, HttpServletResponse httpServletResponse);
+    UserLoginResponseDto refreshAccessToken(String refreshToken, HttpServletResponse response);
 }

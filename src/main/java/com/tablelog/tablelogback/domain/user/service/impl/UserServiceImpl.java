@@ -14,6 +14,8 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtAccessTokenException;
+import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtRefreshTokenException;
+import com.tablelog.tablelogback.global.jwt.exception.FailedJwtTokenException;
 import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -181,4 +183,25 @@ public class UserServiceImpl implements UserService {
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         userRepository.deleteById(user.getId());
     }
+
+    @Override
+    public UserLoginResponseDto refreshAccessToken(final String refreshTokenCookie,
+                                                   final HttpServletResponse response) {
+        String refresh = refreshTokenCookie.substring(13);
+        RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refresh)
+                .orElseThrow(() -> new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN));
+        if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
+            throw new FailedJwtTokenException(JwtErrorCode.FAILED_JWT_TOKEN);
+        }
+        User user = userRepository.findById(refreshToken.getId())
+                .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+
+        // accessToken과 refreshToken 둘 다 refresh
+        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+        String newToken = jwtUtil.addRefreshTokenToCookie(user, response);
+        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
+        refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
+        return userEntityMapper.toUserLoginResponseDto(user);
+    }
+
 }

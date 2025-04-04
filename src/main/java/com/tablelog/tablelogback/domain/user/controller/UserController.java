@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -98,11 +96,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "refreshToken refresh", description = "빈칸 하나만 입력하면 됨")
     @PostMapping("/users/refresh")
-    public void refreshAccessToken(
-//            @RequestHeader("Cookie")
-            String refreshToken
+    public ResponseEntity<?> refreshAccessToken(
+            @RequestHeader("Cookie") String refreshToken,
+            HttpServletResponse httpServletResponse
     ) {
-
+        userService.refreshAccessToken(refreshToken, httpServletResponse);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
