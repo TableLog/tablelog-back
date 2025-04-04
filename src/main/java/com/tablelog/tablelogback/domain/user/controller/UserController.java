@@ -88,11 +88,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "회원탈퇴")
     @DeleteMapping("/users")
-    public void deleteUser(
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
-
+    public ResponseEntity<?> deleteUser(
+            @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+            HttpServletResponse httpServletResponse
+    ) {
+        userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/users/refresh")

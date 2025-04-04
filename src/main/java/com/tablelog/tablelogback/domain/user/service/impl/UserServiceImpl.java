@@ -164,4 +164,21 @@ public class UserServiceImpl implements UserService {
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
     }
+
+    @Transactional
+    public void deleteUser(final User user, final HttpServletResponse response){
+        userRepository.findById(user.getId())
+                .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        // 제약 조건에 걸리지 않기 위해서
+//        if(recipeRepository.findByUser(user) != null){
+//            recipeRepository.deleteAllByUser(user);
+//        }
+//        if(boardRepository.findByUser(user) != null){
+//            boardRepository.deleteAllByUser(user);
+//        }
+        jwtUtil.expireAccessTokenToHeader(user, response);
+        jwtUtil.deleteCookie("refreshToken", response);
+        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
+        userRepository.deleteById(user.getId());
+    }
 }

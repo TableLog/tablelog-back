@@ -17,4 +17,5 @@ public interface UserService {
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
+    void deleteUser(User user, HttpServletResponse httpServletResponse);
 }
