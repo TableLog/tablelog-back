@@ -12,6 +12,8 @@ import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
+import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtAccessTokenException;
+import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,6 +84,17 @@ public class UserServiceImpl implements UserService {
         String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
+        return userEntityMapper.toUserLoginResponseDto(user);
+    }
+
+    @Override
+    public UserLoginResponseDto getUser(final String token){
+        if (jwtUtil.isExpiredAccessToken(token)) {
+            throw new ExpiredJwtAccessTokenException(JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN);
+        }
+        String email = jwtUtil.getUserInfoFromToken(token).getSubject();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 }

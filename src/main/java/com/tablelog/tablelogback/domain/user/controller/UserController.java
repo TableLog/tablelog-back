@@ -4,6 +4,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerR
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,18 +51,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "사용자 정보", description = "Authorize에 token 넣고 Authorization에는 공백 주면 됨")
     @GetMapping("/users")
-    public Map<String, Object> getUser(
-            @PathVariable Long user_id
-    ) {
-        Map<String, Object> user1 = new HashMap<>();
-        user1.put("email", "첫 번째 게시글");
-        user1.put("password", "보안으로 들어갈 예정");
-        user1.put("nickname", "익명");
-        user1.put("profileImgUrl", "https://example.com/image1.jpg");
-        user1.put("kakaoEmail", "소셜 연동시");
-        user1.put("googleEmail", "소셜 연동시");
-        return user1;
+    public ResponseEntity<UserLoginResponseDto> getUser(
+            @RequestHeader("Authorization") String token
+    ){
+        UserLoginResponseDto responseDto = userService.getUser(token);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @PutMapping("/users")
