@@ -1,18 +1,22 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
+import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.UserService;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -60,18 +64,17 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @PutMapping("/users")
-    public void updateUser(
-//            String email,
-            String newPassword,
-            String confirmPassword,
-            String nickname,
-            Boolean imageChange,
-            String kakaoEmail,
-            String googleEmail,
-            MultipartFile profileImage
-    )throws IOException{
-
+    @Operation(summary = "사용자 정보 수정", description = "바꾸는 것만 작성, 안 바꾸면 빈 칸")
+    @PutMapping(value = "/users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateUser(
+            @RequestPart UpdateUserControllerRequestDto controllerRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+            @RequestPart(required=false) MultipartFile multipartFile) throws IOException
+    {
+        UpdateUserServiceRequestDto serviceRequestDto = userDtoMapper
+                .toUpdateUserServiceRequestDto(controllerRequestDto);
+        userService.updateUser(userDetailsImpl.user(), serviceRequestDto, multipartFile);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/users/logout")

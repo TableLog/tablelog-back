@@ -1,7 +1,9 @@
 package com.tablelog.tablelogback.domain.user.mapper.dto;
 
+import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import org.mapstruct.Mapper;
@@ -15,5 +17,9 @@ public interface UserDtoMapper {
 
     UserLoginServiceRequestDto toUserLoginServiceRequestDto(
             UserLoginControllerRequestDto userLoginControllerRequestDto
+    );
+
+    UpdateUserServiceRequestDto toUpdateUserServiceRequestDto(
+            UpdateUserControllerRequestDto updateUserControllerRequestDto
     );
 }

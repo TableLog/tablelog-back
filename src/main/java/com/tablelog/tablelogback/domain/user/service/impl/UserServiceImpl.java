@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
+import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
@@ -19,9 +20,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -96,5 +99,57 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         return userEntityMapper.toUserLoginResponseDto(user);
+    }
+
+    @Transactional
+    public void updateUser(User user,
+                           UpdateUserServiceRequestDto serviceRequestDto,
+                           MultipartFile multipartFile) throws IOException {
+        // 비밀번호
+        if(!Objects.equals(serviceRequestDto.newPassword(), "")){
+            if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
+                throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
+            }
+            if (!serviceRequestDto.newPassword().equals(serviceRequestDto.confirmNewPassword())) {
+                throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
+            }
+            user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
+        }
+
+        // 닉네임
+        if(!Objects.equals(serviceRequestDto.nickname(), "")){
+            if(userRepository.existsByNickname(serviceRequestDto.nickname())){
+                throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
+            }
+            user.updateNickname(serviceRequestDto.nickname());
+        }
+
+        // 프로필 이미지
+        if(serviceRequestDto.ImageChange()) {
+            // 기본 이미지
+            if(multipartFile == null){
+                user.updateProfileImgUrl("");
+            }
+            else {
+//                String imageName = s3Provider.updateImage(user.getProfile_img_url(),
+//                        user.getFolderName(), multipartFile);
+                String imageName = multipartFile.getOriginalFilename();
+                user.updateProfileImgUrl(imageName);
+            }
+        }
+
+        // 카카오 이메일
+        if(!Objects.equals(serviceRequestDto.kakaoEmail(), "")){
+            user.updateKakaoEmail(serviceRequestDto.kakaoEmail());
+            // 연동 취소인 경우에는?
+        }
+
+        // 구글 이메일
+        if(!Objects.equals(serviceRequestDto.googleEmail(), "")){
+            user.updateGoogleEmail(serviceRequestDto.googleEmail());
+            // 연동 취소인 경우에는?
+        }
+
+        userRepository.save(user);
     }
 }

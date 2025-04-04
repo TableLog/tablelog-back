@@ -62,4 +62,28 @@ public class User extends BaseEntity {
         this.kakaoEmail = kakaoEmail;
         this.googleEmail = googleEmail;
     }
+
+    public void changeRole(UserRole newUserRole) {
+        this.userRole = newUserRole;
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateProfileImgUrl(String profileImgUrl) {
+        this.profileImgUrl = profileImgUrl;
+    }
+
+    public void updateKakaoEmail(String kakaoEmail){
+        this.kakaoEmail = kakaoEmail;
+    }
+
+    public void updateGoogleEmail(String googleEmail){
+        this.googleEmail = googleEmail;
+    }
 }
