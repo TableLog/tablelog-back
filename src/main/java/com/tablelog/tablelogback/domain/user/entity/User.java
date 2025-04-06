@@ -86,4 +86,12 @@ public class User extends BaseEntity {
     public void updateGoogleEmail(String googleEmail){
         this.googleEmail = googleEmail;
     }
+
+    public void deleteKakaoEmail(){
+        this.kakaoEmail = null;
+    }
+
+    public void deleteGoogleEmail(){
+        this.googleEmail = null;
+    }
 }
