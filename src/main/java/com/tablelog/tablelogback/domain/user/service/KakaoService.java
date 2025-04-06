@@ -1,0 +1,157 @@
+package com.tablelog.tablelogback.domain.user.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tablelog.tablelogback.domain.user.dto.oauth2.KakaoUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.*;
+import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.global.jwt.JwtUtil;
+import com.tablelog.tablelogback.global.jwt.RefreshToken;
+import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.UUID;
+
+@Slf4j
+@RequiredArgsConstructor
+@Service
+public class KakaoService {
+    @Value("${spring.kakao.client-id}")
+    private String clientId;
+
+    @Value("${spring.kakao.redirect-uri}")
+    private String redirectUri;
+
+    @Value("${spring.jwt.refresh.expiration-period}")
+    private Long timeToLive;
+
+    private final UserRepository userRepository;
+    private final UserEntityMapper userEntityMapper;
+    private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
+    private final HttpServletResponse httpServletResponse;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    public UserLoginResponseDto loginWithKakao(String code) throws JsonProcessingException {
+        JsonNode jsonNode = getToken(code);
+        String kakaoAccessToken = jsonNode.get("access_token").asText();
+        String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
+        Integer refreshTimeToLive = jsonNode.get("refresh_token_expires_in").asInt();
+        KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
+        User user = joinKakaoUser(kakaoUserInfo);
+        // 서버 토큰 저장
+        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+        String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
+        RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
+        refreshTokenRepository.save(refreshToken);
+        // 카카오의 access token과 refresh token 저장
+        httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
+        httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-refreshToken", kakaoRefreshToken));
+        RefreshToken kakaoRefresh = new RefreshToken(user.getId(), kakaoRefreshToken, refreshTimeToLive.longValue());
+        refreshTokenRepository.save(kakaoRefresh);
+        return userEntityMapper.toUserLoginResponseDto(user);
+    }
+
+    private JsonNode getToken(String code) throws JsonProcessingException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", clientId);
+        body.add("redirect_uri", redirectUri);
+        body.add("code", code);
+
+        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> response = rt.exchange(
+                "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
+                kakaoTokenRequest,
+                String.class
+        );
+
+        String responseBody = response.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        return jsonNode;
+    }
+
+    private KakaoUserInfoDto getKakaoUserInfo(String accessToken) throws JsonProcessingException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        HttpEntity<MultiValueMap<String, String>> kakaoUserInfoRequest = new HttpEntity<>(headers);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> response = rt.exchange(
+                "https://kapi.kakao.com/v2/user/me",
+                HttpMethod.POST,
+                kakaoUserInfoRequest,
+                String.class
+        );
+        String responseBody = response.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+        String kakaoEmail = jsonNode.get("kakao_account").get("email").asText();
+        String nickname = jsonNode.get("kakao_account").get("profile").get("nickname").asText();
+        String name = jsonNode.get("kakao_account").get("name").asText();
+        String birth = jsonNode.get("kakao_account").get("birthyear").asText()+"-"
+                +jsonNode.get("kakao_account").get("birthday").asText().substring(0,2)+"-"
+                +jsonNode.get("kakao_account").get("birthday").asText().substring(2);
+        String profileImgUrl;
+        if(jsonNode.get("kakao_account").get("profile").get("profile_image_url") != null){
+            profileImgUrl = jsonNode.get("kakao_account").get("profile").get("profile_image_url").asText();
+        }
+        else {
+            profileImgUrl = "";
+        }
+        return new KakaoUserInfoDto(kakaoEmail, nickname, name, birth, profileImgUrl);
+    }
+
+    private User joinKakaoUser(KakaoUserInfoDto kakaoUserInfoDto) {
+        String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
+        User kakaoUser = userRepository.findByKakaoEmail(kakaoEmail).orElse(null);
+        String uuid = UUID.randomUUID().toString();
+        if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
+            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
+        if(kakaoUser == null){
+            // 중복 가입 확인
+            if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
+                throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+            }
+            // 닉네임 중복 확인
+            if(userRepository.existsByNickname(kakaoUserInfoDto.nickname())){
+                throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
+            }
+            kakaoUser = User.builder()
+                    .email(kakaoEmail)
+                    .password(passwordEncoder.encode(uuid))
+                    .nickname(kakaoUserInfoDto.nickname())
+                    .name(kakaoUserInfoDto.name())
+                    .birthday(kakaoUserInfoDto.birthday())
+                    .userRole(UserRole.USER)
+                    .profileImgUrl(kakaoUserInfoDto.profileImgUrl())
+                    .kakaoEmail(kakaoEmail)
+                    .build();
+            userRepository.save(kakaoUser);
+        }
+        return kakaoUser;
+    }
+}
