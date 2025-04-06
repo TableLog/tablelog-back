@@ -47,8 +47,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public void signUp(final UserSignUpServiceRequestDto serviceRequestDto,
                        MultipartFile multipartFile) throws IOException {
-        // 이름과 생년월일 중복 체크
-//        if(userRepository.existsByNameAndBirthday(serviceRequestDto.name, serviceRequestDto.birthday()))
+        // 이름과 생년월일 중복 체크   
+        if(userRepository.existsByNameAndBirthday(serviceRequestDto.name(), serviceRequestDto.birthday())){
+            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
         // 이메일 중복 체크
         if (userRepository.existsByEmail(serviceRequestDto.email())) {
             throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
