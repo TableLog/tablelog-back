@@ -41,7 +41,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "로그인")
+    @Operation(summary = "로그인", description = "Authorize에 token 넣고 Authorization에는 공백 주면 됨")
     @PostMapping("/users/login")
     public ResponseEntity<?> login(
             @RequestBody UserLoginControllerRequestDto controllerRequestDto
@@ -52,7 +52,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "사용자 정보", description = "Authorize에 token 넣고 Authorization에는 공백 주면 됨")
+    @Operation(summary = "사용자 정보")
     @GetMapping("/users")
     public ResponseEntity<UserLoginResponseDto> getUser(
             @RequestHeader("Authorization") String token
