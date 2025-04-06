@@ -1,9 +1,6 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
-import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.isNotDupUserEmailServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
@@ -198,6 +195,14 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(serviceRequestDto.email())) {
             log.info("중복된 이메일입니다.");
             throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        }
+    }
+
+    @Override
+    public void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto){
+        if(userRepository.existsByNickname(serviceRequestDto.nickname())) {
+            log.info("중복된 닉네임입니다.");
+            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
         }
     }
 }

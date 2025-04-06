@@ -1,9 +1,6 @@
 package com.tablelog.tablelogback.domain.user.service;
 
-import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.isNotDupUserEmailServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,4 +18,5 @@ public interface UserService {
     void deleteUser(User user, HttpServletResponse httpServletResponse);
     UserLoginResponseDto refreshAccessToken(String refreshToken, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
+    void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
 }

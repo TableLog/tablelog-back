@@ -3,10 +3,7 @@ package com.tablelog.tablelogback.domain.user.controller;
 import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
-import com.tablelog.tablelogback.domain.user.dto.service.request.isNotDupUserEmailServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.UserService;
@@ -113,6 +110,15 @@ public class UserController {
             @RequestBody isNotDupUserEmailServiceRequestDto serviceRequestDto
     ){
         userService.isNotDupUserEmail(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "닉네임 중복 확인")
+    @PostMapping("/users/check/nickname")
+    public ResponseEntity<?> isNotDupNickname(
+            @RequestBody isNotDupUserNickServiceRequestDto serviceRequestDto
+    ){
+        userService.isNotDupUserNick(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
