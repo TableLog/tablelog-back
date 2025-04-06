@@ -22,4 +22,5 @@ public interface UserService {
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
     void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto);
+    String findEmail(findEmailServiceRequestDto serviceRequestDto);
 }

@@ -239,4 +239,11 @@ public class UserServiceImpl implements UserService {
             user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
         }
     }
+
+    @Override
+    public String findEmail(findEmailServiceRequestDto serviceRequestDto){
+        User user = userRepository.findByNameAndBirthday(serviceRequestDto.name(), serviceRequestDto.birthday())
+                .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        return user.getEmail();
+    }
 }

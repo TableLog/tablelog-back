@@ -133,4 +133,13 @@ public class UserController {
         userService.updatePassword(userDetailsImpl.user(), serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "이메일 찾기")
+    @PostMapping("/users/email")
+    public ResponseEntity<?> findEmail(
+            @RequestBody findEmailServiceRequestDto serviceRequestDto
+    ){
+        String email = userService.findEmail(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(email);
+    }
 }
