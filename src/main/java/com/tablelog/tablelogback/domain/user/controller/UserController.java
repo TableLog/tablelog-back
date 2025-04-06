@@ -121,4 +121,14 @@ public class UserController {
         userService.isNotDupUserNick(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "비밀번호만 변경")
+    @PutMapping("users/password")
+    public ResponseEntity<?> updatePassword(
+            @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+            @RequestBody UpdatePasswordServiceRequestDto serviceRequestDto
+    ){
+        userService.updatePassword(userDetailsImpl.user(), serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

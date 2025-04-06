@@ -205,4 +205,17 @@ public class UserServiceImpl implements UserService {
             throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
         }
     }
+
+    @Override
+    public void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto){
+        if(!Objects.equals(serviceRequestDto.newPassword(), "")){
+            if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
+                throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
+            }
+            if (!serviceRequestDto.newPassword().equals(serviceRequestDto.confirmNewPassword())) {
+                throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
+            }
+            user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
+        }
+    }
 }

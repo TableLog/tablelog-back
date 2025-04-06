@@ -19,4 +19,5 @@ public interface UserService {
     UserLoginResponseDto refreshAccessToken(String refreshToken, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
+    void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto);
 }
