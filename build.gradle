@@ -60,6 +60,10 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+    //S3
+    implementation platform('software.amazon.awssdk:bom:2.25.7') // 최신 BOM
+    implementation 'software.amazon.awssdk:s3'
+
 
 }
 
