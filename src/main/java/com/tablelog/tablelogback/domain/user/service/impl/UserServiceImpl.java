@@ -104,6 +104,14 @@ public class UserServiceImpl implements UserService {
     public void updateUser(User user,
                            UpdateUserServiceRequestDto serviceRequestDto,
                            MultipartFile multipartFile) throws IOException {
+        // 이메일
+        if(!Objects.equals(serviceRequestDto.newEmail(), "")){
+            if(userRepository.existsByEmail(serviceRequestDto.newEmail())){
+                throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+            }
+            user.updateEmail(serviceRequestDto.newEmail());
+        }
+
         // 비밀번호
         if(!Objects.equals(serviceRequestDto.newPassword(), "")){
             if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
@@ -136,6 +144,16 @@ public class UserServiceImpl implements UserService {
                 user.updateProfileImgUrl(imageName);
             }
         }
+
+        // 카카오 이메일
+        if(!Objects.equals(serviceRequestDto.newKakaoEmail(), "")){
+            if(userRepository.existsByKakaoEmail(serviceRequestDto.newKakaoEmail())){
+                throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+            }
+            user.updateKakaoEmail(serviceRequestDto.newKakaoEmail());
+        }
+
+        // 구글 이메일
 
         userRepository.save(user);
     }
