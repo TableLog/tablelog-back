@@ -26,6 +26,12 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String nickname;
 
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String birthday;
+
     @Column
     private String profileImgUrl;
 
@@ -47,6 +53,8 @@ public class User extends BaseEntity {
             final String email,
             final String password,
             final String nickname,
+            final String name,
+            final String birthday,
             final UserRole userRole,
             final String profileImgUrl,
             final String folderName,
@@ -56,6 +64,8 @@ public class User extends BaseEntity {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
+        this.name = name;
+        this.birthday = birthday;
         this.userRole = UserRole.USER;
         this.profileImgUrl = profileImgUrl;
         this.folderName = folderName;
@@ -67,9 +77,9 @@ public class User extends BaseEntity {
         this.userRole = newUserRole;
     }
 
-    public void updateEmail(String email){
-        this.email = email;
-    }
+//    public void updateEmail(String email){
+//        this.email = email;
+//    }
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
@@ -83,13 +93,13 @@ public class User extends BaseEntity {
         this.profileImgUrl = profileImgUrl;
     }
 
-    public void updateKakaoEmail(String kakaoEmail){
-        this.kakaoEmail = kakaoEmail;
-    }
+//    public void updateKakaoEmail(String kakaoEmail){
+//        this.kakaoEmail = kakaoEmail;
+//    }
 
-    public void updateGoogleEmail(String googleEmail){
-        this.googleEmail = googleEmail;
-    }
+//    public void updateGoogleEmail(String googleEmail){
+//        this.googleEmail = googleEmail;
+//    }
 
     public void deleteKakaoEmail(){
         this.kakaoEmail = null;
