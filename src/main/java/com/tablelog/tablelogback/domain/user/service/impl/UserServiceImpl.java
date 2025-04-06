@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.user.service.impl;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.isNotDupUserEmailServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
@@ -13,12 +14,10 @@ import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
-import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtAccessTokenException;
-import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtRefreshTokenException;
-import com.tablelog.tablelogback.global.jwt.exception.FailedJwtTokenException;
-import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
+import com.tablelog.tablelogback.global.jwt.exception.*;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Objects;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
@@ -140,18 +140,6 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // 카카오 이메일
-        if(!Objects.equals(serviceRequestDto.kakaoEmail(), "")){
-            user.updateKakaoEmail(serviceRequestDto.kakaoEmail());
-            // 연동 취소인 경우에는?
-        }
-
-        // 구글 이메일
-        if(!Objects.equals(serviceRequestDto.googleEmail(), "")){
-            user.updateGoogleEmail(serviceRequestDto.googleEmail());
-            // 연동 취소인 경우에는?
-        }
-
         userRepository.save(user);
     }
 
@@ -178,6 +166,7 @@ public class UserServiceImpl implements UserService {
 //        if(boardRepository.findByUser(user) != null){
 //            boardRepository.deleteAllByUser(user);
 //        }
+        // 소셜 연결 끊기
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
@@ -204,4 +193,11 @@ public class UserServiceImpl implements UserService {
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
+    @Override
+    public void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto) {
+        if (userRepository.existsByEmail(serviceRequestDto.email())) {
+            log.info("중복된 이메일입니다.");
+            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        }
+    }
 }

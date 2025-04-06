@@ -12,8 +12,8 @@ import org.mapstruct.MappingConstants;
 public interface UserEntityMapper {
     @Mapping(source = "serviceRequestDto.password", target = "password", qualifiedBy = EncoderPassword.class)
     @Mapping(source = "userRole", target = "userRole")
-    @Mapping(source = "profileImgUrl",target = "profileImgUrl")
-    @Mapping(source = "folderName",target = "folderName")
+    @Mapping(source = "profileImgUrl", target = "profileImgUrl")
+    @Mapping(source = "folderName", target = "folderName")
     User toUser(UserSignUpServiceRequestDto serviceRequestDto, UserRole userRole,
                 String profileImgUrl, String folderName);
 

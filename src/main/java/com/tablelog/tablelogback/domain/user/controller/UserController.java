@@ -6,6 +6,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpController
 import com.tablelog.tablelogback.domain.user.dto.service.request.UpdateUserServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserLoginServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.isNotDupUserEmailServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.UserService;
@@ -96,13 +97,22 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "refreshToken refresh", description = "빈칸 하나만 입력하면 됨")
+    @Operation(summary = "refresh", description = "빈칸 하나만 입력하면 됨")
     @PostMapping("/users/refresh")
     public ResponseEntity<?> refreshAccessToken(
             @RequestHeader("Cookie") String refreshToken,
             HttpServletResponse httpServletResponse
     ) {
         userService.refreshAccessToken(refreshToken, httpServletResponse);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "이메일 중복 확인")
+    @PostMapping("/users/check/email")
+    public ResponseEntity<?> isNotDupEmail(
+            @RequestBody isNotDupUserEmailServiceRequestDto serviceRequestDto
+    ){
+        userService.isNotDupUserEmail(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
