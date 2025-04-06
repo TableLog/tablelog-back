@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.user.service;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -128,9 +129,6 @@ public class KakaoService {
         String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
         User kakaoUser = userRepository.findByKakaoEmail(kakaoEmail).orElse(null);
         String uuid = UUID.randomUUID().toString();
-        if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
-            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-        }
         if(kakaoUser == null){
             // 중복 가입 확인
             if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
@@ -153,5 +151,32 @@ public class KakaoService {
             userRepository.save(kakaoUser);
         }
         return kakaoUser;
+    }
+
+    public void unlinkKakao(String kakaoAccessToken) throws JacksonException {
+        KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
+        User user = userRepository.findByKakaoEmail(kakaoUserInfo.kakaoEmail())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.set("Authorization", "Bearer " + kakaoAccessToken);
+
+        HttpEntity<?> entity = new HttpEntity<>(new LinkedMultiValueMap<>(), headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://kapi.kakao.com/v1/user/unlink",
+                HttpMethod.POST,
+                entity,
+                String.class
+        );
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            user.deleteKakaoEmail();
+            userRepository.save(user);
+        } else {
+            log.error("카카오 unlink 실패: {}", response.getBody());
+            throw new FailedUnlinkKakaoException(UserErrorCode.FAILED_UNLINK_KAKAO);
+        }
     }
 }

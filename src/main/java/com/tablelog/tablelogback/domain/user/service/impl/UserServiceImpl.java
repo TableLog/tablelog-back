@@ -1,11 +1,13 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
@@ -34,6 +36,7 @@ public class UserServiceImpl implements UserService {
     private final HttpServletResponse httpServletResponse;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final KakaoService kakaoService;
 //    private final RecipeRepository recipeRepository;
 //    private final BoardRepository boardRepository;
 
@@ -44,6 +47,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void signUp(final UserSignUpServiceRequestDto serviceRequestDto,
                        MultipartFile multipartFile) throws IOException {
+        // 이름과 생년월일 중복 체크
+//        if(userRepository.existsByNameAndBirthday(serviceRequestDto.name, serviceRequestDto.birthday()))
         // 이메일 중복 체크
         if (userRepository.existsByEmail(serviceRequestDto.email())) {
             throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
@@ -104,23 +109,25 @@ public class UserServiceImpl implements UserService {
     public void updateUser(User user,
                            UpdateUserServiceRequestDto serviceRequestDto,
                            MultipartFile multipartFile) throws IOException {
-        // 이메일
-        if(!Objects.equals(serviceRequestDto.newEmail(), "")){
-            if(userRepository.existsByEmail(serviceRequestDto.newEmail())){
-                throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        // 소셜 미연동 시
+        if(user.getKakaoEmail() != null || user.getGoogleEmail() != null){
+            // 이메일
+            if(!Objects.equals(serviceRequestDto.newPassword(), "")){
+                if(userRepository.existsByEmail(serviceRequestDto.newEmail())){
+                    throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+                }
+                user.updateEmail(serviceRequestDto.newEmail());
             }
-            user.updateEmail(serviceRequestDto.newEmail());
-        }
-
-        // 비밀번호
-        if(!Objects.equals(serviceRequestDto.newPassword(), "")){
-            if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
-                throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
+            // 비밀번호
+            if(!Objects.equals(serviceRequestDto.newPassword(), "")){
+                if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
+                    throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
+                }
+                if (!serviceRequestDto.newPassword().equals(serviceRequestDto.confirmNewPassword())) {
+                    throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
+                }
+                user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
             }
-            if (!serviceRequestDto.newPassword().equals(serviceRequestDto.confirmNewPassword())) {
-                throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
-            }
-            user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
         }
 
         // 닉네임
@@ -145,16 +152,6 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // 카카오 이메일
-        if(!Objects.equals(serviceRequestDto.newKakaoEmail(), "")){
-            if(userRepository.existsByKakaoEmail(serviceRequestDto.newKakaoEmail())){
-                throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
-            }
-            user.updateKakaoEmail(serviceRequestDto.newKakaoEmail());
-        }
-
-        // 구글 이메일
-
         userRepository.save(user);
     }
 
@@ -171,7 +168,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public void deleteUser(final User user, final HttpServletResponse response){
+    public void deleteUser(final User user, final String kakaoAccessToken,
+                           final HttpServletResponse response
+    ) throws JacksonException {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         // 제약 조건에 걸리지 않기 위해서
@@ -181,7 +180,9 @@ public class UserServiceImpl implements UserService {
 //        if(boardRepository.findByUser(user) != null){
 //            boardRepository.deleteAllByUser(user);
 //        }
-        // 소셜 연결 끊기
+        if(user.getKakaoEmail() != null) {
+            kakaoService.unlinkKakao(kakaoAccessToken);
+        }
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));

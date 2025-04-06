@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.user.service;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -15,7 +16,8 @@ public interface UserService {
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
-    void deleteUser(User user, HttpServletResponse httpServletResponse);
+    void deleteUser(User user, String kakaoAccessToken, HttpServletResponse httpServletResponse)
+            throws JacksonException;
     UserLoginResponseDto refreshAccessToken(String refreshToken, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);

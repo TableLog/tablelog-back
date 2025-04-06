@@ -77,9 +77,9 @@ public class User extends BaseEntity {
         this.userRole = newUserRole;
     }
 
-//    public void updateEmail(String email){
-//        this.email = email;
-//    }
+    public void updateEmail(String email){
+        this.email = email;
+    }
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
