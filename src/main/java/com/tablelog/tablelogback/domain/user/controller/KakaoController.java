@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.oauth2.KakaoUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,11 +45,11 @@ public class KakaoController {
 
     @Operation(summary = "카카오 로그인")
     @PostMapping("users/kakao/login")
-    public ResponseEntity<KakaoUserInfoDto> loginWithKakao(
+    public ResponseEntity<UserLoginResponseDto> loginWithKakao(
             @RequestParam("code") String code
     ) throws JacksonException {
-        KakaoUserInfoDto kakaoUserInfoDto = kakaoService.loginWithKakao(code);
-        return ResponseEntity.status(HttpStatus.OK).body(kakaoUserInfoDto);
+        UserLoginResponseDto userLoginResponseDto = kakaoService.loginWithKakao(code);
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginResponseDto);
     }
 
     @Operation(summary = "카카오 연결 끊기")

@@ -162,7 +162,7 @@ public class KakaoService {
         return kakaoUser;
     }
 
-    public KakaoUserInfoDto loginWithKakao(String code) throws JsonProcessingException {
+    public UserLoginResponseDto loginWithKakao(String code) throws JsonProcessingException {
         JsonNode jsonNode = getKakaoToken(code);
         String kakaoAccessToken = jsonNode.get("access_token").asText();
         String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
@@ -184,7 +184,7 @@ public class KakaoService {
         httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
         RefreshToken kakaoRefresh = new RefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive.longValue());
         refreshTokenRepository.save(kakaoRefresh);
-        return kakaoUserInfoDto;
+        return userEntityMapper.toUserLoginResponseDto(kakaoUser);
     }
 
     public void unlinkKakao(String kakaoAccessToken) throws JacksonException {
