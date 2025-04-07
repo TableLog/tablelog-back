@@ -16,9 +16,9 @@ public class S3Config {
 
     @Bean
     public S3Client s3Client(
-            @Value("${cloud.aws.credentials.access-key}") String accessKey,
-            @Value("${cloud.aws.credentials.secret-key}") String secretKey,
-            @Value("${cloud.aws.region.static}") String region
+            @Value("${spring.cloud.aws.credentials.access-key}") String accessKey,
+            @Value("${spring.cloud.aws.credentials.secret-key}") String secretKey,
+            @Value("${spring.cloud.aws.region.static}") String region
     ) {
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
 
