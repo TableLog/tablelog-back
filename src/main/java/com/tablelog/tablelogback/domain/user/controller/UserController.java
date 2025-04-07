@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
@@ -88,9 +89,10 @@ public class UserController {
     @DeleteMapping("/users")
     public ResponseEntity<?> deleteUser(
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+            @RequestHeader(value = "Kakao-Access-Token", required = false) String kakaoAccessToken,
             HttpServletResponse httpServletResponse
-    ) {
-        userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
+    ) throws JacksonException {
+        userService.deleteUser(userDetailsImpl.user(), kakaoAccessToken, httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -130,5 +132,14 @@ public class UserController {
     ){
         userService.updatePassword(userDetailsImpl.user(), serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "이메일 찾기")
+    @PostMapping("/users/email")
+    public ResponseEntity<?> findEmail(
+            @RequestBody findEmailServiceRequestDto serviceRequestDto
+    ){
+        String email = userService.findEmail(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(email);
     }
 }

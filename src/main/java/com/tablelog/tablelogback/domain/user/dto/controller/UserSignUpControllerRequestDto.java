@@ -4,6 +4,8 @@ public record UserSignUpControllerRequestDto(
         String email,
         String password,
         String confirmPassword,
-        String nickname
+        String nickname,
+        String name,
+        String birthday
 ) {
 }

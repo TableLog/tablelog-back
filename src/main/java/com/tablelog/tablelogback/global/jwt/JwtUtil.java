@@ -137,6 +137,18 @@ public class JwtUtil {
         return cookie;
     }
 
+    public String getRefreshTokenFromCookie(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookieName.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
     public void deleteCookie(String key, final HttpServletResponse httpServletResponse) {
         Cookie cookie = new Cookie(key, null);
         cookie.setMaxAge(0);
