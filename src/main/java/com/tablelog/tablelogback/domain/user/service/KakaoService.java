@@ -114,51 +114,51 @@ public class KakaoService {
                                MultipartFile multipartFile
     ) {
         String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
-        User kakaoUser = userRepository.findByKakaoEmail(kakaoEmail).orElse(null);
+        if(userRepository.existsByKakaoEmail(kakaoEmail)){
+            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
+        // 중복 가입 확인
+        if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
+            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
+        // 닉네임 중복 확인
+        if(userRepository.existsByNickname(kakaoUserInfoDto.nickname())){
+            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
+        }
+        User kakaoUser;
         String uuid = UUID.randomUUID().toString();
-        if(kakaoUser == null){
-            // 중복 가입 확인
-            if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
-                throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-            }
-            // 닉네임 중복 확인
-            if(userRepository.existsByNickname(kakaoUserInfoDto.nickname())){
-                throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
-            }
-
-            String fileName;
-            String fileUrl;
-            if (multipartFile == null || multipartFile.isEmpty()){
-                kakaoUser = User.builder()
-                        .email(kakaoEmail)
-                        .password(passwordEncoder.encode(uuid))
-                        .nickname(kakaoUserInfoDto.nickname())
-                        .name(kakaoUserInfoDto.name())
-                        .birthday(kakaoUserInfoDto.birthday())
-                        .userRole(UserRole.USER)
-                        .profileImgUrl(kakaoUserInfoDto.profileImgUrl())
-                        .kakaoEmail(kakaoEmail)
-                        .build();
-            } else {
+        String fileName;
+        String fileUrl;
+        if (multipartFile == null || multipartFile.isEmpty()){
+            kakaoUser = User.builder()
+                    .email(kakaoEmail)
+                    .password(passwordEncoder.encode(uuid))
+                    .nickname(kakaoUserInfoDto.nickname())
+                    .name(kakaoUserInfoDto.name())
+                    .birthday(kakaoUserInfoDto.birthday())
+                    .userRole(UserRole.USER)
+                    .profileImgUrl(kakaoUserInfoDto.profileImgUrl())
+                    .kakaoEmail(kakaoEmail)
+                    .build();
+        } else {
 //            fileName = s3Provider.originalFileName(multipartFile);
 //            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
-                fileUrl = multipartFile.getOriginalFilename();
-                kakaoUser = User.builder()
-                        .email(kakaoEmail)
-                        .password(passwordEncoder.encode(uuid))
-                        .nickname(kakaoUserInfoDto.nickname())
-                        .name(kakaoUserInfoDto.name())
-                        .birthday(kakaoUserInfoDto.birthday())
-                        .userRole(UserRole.USER)
-                        .profileImgUrl(fileUrl)
-                        .kakaoEmail(kakaoEmail)
-                        .build();
+            fileUrl = multipartFile.getOriginalFilename();
+            kakaoUser = User.builder()
+                    .email(kakaoEmail)
+                    .password(passwordEncoder.encode(uuid))
+                    .nickname(kakaoUserInfoDto.nickname())
+                    .name(kakaoUserInfoDto.name())
+                    .birthday(kakaoUserInfoDto.birthday())
+                    .userRole(UserRole.USER)
+                    .profileImgUrl(fileUrl)
+                    .kakaoEmail(kakaoEmail)
+                    .build();
 //            fileUrl = user.getFolderName() + SEPARATOR + fileName;
 //            s3Provider.createFolder(serviceRequestDto.email());
 //            s3Provider.saveFile(multipartFile, fileUrl);
-            }
-            userRepository.save(kakaoUser);
         }
+        userRepository.save(kakaoUser);
         return kakaoUser;
     }
 
