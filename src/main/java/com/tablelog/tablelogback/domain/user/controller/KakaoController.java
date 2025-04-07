@@ -22,7 +22,7 @@ public class KakaoController {
     private final KakaoService kakaoService;
     private final UserDtoMapper userDtoMapper;
 
-    @Operation(summary = "카카오 연동과 로그인", description = "카카오 연동 시 정보 불러오기")
+    @Operation(summary = "카카오 연동", description = "카카오 연동 시 정보 불러오기")
     @GetMapping("/users/kakao/login/callback")
     public ResponseEntity<KakaoUserInfoDto> getKakao(
             @RequestParam("code") String code
@@ -40,6 +40,15 @@ public class KakaoController {
     ) {
         kakaoService.signupWithKakao(kakaoUserInfoDto, multipartFile, httpServletRequest);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "카카오 로그인")
+    @PostMapping("users/kakao/login")
+    public ResponseEntity<KakaoUserInfoDto> loginWithKakao(
+            @RequestParam("code") String code
+    ) throws JacksonException {
+        KakaoUserInfoDto kakaoUserInfoDto = kakaoService.loginWithKakao(code);
+        return ResponseEntity.status(HttpStatus.OK).body(kakaoUserInfoDto);
     }
 
     @Operation(summary = "카카오 연결 끊기")
