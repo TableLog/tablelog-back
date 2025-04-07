@@ -183,6 +183,9 @@ public class UserServiceImpl implements UserService {
 //            boardRepository.deleteAllByUser(user);
 //        }
         if(user.getKakaoEmail() != null) {
+            if(kakaoAccessToken == null || kakaoAccessToken.equals("")){
+                throw new FailedUnlinkKakaoException(UserErrorCode.FAILED_UNLINK_KAKAO);
+            }
             kakaoService.unlinkKakao(kakaoAccessToken);
         }
         jwtUtil.expireAccessTokenToHeader(user, response);

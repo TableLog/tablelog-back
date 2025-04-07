@@ -89,7 +89,7 @@ public class UserController {
     @DeleteMapping("/users")
     public ResponseEntity<?> deleteUser(
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestHeader("Kakao-Access-Token") String kakaoAccessToken,
+            @RequestHeader(value = "Kakao-Access-Token", required = false) String kakaoAccessToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
         userService.deleteUser(userDetailsImpl.user(), kakaoAccessToken, httpServletResponse);
