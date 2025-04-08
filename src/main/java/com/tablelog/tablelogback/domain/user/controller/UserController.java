@@ -102,9 +102,10 @@ public class UserController {
     public ResponseEntity<?> refreshAccessToken(
             @RequestHeader("Refresh-Token") String refreshToken,
             @RequestHeader(value = "Kakao-Refresh-Token", required = false) String kakaoRefreshToken,
+            @RequestHeader(value = "Google-Refresh-Token", required = false) String googleRefreshToken,
             HttpServletResponse httpServletResponse
     ) {
-        userService.refreshAccessToken(refreshToken, kakaoRefreshToken, httpServletResponse);
+        userService.refreshAccessToken(refreshToken, kakaoRefreshToken, googleRefreshToken, httpServletResponse);
         return ResponseEntity.ok().build();
     }
 

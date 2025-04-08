@@ -206,6 +206,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserLoginResponseDto refreshAccessToken(final String refreshTokenCookie,
                                                    final String kakaoRefreshToken,
+                                                   final String googleRefreshToken,
                                                    final HttpServletResponse response) {
         String refresh = refreshTokenCookie;
         if (refreshTokenCookie.startsWith("refreshToken=")) {
@@ -228,9 +229,17 @@ public class UserServiceImpl implements UserService {
         // 카카오
         if(user.getKakaoEmail() != null){
             try {
-                kakaoService.refresh(kakaoRefreshToken);
+                kakaoService.refresh(kakaoRefreshToken, user);
             } catch (Exception e){
                 throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+            }
+        }
+        // 구글
+        if(user.getGoogleEmail() != null){
+            try {
+                googleService.refresh(googleRefreshToken, user);
+            } catch (Exception e){
+                throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
             }
         }
         return userEntityMapper.toUserLoginResponseDto(user);
