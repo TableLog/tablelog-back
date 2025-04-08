@@ -20,7 +20,7 @@ import java.util.Map;
 @Tag(name = "게시판 API", description = "")
 public class BoardController {
 
-    @PostMapping("/board")
+    @PostMapping("/boards")
     public void createBoard(
             String title,
             String content,

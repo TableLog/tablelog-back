@@ -1,0 +1,34 @@
+package com.tablelog.tablelogback.domain.board.entity;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "TB_BOARD")
+@Entity
+public class Board {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column
+    private String title;
+    @Column
+    private String content;
+    @Column
+    private  String image_url;
+    @Column
+    private String category;
+
+    @Builder
+    public Board(final String title, final String content,final String image_url, final String category) {
+        this.title = title;
+        this.content = content;
+        this.image_url = image_url;
+        this.category = category;
+    }
+}
