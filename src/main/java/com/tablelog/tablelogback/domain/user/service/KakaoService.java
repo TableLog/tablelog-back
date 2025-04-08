@@ -14,6 +14,8 @@ import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
+import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshToken;
+import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +52,7 @@ public class KakaoService {
     private final PasswordEncoder passwordEncoder;
     private final HttpServletResponse httpServletResponse;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
 
     private JsonNode getKakaoToken(String code) throws JsonProcessingException {
@@ -90,7 +93,7 @@ public class KakaoService {
             throw new NotFoundKakaoUserException(UserErrorCode.NOT_FOUND_USER);
         }
         httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
-        httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-refresh-Token", kakaoRefreshToken));
+        httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
         return kakaoUserInfoDto;
     }
 
@@ -104,6 +107,11 @@ public class KakaoService {
         String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
+        // 카카오 토큰 저장
+        String kakaoRefresh = jwtUtil.getRefreshTokenFromCookie(httpServletRequest, "Kakao-Refresh-Token");
+        jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
+        KakaoRefreshToken kakaoRefreshToken = new KakaoRefreshToken(user.getId(), kakaoRefresh, refreshTimeToLive);
+        kakaoRefreshTokenRepository.save(kakaoRefreshToken);
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
@@ -185,7 +193,9 @@ public class KakaoService {
         refreshTokenRepository.save(refreshToken);
         // 카카오 토큰 저장
         httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
-        httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
+        jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
+        KakaoRefreshToken kakaoRefresh = new KakaoRefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive);
+        kakaoRefreshTokenRepository.save(kakaoRefresh);
         return userEntityMapper.toUserLoginResponseDto(kakaoUser);
     }
 
@@ -209,6 +219,7 @@ public class KakaoService {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             user.deleteKakaoEmail();
+            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
             userRepository.save(user);
         } else {
             log.error("카카오 unlink 실패: {}", response.getBody());
@@ -249,7 +260,7 @@ public class KakaoService {
         return new KakaoUserInfoDto(kakaoEmail, nickname, name, birth, profileImgUrl);
     }
 
-    public void refresh(String kakaoRefreshToken) throws JacksonException {
+    public void refresh(String kakaoRefreshToken, User user) throws JacksonException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
@@ -273,8 +284,10 @@ public class KakaoService {
         httpServletResponse.addHeader("Kakao-Access-Token", jsonNode.get("access_token").asText());
         if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
             String newKakaoRefreshToken = jsonNode.get("refresh_token").asText();
+            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
             jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
-            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", newKakaoRefreshToken));
+            KakaoRefreshToken kakaoRefresh = new KakaoRefreshToken(user.getId(), newKakaoRefreshToken, refreshTimeToLive);
+            kakaoRefreshTokenRepository.save(kakaoRefresh);
         }
     }
 }
