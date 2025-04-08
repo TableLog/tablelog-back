@@ -15,6 +15,7 @@ public enum UserErrorCode implements ErrorCode {
     MATCH_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "기존 비밀번호입니다."),
     BAD_LOGIN(HttpStatus.BAD_REQUEST, "로그인에 실패하였습니다."),
     FAILED_UNLINK_KAKAO(HttpStatus.BAD_REQUEST, "카카오 동의 철회에 실패하였습니다."),
+    FAILED_UNLINK_GOOGLE(HttpStatus.BAD_REQUEST, "구글 동의 철회에 실패하였습니다."),
 
     // 404
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
