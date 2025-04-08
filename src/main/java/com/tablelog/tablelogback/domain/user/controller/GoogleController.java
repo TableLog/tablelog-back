@@ -34,9 +34,10 @@ public class GoogleController {
     @PostMapping(value = "users/google/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> signupWithGoogle(
             @RequestPart GoogleUserInfoDto googleUserInfoDto,
-            @RequestPart(required = false) MultipartFile multipartFile
+            @RequestPart(required = false) MultipartFile multipartFile,
+            @RequestHeader("Google-Access-Token") String googleAccessToken
     ) {
-        googleService.signupWithGoogle(googleUserInfoDto, multipartFile);
+        googleService.signupWithGoogle(googleUserInfoDto, multipartFile, googleAccessToken);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -47,5 +48,14 @@ public class GoogleController {
     ) throws JacksonException {
         UserLoginResponseDto userLoginResponseDto = googleService.loginWithGoogle(code);
         return ResponseEntity.status(HttpStatus.OK).body(userLoginResponseDto);
+    }
+
+    @Operation(summary = "구글 연결 끊기")
+    @PostMapping("/users/google/unlink")
+    public ResponseEntity<?> unlinkGoogle(
+            @RequestHeader("Google-Access-Token") String googleAccessToken
+    ) throws JacksonException {
+        googleService.unlinkGoogle(googleAccessToken);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
