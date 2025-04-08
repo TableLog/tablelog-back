@@ -7,7 +7,6 @@ import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,9 +35,10 @@ public class KakaoController {
     @PostMapping(value = "users/kakao/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> signupWithKakao(
             @RequestPart KakaoUserInfoDto kakaoUserInfoDto,
-            @RequestPart(required = false) MultipartFile multipartFile
+            @RequestPart(required = false) MultipartFile multipartFile,
+            @RequestHeader("Kakao-Access-Token") String kakaoAccessToken
     ) {
-        kakaoService.signupWithKakao(kakaoUserInfoDto, multipartFile);
+        kakaoService.signupWithKakao(kakaoUserInfoDto, multipartFile, kakaoAccessToken);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

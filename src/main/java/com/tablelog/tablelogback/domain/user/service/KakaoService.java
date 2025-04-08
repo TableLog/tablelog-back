@@ -99,7 +99,8 @@ public class KakaoService {
 
     public UserLoginResponseDto signupWithKakao(
             KakaoUserInfoDto kakaoUserInfoDto,
-            MultipartFile multipartFile
+            MultipartFile multipartFile,
+            String kakaoAccessToken
     ) {
         User user = joinKakaoUser(kakaoUserInfoDto, multipartFile);
         // 서버 토큰 저장
@@ -108,6 +109,7 @@ public class KakaoService {
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
         // 카카오 토큰 저장
+        httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
         String kakaoRefresh = jwtUtil.getRefreshTokenFromCookie(httpServletRequest, "Kakao-Refresh-Token");
         jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
         KakaoRefreshToken kakaoRefreshToken = new KakaoRefreshToken(user.getId(), kakaoRefresh, refreshTimeToLive);

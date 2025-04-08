@@ -129,44 +129,19 @@ public class GoogleService {
             String googleAccessToken
     ) {
         User user = joinGoogleUser(googleUserInfoDto, multipartFile);
-
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
         String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
-
         // 구글 토큰 저장
-//        String access = httpServletRequest.getHeader("Google-Access-Token");
-//        log.info(access);
         httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
         String googleRefresh = jwtUtil.getRefreshTokenFromCookie(httpServletRequest, "Google-Refresh-Token");
-        log.info(googleRefresh);
         jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
         GoogleRefreshToken googleRefreshToken = new GoogleRefreshToken(user.getId(), googleRefresh, timeToLive);
         googleRefreshTokenRepository.save(googleRefreshToken);
         return userEntityMapper.toUserLoginResponseDto(user);
     }
-
-
-//    public UserLoginResponseDto signupWithGoogle(
-//            GoogleUserInfoDto googleUserInfoDto,
-//            MultipartFile multipartFile
-//    ) {
-//        User user = joinGoogleUser(googleUserInfoDto, multipartFile);
-//        // 서버 토큰 저장
-//        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
-//        String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
-//        RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
-//        refreshTokenRepository.save(refreshToken);
-//        // 구글 토큰 저장
-//        String googleRefresh = jwtUtil.getRefreshTokenFromCookie(httpServletRequest, "Google-Refresh-Token");
-//        log.info(googleRefresh);
-//        jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
-//        GoogleRefreshToken googleRefreshToken = new GoogleRefreshToken(user.getId(), googleRefresh, timeToLive);
-//        googleRefreshTokenRepository.save(googleRefreshToken);
-//        return userEntityMapper.toUserLoginResponseDto(user);
-//    }
 
     private User joinGoogleUser(GoogleUserInfoDto googleUserInfoDto,
                                 MultipartFile multipartFile
