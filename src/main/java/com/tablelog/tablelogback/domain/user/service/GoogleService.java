@@ -191,4 +191,28 @@ public class GoogleService {
         userRepository.save(googleUser);
         return googleUser;
     }
+
+    public UserLoginResponseDto loginWithGoogle(String code) throws JsonProcessingException {
+        JsonNode jsonNode = getGoogleToken(code);
+        String googleAccessToken = jsonNode.get("access_token").asText();
+        String googleRefreshToken = jsonNode.get("id_token").asText();
+
+        GoogleUserInfoDto googleUserInfoDto;
+        try{
+            googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+        } catch (Exception e){
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
+        }
+        User googleUser = userRepository.findByGoogleEmail(googleUserInfoDto.googleEmail())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        // 서버 토큰 저장
+        jwtUtil.addAccessTokenToHeader(googleUser, httpServletResponse);
+        String refresh = jwtUtil.addRefreshTokenToCookie(googleUser, httpServletResponse);
+        RefreshToken refreshToken = new RefreshToken(googleUser.getId(), refresh, timeToLive);
+        refreshTokenRepository.save(refreshToken);
+        // 구글 토큰 저장
+        httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
+        httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
+        return userEntityMapper.toUserLoginResponseDto(googleUser);
+    }
 }

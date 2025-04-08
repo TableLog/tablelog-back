@@ -39,4 +39,13 @@ public class GoogleController {
         googleService.signupWithGoogle(googleUserInfoDto, multipartFile);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "구글 로그인")
+    @PostMapping("users/google/login")
+    public ResponseEntity<UserLoginResponseDto> loginWithGoogle(
+            @RequestParam("code") String code
+    ) throws JacksonException {
+        UserLoginResponseDto userLoginResponseDto = googleService.loginWithGoogle(code);
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginResponseDto);
+    }
 }
