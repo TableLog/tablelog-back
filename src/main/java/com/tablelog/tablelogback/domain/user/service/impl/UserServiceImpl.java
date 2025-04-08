@@ -191,12 +191,12 @@ public class UserServiceImpl implements UserService {
             }
             kakaoService.unlinkKakao(kakaoAccessToken);
         }
-//        if(user.getGoogleEmail() != null) {
-//            if(googleAccessToken == null || googleAccessToken.equals("")){
-//                throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
-//            }
-//            googleService.unlinkGoogle(googleAccessToken);
-//        }
+        if(user.getGoogleEmail() != null) {
+            if(googleAccessToken == null || googleAccessToken.equals("")){
+                throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
+            }
+            googleService.unlinkGoogle(googleAccessToken);
+        }
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
