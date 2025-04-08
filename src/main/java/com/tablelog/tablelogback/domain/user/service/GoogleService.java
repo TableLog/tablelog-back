@@ -122,4 +122,73 @@ public class GoogleService {
                 jsonNode.get("picture").asText()
         );
     }
+
+    public UserLoginResponseDto signupWithGoogle(
+            GoogleUserInfoDto googleUserInfoDto,
+            MultipartFile multipartFile
+    ) {
+        User user = joinGoogleUser(googleUserInfoDto, multipartFile);
+        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+        String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
+        RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
+        refreshTokenRepository.save(refreshToken);
+        return userEntityMapper.toUserLoginResponseDto(user);
+    }
+
+    private User joinGoogleUser(GoogleUserInfoDto googleUserInfoDto,
+                                MultipartFile multipartFile
+    ) {
+        String googleEmail = googleUserInfoDto.googleEmail();
+        // 구글 가입 여부 확인
+        if(userRepository.existsByGoogleEmail(googleEmail)){
+            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
+        // 중복 가입 확인
+        if(userRepository.existsByNameAndBirthday(googleUserInfoDto.name(), googleUserInfoDto.birthday())){
+            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
+        // 중복 이메일 가입 확인
+        if(userRepository.existsByEmail(googleEmail)){
+            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        }
+        // 닉네임 중복 확인
+        if(userRepository.existsByNickname(googleUserInfoDto.nickname())){
+            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
+        }
+        User googleUser;
+        String uuid = UUID.randomUUID().toString();
+        String fileName;
+        String fileUrl;
+        if (multipartFile == null || multipartFile.isEmpty()){
+            googleUser = User.builder()
+                    .email(googleEmail)
+                    .password(passwordEncoder.encode(uuid))
+                    .nickname(googleUserInfoDto.nickname())
+                    .name(googleUserInfoDto.name())
+                    .birthday(googleUserInfoDto.birthday())
+                    .userRole(UserRole.USER)
+                    .profileImgUrl(googleUserInfoDto.profileImgUrl())
+                    .googleEmail(googleEmail)
+                    .build();
+        } else {
+//            fileName = s3Provider.originalFileName(multipartFile);
+//            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
+            fileUrl = multipartFile.getOriginalFilename();
+            googleUser = User.builder()
+                    .email(googleEmail)
+                    .password(passwordEncoder.encode(uuid))
+                    .nickname(googleUserInfoDto.nickname())
+                    .name(googleUserInfoDto.name())
+                    .birthday(googleUserInfoDto.birthday())
+                    .userRole(UserRole.USER)
+                    .profileImgUrl(fileUrl)
+                    .googleEmail(googleEmail)
+                    .build();
+//            fileUrl = user.getFolderName() + SEPARATOR + fileName;
+//            s3Provider.createFolder(serviceRequestDto.email());
+//            s3Provider.saveFile(multipartFile, fileUrl);
+        }
+        userRepository.save(googleUser);
+        return googleUser;
+    }
 }

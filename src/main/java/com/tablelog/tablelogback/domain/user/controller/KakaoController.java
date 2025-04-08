@@ -36,10 +36,9 @@ public class KakaoController {
     @PostMapping(value = "users/kakao/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> signupWithKakao(
             @RequestPart KakaoUserInfoDto kakaoUserInfoDto,
-            @RequestPart(required = false) MultipartFile multipartFile,
-            HttpServletRequest httpServletRequest
+            @RequestPart(required = false) MultipartFile multipartFile
     ) {
-        kakaoService.signupWithKakao(kakaoUserInfoDto, multipartFile, httpServletRequest);
+        kakaoService.signupWithKakao(kakaoUserInfoDto, multipartFile);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

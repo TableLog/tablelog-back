@@ -30,5 +30,13 @@ public class GoogleController {
         return ResponseEntity.status(HttpStatus.OK).body(googleUserInfoDto);
     }
 
-
+    @Operation(summary = "구글 회원가입")
+    @PostMapping(value = "users/google/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> signupWithGoogle(
+            @RequestPart GoogleUserInfoDto googleUserInfoDto,
+            @RequestPart(required = false) MultipartFile multipartFile
+    ) {
+        googleService.signupWithGoogle(googleUserInfoDto, multipartFile);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }

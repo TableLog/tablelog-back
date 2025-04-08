@@ -96,8 +96,7 @@ public class KakaoService {
 
     public UserLoginResponseDto signupWithKakao(
             KakaoUserInfoDto kakaoUserInfoDto,
-            MultipartFile multipartFile,
-            HttpServletRequest request
+            MultipartFile multipartFile
     ) {
         User user = joinKakaoUser(kakaoUserInfoDto, multipartFile);
         // 서버 토큰 저장
