@@ -50,6 +50,7 @@ public class KakaoService {
     private final PasswordEncoder passwordEncoder;
     private final HttpServletResponse httpServletResponse;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final HttpServletRequest httpServletRequest;
 
     private JsonNode getKakaoToken(String code) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -104,9 +105,6 @@ public class KakaoService {
         String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
-        String kakaoRefreshToken = jwtUtil.getRefreshTokenFromCookie(request, "Kakao-refresh-Token");
-        RefreshToken kakaoRefresh = new RefreshToken(user.getId(), kakaoRefreshToken, refreshTimeToLive.longValue());
-        refreshTokenRepository.save(kakaoRefresh);
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
@@ -114,12 +112,17 @@ public class KakaoService {
                                MultipartFile multipartFile
     ) {
         String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
+        // 카카오 가입 여부 확인
         if(userRepository.existsByKakaoEmail(kakaoEmail)){
             throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
         }
         // 중복 가입 확인
         if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
             throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
+        }
+        // 중복 이메일 가입 확인
+        if(userRepository.existsByEmail(kakaoEmail)){
+            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
         // 닉네임 중복 확인
         if(userRepository.existsByNickname(kakaoUserInfoDto.nickname())){
@@ -181,10 +184,9 @@ public class KakaoService {
         String refresh = jwtUtil.addRefreshTokenToCookie(kakaoUser, httpServletResponse);
         RefreshToken refreshToken = new RefreshToken(kakaoUser.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
+        // 카카오 토큰 저장
         httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
-        RefreshToken kakaoRefresh = new RefreshToken(kakaoUser.getId(),
-                kakaoRefreshToken, refreshTimeToLive.longValue());
-        refreshTokenRepository.save(kakaoRefresh);
+        httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
         return userEntityMapper.toUserLoginResponseDto(kakaoUser);
     }
 
@@ -246,5 +248,34 @@ public class KakaoService {
             profileImgUrl = "";
         }
         return new KakaoUserInfoDto(kakaoEmail, nickname, name, birth, profileImgUrl);
+    }
+
+    public void refresh(String kakaoRefreshToken) throws JacksonException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "refresh_token");
+        body.add("client_id", clientId);
+        body.add("refresh_token", kakaoRefreshToken);
+
+        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> response = rt.exchange(
+                "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
+                kakaoTokenRequest,
+                String.class
+        );
+
+        String responseBody = response.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        httpServletResponse.addHeader("Kakao-Access-Token", jsonNode.get("access_token").asText());
+        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
+            String newKakaoRefreshToken = jsonNode.get("refresh_token").asText();
+            jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
+            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", newKakaoRefreshToken));
+        }
     }
 }

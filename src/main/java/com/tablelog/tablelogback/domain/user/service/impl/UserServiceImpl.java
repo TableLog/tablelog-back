@@ -7,6 +7,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -37,6 +38,7 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoService kakaoService;
+    private final GoogleService googleService;
 //    private final RecipeRepository recipeRepository;
 //    private final BoardRepository boardRepository;
 
@@ -171,6 +173,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     public void deleteUser(final User user, final String kakaoAccessToken,
+                           final String googleAccessToken,
                            final HttpServletResponse response
     ) throws JacksonException {
         userRepository.findById(user.getId())
@@ -188,6 +191,12 @@ public class UserServiceImpl implements UserService {
             }
             kakaoService.unlinkKakao(kakaoAccessToken);
         }
+//        if(user.getGoogleEmail() != null) {
+//            if(googleAccessToken == null || googleAccessToken.equals("")){
+//                throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
+//            }
+//            googleService.unlinkGoogle(googleAccessToken);
+//        }
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
@@ -196,8 +205,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserLoginResponseDto refreshAccessToken(final String refreshTokenCookie,
+                                                   final String kakaoRefreshToken,
                                                    final HttpServletResponse response) {
-        String refresh = refreshTokenCookie.substring(13);
+        String refresh = refreshTokenCookie;
+        if (refreshTokenCookie.startsWith("refreshToken=")) {
+            refresh = refreshTokenCookie.substring("refreshToken=".length());
+        }
         RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refresh)
                 .orElseThrow(() -> new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN));
         if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
@@ -208,9 +221,18 @@ public class UserServiceImpl implements UserService {
 
         // accessToken과 refreshToken 둘 다 refresh
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+        jwtUtil.deleteCookie("refreshToken", response);
         String newToken = jwtUtil.addRefreshTokenToCookie(user, response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
+        // 카카오
+        if(user.getKakaoEmail() != null){
+            try {
+                kakaoService.refresh(kakaoRefreshToken);
+            } catch (Exception e){
+                throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+            }
+        }
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
