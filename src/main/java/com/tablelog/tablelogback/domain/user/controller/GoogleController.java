@@ -1,19 +1,34 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.user.dto.oauth2.GoogleUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.service.GoogleService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "사용자-구글 API", description = "")
+@Tag(name = "사용자 - 구글 API", description = "")
 public class GoogleController {
+    private final GoogleService googleService;
+
+    @Operation(summary = "구글 연동", description = "구글 연동 시 정보 불러오기")
     @GetMapping("/users/google/login/callback")
-    public void kakaoLogin(
-            @RequestParam("code") String code) {
+    public ResponseEntity<GoogleUserInfoDto> getGoogle(
+            @RequestParam("code") String code
+    ) throws JacksonException {
+        GoogleUserInfoDto googleUserInfoDto = googleService.getGoogleUserInfo(code);
+        return ResponseEntity.status(HttpStatus.OK).body(googleUserInfoDto);
     }
+
+
 }

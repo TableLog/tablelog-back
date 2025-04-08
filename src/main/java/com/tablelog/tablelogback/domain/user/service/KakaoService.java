@@ -182,7 +182,8 @@ public class KakaoService {
         RefreshToken refreshToken = new RefreshToken(kakaoUser.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
         httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
-        RefreshToken kakaoRefresh = new RefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive.longValue());
+        RefreshToken kakaoRefresh = new RefreshToken(kakaoUser.getId(),
+                kakaoRefreshToken, refreshTimeToLive.longValue());
         refreshTokenRepository.save(kakaoRefresh);
         return userEntityMapper.toUserLoginResponseDto(kakaoUser);
     }
