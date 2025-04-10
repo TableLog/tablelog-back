@@ -23,12 +23,14 @@ public class Board {
     private  String image_url;
     @Column
     private String category;
-
+    @Column
+    private String user;
     @Builder
-    public Board(final String title, final String content,final String image_url, final String category) {
+    public Board(final String title, final String content,final String image_url, final String category, final String user) {
         this.title = title;
         this.content = content;
         this.image_url = image_url;
         this.category = category;
+        this.user = user;
     }
 }

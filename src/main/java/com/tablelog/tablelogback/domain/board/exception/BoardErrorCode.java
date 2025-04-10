@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum TestErrorCode implements ErrorCode {
+public enum BoardErrorCode implements ErrorCode {
 
     // 400
     ALREADY_EXIST_BOARD(HttpStatus.BAD_REQUEST, "이미 게시글이 존재합니다."),

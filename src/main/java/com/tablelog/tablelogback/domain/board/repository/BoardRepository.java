@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface TestRepository extends JpaRepository<Board, Long> {
+public interface BoardRepository extends JpaRepository<Board, Long> {
 
-    List<Board> findByName(String name);
-
-    Slice<Board> findAllBy(Pageable pageable);
+//    List<Board> findByName(String name);
+//
+//    Slice<Board> findAllBy(Pageable pageable);
 }
