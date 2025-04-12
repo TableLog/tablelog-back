@@ -48,6 +48,9 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
+    @Column
+    private Integer pointBalance;
+
     @Builder
     public User(
             final String email,
@@ -59,18 +62,20 @@ public class User extends BaseEntity {
             final String profileImgUrl,
             final String folderName,
             final String kakaoEmail,
-            final String googleEmail
+            final String googleEmail,
+            final Integer pointBalance
     ){
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.name = name;
         this.birthday = birthday;
-        this.userRole = UserRole.USER;
+        this.userRole = UserRole.NORMAL;
         this.profileImgUrl = profileImgUrl;
         this.folderName = folderName;
         this.kakaoEmail = kakaoEmail;
         this.googleEmail = googleEmail;
+        this.pointBalance = pointBalance;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -100,6 +105,10 @@ public class User extends BaseEntity {
 //    public void updateGoogleEmail(String googleEmail){
 //        this.googleEmail = googleEmail;
 //    }
+
+    public void updatePointBalance(Integer point){
+        this.pointBalance = this.pointBalance + point;
+    }
 
     public void deleteKakaoEmail(){
         this.kakaoEmail = null;

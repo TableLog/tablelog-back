@@ -174,7 +174,7 @@ public class GoogleService {
                     .nickname(googleUserInfoDto.nickname())
                     .name(googleUserInfoDto.name())
                     .birthday(googleUserInfoDto.birthday())
-                    .userRole(UserRole.USER)
+                    .userRole(UserRole.NORMAL)
                     .profileImgUrl(googleUserInfoDto.profileImgUrl())
                     .googleEmail(googleEmail)
                     .build();
@@ -188,7 +188,7 @@ public class GoogleService {
                     .nickname(googleUserInfoDto.nickname())
                     .name(googleUserInfoDto.name())
                     .birthday(googleUserInfoDto.birthday())
-                    .userRole(UserRole.USER)
+                    .userRole(UserRole.NORMAL)
                     .profileImgUrl(fileUrl)
                     .googleEmail(googleEmail)
                     .build();

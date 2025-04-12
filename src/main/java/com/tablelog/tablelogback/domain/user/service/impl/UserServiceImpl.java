@@ -70,13 +70,13 @@ public class UserServiceImpl implements UserService {
         String fileUrl;
         if (multipartFile == null || multipartFile.isEmpty()){
             fileUrl = null;
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.USER, fileUrl, serviceRequestDto.nickname());
+            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL, fileUrl, serviceRequestDto.nickname());
             userRepository.save(user);
         } else {
 //            fileName = s3Provider.originalFileName(multipartFile);
 //            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
             fileUrl = multipartFile.getOriginalFilename();
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.USER, fileUrl, serviceRequestDto.nickname());
+            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL, fileUrl, serviceRequestDto.nickname());
             userRepository.save(user);
 //            fileUrl = user.getFolderName() + SEPARATOR + fileName;
 //            s3Provider.createFolder(serviceRequestDto.email());

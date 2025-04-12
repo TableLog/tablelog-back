@@ -148,7 +148,7 @@ public class KakaoService {
                     .nickname(kakaoUserInfoDto.nickname())
                     .name(kakaoUserInfoDto.name())
                     .birthday(kakaoUserInfoDto.birthday())
-                    .userRole(UserRole.USER)
+                    .userRole(UserRole.NORMAL)
                     .profileImgUrl(kakaoUserInfoDto.profileImgUrl())
                     .kakaoEmail(kakaoEmail)
                     .build();
@@ -162,7 +162,7 @@ public class KakaoService {
                     .nickname(kakaoUserInfoDto.nickname())
                     .name(kakaoUserInfoDto.name())
                     .birthday(kakaoUserInfoDto.birthday())
-                    .userRole(UserRole.USER)
+                    .userRole(UserRole.NORMAL)
                     .profileImgUrl(fileUrl)
                     .kakaoEmail(kakaoEmail)
                     .build();
