@@ -1,0 +1,81 @@
+package com.tablelog.tablelogback.domain.board.service.impl;
+
+
+import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.entity.Board;
+import com.tablelog.tablelogback.domain.board.mapper.entity.BoardEntityMapper;
+import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
+import com.tablelog.tablelogback.domain.board.service.BoardService;
+import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.global.s3.S3Provider;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
+
+
+import java.io.IOException;
+import java.util.List;
+
+@RequiredArgsConstructor
+@Service
+public class BoardServiceImpl implements BoardService {
+
+    private final BoardRepository boardRepository;
+    private final BoardEntityMapper boardEntityMapper;
+    private final S3Provider s3Provider;
+    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    @Value("${spring.cloud.aws.s3.bucket}")
+    public String bucket;
+    private final String SEPARATOR = "/";
+
+
+    // TestCreateServiceRequestDto -> Test
+    @Override
+    public void create(final BoardCreateServiceRequestDto boardRequestDto
+            , User user
+            , MultipartFile multipartFile
+            )throws IOException
+    {
+        // Mapper로 만들기
+
+        String fileName;
+        String fileUrl;
+        /* Builder로 만들기
+            Test test = Test.builder()
+            .name(testRequestDto.name())
+            .age(testRequestDto.age())
+            .build();
+         */
+        if (multipartFile.isEmpty()) {
+            fileUrl = null;
+            Board board = boardEntityMapper.toBoard(boardRequestDto,fileUrl
+                    ,user
+            );
+            boardRepository.save(board);
+        } else {
+            fileName = s3Provider.originalFileName(multipartFile);
+            fileUrl = url + user.getFolderName() + SEPARATOR + fileName;
+            Board board = boardEntityMapper.toBoard(boardRequestDto,fileUrl
+                    ,user);
+            boardRepository.save(board);
+            fileUrl = user.getFolderName() + SEPARATOR + fileName;
+            s3Provider.saveFile(multipartFile, fileUrl);
+        }
+    }
+
+    // Test -> TestCreateServiceRequestDto
+//    @Override
+//    public TestReadResponseDto get(Long id) {
+//        Board board = boardRepository.findById(id)
+//            .orElseThrow(() -> new NotFoundTestException(BoardErrorCode.NOT_FOUND_BOARD));
+//        return boardEntityMapper.toTestReadResponseDto(board);
+//    }
+//
+//    // List<Test> -> List<TestCreateServiceRequestDto>
+//    @Override
+//    public List<TestReadResponseDto> getAll(int pageNumber) {
+//        Slice<Board> tests = boardRepository.findAllBy(PageRequest.of(pageNumber, 9));
+//        return boardEntityMapper.toTestReadResponseDtos(tests.getContent());
+//    }
+}

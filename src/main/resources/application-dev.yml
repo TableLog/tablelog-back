@@ -5,6 +5,18 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 spring:
+  cloud:
+    aws:
+      s3:
+        bucket: tablelog
+      credentials:
+        access-key: AKIA3CFIBJD3AAQUKOWB
+        secret-key: 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
+      region:
+        static: ap-northeast-2
+        auto: false
+      stack:
+        auto: false
   datasource:
     url: jdbc:mysql://localhost:3306/tablelog
     username: root
@@ -14,3 +26,22 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  jwt:
+    access:
+      expiration-period: 8400000
+    refresh:
+      expiration-period: 20160000
+    secret-key: testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+    data:
+      redis:
+        host: localhost
+        port: 6379
+  kakao:
+    client-id: 4e3e9f41870b960cc2db08bdd7c613b7
+    redirect-uri: http://localhost:8080/api/v1/users/kakao/callback
+    google:
+      client-id: 234647664182-3b80b74t24aukihghecg5g3j3lfii6gq.apps.googleusercontent.com
+      redirect-uri: http://localhost:8080/api/v1/users/google/callback
+      client_secret: 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
+
+
