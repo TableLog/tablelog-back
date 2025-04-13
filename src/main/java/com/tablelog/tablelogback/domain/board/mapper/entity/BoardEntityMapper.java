@@ -20,7 +20,8 @@ public interface BoardEntityMapper {
     @Mapping(source = "BoardRequestDto.title",target = "title")
     @Mapping(source = "BoardRequestDto.content",target = "content")
     @Mapping(source = "BoardRequestDto.category",target = "category")
-    Board toBoard(BoardCreateServiceRequestDto BoardRequestDto
+    @Mapping(source = "fileUrl",target = "image_url")
+    Board toBoard(BoardCreateServiceRequestDto BoardRequestDto,String fileUrl
 , User user
     );
 

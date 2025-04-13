@@ -7,10 +7,10 @@ import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,15 +31,16 @@ public class BoardController {
     private final BoardService boardService;
     private final BoardDtoMapper boardDtoMapper;
 
-    @PostMapping("/boards")
+    @PostMapping(value = "/boards", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createBoard(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody BoardCreateControllerRequestDto controllerRequestDto
-    )  {
+            @RequestPart BoardCreateControllerRequestDto controllerRequestDto,
+            @RequestPart(value = "multipartFile",required = false) MultipartFile multipartFile
+    )  throws IOException{
         System.out.println(controllerRequestDto);
         BoardCreateServiceRequestDto boardCreateServiceRequestDto =
                 boardDtoMapper.toBoardServiceRequestDto(controllerRequestDto);
-        boardService.create(boardCreateServiceRequestDto,userDetails.user());
+        boardService.create(boardCreateServiceRequestDto,userDetails.user(),multipartFile);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PutMapping("/boards/{board_id}")

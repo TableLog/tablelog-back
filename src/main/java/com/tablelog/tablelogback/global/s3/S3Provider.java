@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -38,14 +39,28 @@ public class S3Provider {
     }
 
     public String originalFileName(MultipartFile multipartFile) {
-        if (multipartFile.isEmpty()) return "";
+        if (multipartFile.isEmpty()) {
+            System.out.println("📦 파일이 비었나요? : " + multipartFile.isEmpty());
+            return "";
+        }
+        System.out.println("📄 파일 이름: " + multipartFile.getOriginalFilename());
+        System.out.println("📦 업로드된 파일 Content-Type: " + multipartFile.getContentType());
 
-        String fileType = switch (multipartFile.getContentType()) {
-            case "image/png" -> ".png";
-            case "image/jpeg" -> ".jpg";
-            default -> throw new IllegalArgumentException("잘못된 파일 형식입니다");
-        };
-        return UUID.randomUUID() + fileType;
+        if (Objects.equals(multipartFile.getContentType(), "image/png")
+                || Objects.equals(multipartFile.getContentType(), "image/jpeg")) {
+
+            String fileType = switch (multipartFile.getContentType()) {
+                case "image/png" -> ".png";
+                case "image/jpeg" -> ".jpg";
+                default -> throw new IllegalStateException(
+                        "Unexpected value: " + multipartFile.getContentType());
+            };
+
+            return UUID.randomUUID() + fileType;
+
+        } else {
+            throw new IllegalArgumentException("잘못된 파일 형식입니다: " + multipartFile.getContentType());
+        }
     }
 
     public void createFolder(String folderName) {
