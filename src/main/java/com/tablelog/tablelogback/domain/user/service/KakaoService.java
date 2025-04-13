@@ -16,6 +16,7 @@ import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshToken;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
+import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Slf4j
@@ -54,6 +56,11 @@ public class KakaoService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
+    private final S3Provider s3Provider;
+    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    @Value("${spring.cloud.aws.s3.bucket}")
+    public String bucket;
+    private final String SEPARATOR = "/";
 
     private JsonNode getKakaoToken(String code) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -101,7 +108,7 @@ public class KakaoService {
             KakaoUserInfoDto kakaoUserInfoDto,
             MultipartFile multipartFile,
             String kakaoAccessToken
-    ) {
+    ) throws IOException {
         User user = joinKakaoUser(kakaoUserInfoDto, multipartFile);
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
@@ -119,7 +126,7 @@ public class KakaoService {
 
     private User joinKakaoUser(KakaoUserInfoDto kakaoUserInfoDto,
                                MultipartFile multipartFile
-    ) {
+    ) throws IOException {
         String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
         // 카카오 가입 여부 확인
         if(userRepository.existsByKakaoEmail(kakaoEmail)){
@@ -149,13 +156,11 @@ public class KakaoService {
                     .name(kakaoUserInfoDto.name())
                     .birthday(kakaoUserInfoDto.birthday())
                     .userRole(UserRole.NORMAL)
-                    .profileImgUrl(kakaoUserInfoDto.profileImgUrl())
                     .kakaoEmail(kakaoEmail)
                     .build();
         } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
-            fileUrl = multipartFile.getOriginalFilename();
+            fileName = s3Provider.originalFileName(multipartFile);
+            fileUrl = url + kakaoUserInfoDto.nickname() + SEPARATOR + fileName;
             kakaoUser = User.builder()
                     .email(kakaoEmail)
                     .password(passwordEncoder.encode(uuid))
@@ -166,9 +171,8 @@ public class KakaoService {
                     .profileImgUrl(fileUrl)
                     .kakaoEmail(kakaoEmail)
                     .build();
-//            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.createFolder(serviceRequestDto.email());
-//            s3Provider.saveFile(multipartFile, fileUrl);
+            fileUrl = kakaoUser.getFolderName() + SEPARATOR + fileName;
+            s3Provider.saveFile(multipartFile, fileUrl);
         }
         userRepository.save(kakaoUser);
         return kakaoUser;

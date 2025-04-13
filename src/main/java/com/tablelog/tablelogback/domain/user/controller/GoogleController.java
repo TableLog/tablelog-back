@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
@@ -35,7 +37,7 @@ public class GoogleController {
             @RequestPart GoogleUserInfoDto googleUserInfoDto,
             @RequestPart(required = false) MultipartFile multipartFile,
             @RequestHeader("Google-Access-Token") String googleAccessToken
-    ) {
+    ) throws IOException {
         googleService.signupWithGoogle(googleUserInfoDto, multipartFile, googleAccessToken);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

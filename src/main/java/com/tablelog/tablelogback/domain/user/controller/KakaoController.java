@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
@@ -37,7 +39,7 @@ public class KakaoController {
             @RequestPart KakaoUserInfoDto kakaoUserInfoDto,
             @RequestPart(required = false) MultipartFile multipartFile,
             @RequestHeader("Kakao-Access-Token") String kakaoAccessToken
-    ) {
+    ) throws IOException {
         kakaoService.signupWithKakao(kakaoUserInfoDto, multipartFile, kakaoAccessToken);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

@@ -16,6 +16,7 @@ import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshToken;
 import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshTokenRepository;
+import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -57,6 +59,11 @@ public class GoogleService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
     private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
+    private final S3Provider s3Provider;
+    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    @Value("${spring.cloud.aws.s3.bucket}")
+    public String bucket;
+    private final String SEPARATOR = "/";
 
     private JsonNode getGoogleToken(String code) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -127,7 +134,7 @@ public class GoogleService {
             GoogleUserInfoDto googleUserInfoDto,
             MultipartFile multipartFile,
             String googleAccessToken
-    ) {
+    ) throws IOException {
         User user = joinGoogleUser(googleUserInfoDto, multipartFile);
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
@@ -145,7 +152,7 @@ public class GoogleService {
 
     private User joinGoogleUser(GoogleUserInfoDto googleUserInfoDto,
                                 MultipartFile multipartFile
-    ) {
+    ) throws IOException {
         String googleEmail = googleUserInfoDto.googleEmail();
         // 구글 가입 여부 확인
         if(userRepository.existsByGoogleEmail(googleEmail)){
@@ -175,13 +182,11 @@ public class GoogleService {
                     .name(googleUserInfoDto.name())
                     .birthday(googleUserInfoDto.birthday())
                     .userRole(UserRole.NORMAL)
-                    .profileImgUrl(googleUserInfoDto.profileImgUrl())
                     .googleEmail(googleEmail)
                     .build();
         } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
-            fileUrl = multipartFile.getOriginalFilename();
+            fileName = s3Provider.originalFileName(multipartFile);
+            fileUrl = url + googleUserInfoDto.nickname() + SEPARATOR + fileName;
             googleUser = User.builder()
                     .email(googleEmail)
                     .password(passwordEncoder.encode(uuid))
@@ -192,9 +197,8 @@ public class GoogleService {
                     .profileImgUrl(fileUrl)
                     .googleEmail(googleEmail)
                     .build();
-//            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.createFolder(serviceRequestDto.email());
-//            s3Provider.saveFile(multipartFile, fileUrl);
+            fileUrl = googleUser.getFolderName() + SEPARATOR + fileName;
+            s3Provider.saveFile(multipartFile, fileUrl);
         }
         userRepository.save(googleUser);
         return googleUser;
@@ -203,8 +207,6 @@ public class GoogleService {
     public UserLoginResponseDto loginWithGoogle(String code) throws JsonProcessingException {
         JsonNode jsonNode = getGoogleToken(code);
         String googleAccessToken = jsonNode.get("access_token").asText();
-//        log.info(jsonNode.get(""))
-//        String googleRefreshToken = jsonNode.get("id_token").asText();
 
         GoogleUserInfoDto googleUserInfoDto;
         try{
@@ -222,8 +224,6 @@ public class GoogleService {
         // 카카오 토큰 저장
         httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
         jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
-//        GoogleRefreshToken googleRefresh = new GoogleRefreshToken(googleUser.getId(), googleRefreshToken, timeToLive);
-//        googleRefreshTokenRepository.save(googleRefresh);
         return userEntityMapper.toUserLoginResponseDto(googleUser);
     }
 

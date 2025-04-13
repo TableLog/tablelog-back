@@ -15,6 +15,7 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
+import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,12 +40,13 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoService kakaoService;
     private final GoogleService googleService;
-//    private final RecipeRepository recipeRepository;
-//    private final BoardRepository boardRepository;
-
+    private final S3Provider s3Provider;
+    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    @Value("${spring.cloud.aws.s3.bucket}")
+    public String bucket;
+    private final String SEPARATOR = "/";
     @Value("${spring.jwt.refresh.expiration-period}")
     private Long timeToLive;
-    private final String SEPARATOR = "/";
 
     @Override
     public void signUp(final UserSignUpServiceRequestDto serviceRequestDto,
@@ -70,17 +72,18 @@ public class UserServiceImpl implements UserService {
         String fileUrl;
         if (multipartFile == null || multipartFile.isEmpty()){
             fileUrl = null;
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL, fileUrl, serviceRequestDto.nickname());
+            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
+                    fileUrl, serviceRequestDto.nickname());
             userRepository.save(user);
         } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
-            fileUrl = multipartFile.getOriginalFilename();
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL, fileUrl, serviceRequestDto.nickname());
+            fileName = s3Provider.originalFileName(multipartFile);
+            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
+            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
+                    fileUrl, serviceRequestDto.nickname());
             userRepository.save(user);
-//            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.createFolder(serviceRequestDto.email());
-//            s3Provider.saveFile(multipartFile, fileUrl);
+            fileUrl = user.getFolderName() + SEPARATOR + fileName;
+            s3Provider.createFolder(serviceRequestDto.email());
+            s3Provider.saveFile(multipartFile, fileUrl);
         }
     }
 
@@ -143,15 +146,15 @@ public class UserServiceImpl implements UserService {
         }
 
         // 프로필 이미지
-        if(serviceRequestDto.ImageChange()) {
-            // 기본 이미지
-            if(multipartFile == null){
-                user.updateProfileImgUrl("");
+        if(serviceRequestDto.imageChange()) {
+            String imageName;
+            if(multipartFile == null || multipartFile.isEmpty()){
+                imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
+                s3Provider.delete(imageName);
+                user.updateProfileImgUrl(null);
             }
             else {
-//                String imageName = s3Provider.updateImage(user.getProfile_img_url(),
-//                        user.getFolderName(), multipartFile);
-                String imageName = multipartFile.getOriginalFilename();
+                imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
                 user.updateProfileImgUrl(imageName);
             }
         }
@@ -178,13 +181,6 @@ public class UserServiceImpl implements UserService {
     ) throws JacksonException {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        // 제약 조건에 걸리지 않기 위해서
-//        if(recipeRepository.findByUser(user) != null){
-//            recipeRepository.deleteAllByUser(user);
-//        }
-//        if(boardRepository.findByUser(user) != null){
-//            boardRepository.deleteAllByUser(user);
-//        }
         if(user.getKakaoEmail() != null) {
             if(kakaoAccessToken == null || kakaoAccessToken.equals("")){
                 throw new FailedUnlinkKakaoException(UserErrorCode.FAILED_UNLINK_KAKAO);
