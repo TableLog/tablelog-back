@@ -2,10 +2,16 @@ package com.tablelog.tablelogback.domain.board.controller;
 
 
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
+import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,17 +28,19 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 @Tag(name = "게시판 API", description = "")
 public class BoardController {
+    private final BoardService boardService;
+    private final BoardDtoMapper boardDtoMapper;
 
     @PostMapping("/boards")
-    public void createBoard(
-//            String title,
-//            String content,
-//            String user,
-//            BoardCategory category,
-//            MultipartFile image_file
-            BoardCreateControllerRequestDto controllerRequestDto,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ) throws IOException {
+    public ResponseEntity<?> createBoard(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody BoardCreateControllerRequestDto controllerRequestDto
+    )  {
+        System.out.println(controllerRequestDto);
+        BoardCreateServiceRequestDto boardCreateServiceRequestDto =
+                boardDtoMapper.toBoardServiceRequestDto(controllerRequestDto);
+        boardService.create(boardCreateServiceRequestDto,userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PutMapping("/boards/{board_id}")
     public void updateBoard(

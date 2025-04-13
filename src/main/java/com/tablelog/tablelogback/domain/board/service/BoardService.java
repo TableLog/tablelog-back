@@ -10,7 +10,9 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 
 public interface BoardService {
 
-    void create(BoardCreateServiceRequestDto testRequestDto, User user);
+    void create(BoardCreateServiceRequestDto requestDto
+    , User user
+    );
 
 //    TestReadResponseDto get(Long id);
 //

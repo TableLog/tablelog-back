@@ -17,7 +17,12 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface BoardEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
-    Board toBoard(BoardCreateServiceRequestDto BoardRequestDto, User user);
+    @Mapping(source = "BoardRequestDto.title",target = "title")
+    @Mapping(source = "BoardRequestDto.content",target = "content")
+    @Mapping(source = "BoardRequestDto.category",target = "category")
+    Board toBoard(BoardCreateServiceRequestDto BoardRequestDto
+, User user
+    );
 
     TestReadResponseDto toTestReadResponseDto(Board board);
 

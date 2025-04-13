@@ -26,9 +26,14 @@ public class BoardServiceImpl implements BoardService {
 
     // TestCreateServiceRequestDto -> Test
     @Override
-    public void create(final BoardCreateServiceRequestDto boardRequestDto, User user) {
+    public void create(final BoardCreateServiceRequestDto boardRequestDto
+            , User user
+            )
+    {
         // Mapper로 만들기
-        Board board = boardEntityMapper.toBoard(boardRequestDto,user);
+        Board board = boardEntityMapper.toBoard(boardRequestDto
+        ,user
+        );
 
         /* Builder로 만들기
             Test test = Test.builder()
