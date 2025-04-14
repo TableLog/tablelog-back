@@ -43,16 +43,13 @@ public class FoodController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @Operation(summary = "식재료 단건 조회")
     @GetMapping("/foods/{foodId}")
-    public Map<String, Object> readFood(
+    public ResponseEntity<FoodReadAllServiceResponseDto> readFood(
             @PathVariable Long foodId
     ){
-        Map<String, Object> food1 = new HashMap<>();
-        food1.put("name", "사과");
-        food1.put("foodUnit", "g");
-        food1.put("cal", 300);
-        food1.put("user", "user1");
-        return food1;
+        FoodReadAllServiceResponseDto responseDto = foodService.readFood(foodId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @GetMapping("/foods")

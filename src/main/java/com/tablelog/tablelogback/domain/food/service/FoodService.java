@@ -11,4 +11,5 @@ import java.util.List;
 
 public interface FoodService {
     void createFood (FoodCreateServiceRequestDto requestDto) throws IOException;
+    FoodReadAllServiceResponseDto readFood(Long id);
 }

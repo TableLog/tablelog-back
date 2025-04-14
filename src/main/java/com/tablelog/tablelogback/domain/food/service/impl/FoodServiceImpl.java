@@ -40,4 +40,10 @@ public class FoodServiceImpl implements FoodService {
         foodRepository.save(food);
     }
 
+    @Override
+    public FoodReadAllServiceResponseDto readFood(Long id){
+        Food food = foodRepository.findById(id)
+                .orElseThrow(()->new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        return foodEntityMapper.toFoodReadResponseDto(food);
+    }
 }
