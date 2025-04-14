@@ -6,6 +6,6 @@ public record UpdateUserServiceRequestDto(
         String confirmNewPassword,
         String nickname,
         String profileImgUrl,
-        Boolean ImageChange
+        Boolean imageChange
 ) {
 }

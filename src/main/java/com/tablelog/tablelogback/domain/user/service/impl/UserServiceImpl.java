@@ -7,6 +7,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -14,6 +15,7 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
+import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,12 +39,14 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoService kakaoService;
-//    private final RecipeRepository recipeRepository;
-//    private final BoardRepository boardRepository;
-
+    private final GoogleService googleService;
+    private final S3Provider s3Provider;
+    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    @Value("${spring.cloud.aws.s3.bucket}")
+    public String bucket;
+    private final String SEPARATOR = "/";
     @Value("${spring.jwt.refresh.expiration-period}")
     private Long timeToLive;
-    private final String SEPARATOR = "/";
 
     @Override
     public void signUp(final UserSignUpServiceRequestDto serviceRequestDto,
@@ -68,17 +72,18 @@ public class UserServiceImpl implements UserService {
         String fileUrl;
         if (multipartFile == null || multipartFile.isEmpty()){
             fileUrl = null;
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.USER, fileUrl, serviceRequestDto.nickname());
+            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
+                    fileUrl, serviceRequestDto.nickname());
             userRepository.save(user);
         } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
-            fileUrl = multipartFile.getOriginalFilename();
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.USER, fileUrl, serviceRequestDto.nickname());
+            fileName = s3Provider.originalFileName(multipartFile);
+            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
+            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
+                    fileUrl, serviceRequestDto.nickname());
             userRepository.save(user);
-//            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.createFolder(serviceRequestDto.email());
-//            s3Provider.saveFile(multipartFile, fileUrl);
+            fileUrl = user.getFolderName() + SEPARATOR + fileName;
+            s3Provider.createFolder(serviceRequestDto.email());
+            s3Provider.saveFile(multipartFile, fileUrl);
         }
     }
 
@@ -141,15 +146,15 @@ public class UserServiceImpl implements UserService {
         }
 
         // 프로필 이미지
-        if(serviceRequestDto.ImageChange()) {
-            // 기본 이미지
-            if(multipartFile == null){
-                user.updateProfileImgUrl("");
+        if(serviceRequestDto.imageChange()) {
+            String imageName;
+            if(multipartFile == null || multipartFile.isEmpty()){
+                imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
+                s3Provider.delete(imageName);
+                user.updateProfileImgUrl(null);
             }
             else {
-//                String imageName = s3Provider.updateImage(user.getProfile_img_url(),
-//                        user.getFolderName(), multipartFile);
-                String imageName = multipartFile.getOriginalFilename();
+                imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
                 user.updateProfileImgUrl(imageName);
             }
         }
@@ -171,22 +176,22 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     public void deleteUser(final User user, final String kakaoAccessToken,
+                           final String googleAccessToken,
                            final HttpServletResponse response
     ) throws JacksonException {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        // 제약 조건에 걸리지 않기 위해서
-//        if(recipeRepository.findByUser(user) != null){
-//            recipeRepository.deleteAllByUser(user);
-//        }
-//        if(boardRepository.findByUser(user) != null){
-//            boardRepository.deleteAllByUser(user);
-//        }
         if(user.getKakaoEmail() != null) {
             if(kakaoAccessToken == null || kakaoAccessToken.equals("")){
                 throw new FailedUnlinkKakaoException(UserErrorCode.FAILED_UNLINK_KAKAO);
             }
             kakaoService.unlinkKakao(kakaoAccessToken);
+        }
+        if(user.getGoogleEmail() != null) {
+            if(googleAccessToken == null || googleAccessToken.equals("")){
+                throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
+            }
+            googleService.unlinkGoogle(googleAccessToken);
         }
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
@@ -196,8 +201,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserLoginResponseDto refreshAccessToken(final String refreshTokenCookie,
+                                                   final String kakaoRefreshToken,
+                                                   final String googleRefreshToken,
                                                    final HttpServletResponse response) {
-        String refresh = refreshTokenCookie.substring(13);
+        String refresh = refreshTokenCookie;
+        if (refreshTokenCookie.startsWith("refreshToken=")) {
+            refresh = refreshTokenCookie.substring("refreshToken=".length());
+        }
         RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refresh)
                 .orElseThrow(() -> new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN));
         if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
@@ -208,9 +218,26 @@ public class UserServiceImpl implements UserService {
 
         // accessToken과 refreshToken 둘 다 refresh
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+        jwtUtil.deleteCookie("refreshToken", response);
         String newToken = jwtUtil.addRefreshTokenToCookie(user, response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
+        // 카카오
+        if(user.getKakaoEmail() != null){
+            try {
+                kakaoService.refresh(kakaoRefreshToken, user);
+            } catch (Exception e){
+                throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+            }
+        }
+        // 구글
+        if(user.getGoogleEmail() != null){
+            try {
+                googleService.refresh(googleRefreshToken, user);
+            } catch (Exception e){
+                throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
+            }
+        }
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 

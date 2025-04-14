@@ -67,7 +67,7 @@ public class UserController {
     public ResponseEntity<?> updateUser(
             @RequestPart UpdateUserControllerRequestDto controllerRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestPart(required=false) MultipartFile multipartFile) throws IOException
+            @RequestPart(required = false) MultipartFile multipartFile) throws IOException
     {
         UpdateUserServiceRequestDto serviceRequestDto = userDtoMapper
                 .toUpdateUserServiceRequestDto(controllerRequestDto);
@@ -90,20 +90,23 @@ public class UserController {
     public ResponseEntity<?> deleteUser(
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @RequestHeader(value = "Kakao-Access-Token", required = false) String kakaoAccessToken,
+            @RequestHeader(value = "Google-Access-Token", required = false) String googleAccessToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
-        userService.deleteUser(userDetailsImpl.user(), kakaoAccessToken, httpServletResponse);
+        userService.deleteUser(userDetailsImpl.user(), kakaoAccessToken, googleAccessToken, httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "refresh", description = "빈칸 하나만 입력하면 됨")
+    @Operation(summary = "토큰 갱신")
     @PostMapping("/users/refresh")
     public ResponseEntity<?> refreshAccessToken(
-            @RequestHeader("Cookie") String refreshToken,
+            @RequestHeader("Refresh-Token") String refreshToken,
+            @RequestHeader(value = "Kakao-Refresh-Token", required = false) String kakaoRefreshToken,
+            @RequestHeader(value = "Google-Refresh-Token", required = false) String googleRefreshToken,
             HttpServletResponse httpServletResponse
     ) {
-        userService.refreshAccessToken(refreshToken, httpServletResponse);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        userService.refreshAccessToken(refreshToken, kakaoRefreshToken, googleRefreshToken, httpServletResponse);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "이메일 중복 확인")

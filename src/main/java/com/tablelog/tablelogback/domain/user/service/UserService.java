@@ -16,9 +16,11 @@ public interface UserService {
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
-    void deleteUser(User user, String kakaoAccessToken, HttpServletResponse httpServletResponse)
+    void deleteUser(User user, String kakaoAccessToken,
+                    String googleAccessToken, HttpServletResponse httpServletResponse)
             throws JacksonException;
-    UserLoginResponseDto refreshAccessToken(String refreshToken, HttpServletResponse response);
+    UserLoginResponseDto refreshAccessToken(String refreshToken, String kakaoRefresh,
+                                            String googleRefresh, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
     void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto);

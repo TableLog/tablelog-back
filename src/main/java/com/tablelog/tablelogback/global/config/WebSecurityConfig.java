@@ -61,10 +61,11 @@ public class WebSecurityConfig {
             CorsConfiguration config = new CorsConfiguration();
             config.setAllowedHeaders(Collections.singletonList("*"));
             config.setAllowedMethods(Collections.singletonList("*"));
-            config.setAllowedOrigins(List.of("http://localhost:3000", "http:localhost:8080"));
+//            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080"));
             config.setMaxAge(3600L);
             config.setAllowCredentials(true);
-            config.setExposedHeaders(List.of("Access-Token", "Set-Cookie", "Cookie"));
+            config.setExposedHeaders(List.of("Access-Token", "Set-Cookie", "Cookie", "refreshToken", "Kakao-Refresh-Token"));
             return config;
         };
     }

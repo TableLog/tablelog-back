@@ -134,6 +134,7 @@ public class JwtUtil {
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(Math.toIntExact(refreshTokenExpirationPeriod));
         cookie.setHttpOnly(true);
+        cookie.setPath("/");
         return cookie;
     }
 
@@ -153,7 +154,7 @@ public class JwtUtil {
         Cookie cookie = new Cookie(key, null);
         cookie.setMaxAge(0);
         cookie.setHttpOnly(true);
-        logger.info(cookie.getName());
+        cookie.setPath("/");
         httpServletResponse.addCookie(cookie);
     }
 

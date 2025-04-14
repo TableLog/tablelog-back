@@ -11,6 +11,7 @@ public record UserLoginResponseDto(
         UserRole userRole,
         String profileImgUrl,
         String kakaoEmail,
-        String googleEmail
+        String googleEmail,
+        Integer pointBalance
 ) {
 }
