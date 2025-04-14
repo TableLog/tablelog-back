@@ -52,22 +52,27 @@ public class FoodController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "식재료 전체 조회 (페이징 + 검색)")
     @GetMapping("/foods")
-    public List<Map<String, Object>> readAllFoods(){
-        List<Map<String, Object>> foods = new ArrayList<>();
-        Map<String, Object> food1 = new HashMap<>();
-        food1.put("name", "사과");
-        food1.put("foodUnit", "g");
-        food1.put("cal", 300);
-        food1.put("user", "user1");
-        Map<String, Object> food2 = new HashMap<>();
-        food2.put("name", "사과");
-        food2.put("foodUnit", "g");
-        food2.put("cal", 300);
-        food2.put("user", "user1");
-        foods.add(food1);;
-        foods.add(food2);
-        return foods;
+    public ResponseEntity<List<FoodReadAllServiceResponseDto>> readAllFoods(
+            @RequestParam(required = false) String search,
+            @RequestParam(name = "page", required = false) Integer page
+    ){
+        if (search != null && !search.isBlank()) {
+            if (page != null) {
+                return ResponseEntity.ok(foodService.searchFoods(search, page)); // 검색 + 페이징
+            }
+            else {
+                return ResponseEntity.ok(foodService.searchFoods(search, -1)); // 전체 검색
+            }
+        }
+
+        if (page != null) {
+            return ResponseEntity.ok(foodService.readAllFoods(page)); // 페이징
+        }
+        else {
+            return ResponseEntity.ok(foodService.readAllFoods(-1)); // 전체 조회
+        }
     }
 
     @PutMapping("/foods/{foodId}")

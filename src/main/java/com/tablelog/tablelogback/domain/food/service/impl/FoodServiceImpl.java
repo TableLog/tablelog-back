@@ -46,4 +46,26 @@ public class FoodServiceImpl implements FoodService {
                 .orElseThrow(()->new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
         return foodEntityMapper.toFoodReadResponseDto(food);
     }
+
+    @Override
+    public List<FoodReadAllServiceResponseDto> readAllFoods(Integer pageNumber) {
+        if(pageNumber < 0){
+            List<Food> foods = foodRepository.findAll();
+            return foodEntityMapper.toFoodReadAllResponseDto(foods);
+        } else {
+            Slice<Food> foods = foodRepository.findAllBy(PageRequest.of(pageNumber, 9));
+            return foodEntityMapper.toFoodReadAllResponseDto(foods.getContent());
+        }
+    }
+
+    @Override
+    public List<FoodReadAllServiceResponseDto> searchFoods(String keyword, Integer pageNumber) {
+        if(pageNumber < 0){
+            List<Food> foods = foodRepository.findAllByFoodNameContaining(keyword);
+            return foodEntityMapper.toFoodReadAllResponseDto(foods);
+        } else {
+            Slice<Food> foods = foodRepository.findByFoodNameContaining(keyword, PageRequest.of(pageNumber, 9));
+            return foodEntityMapper.toFoodReadAllResponseDto(foods.getContent());
+        }
+    }
 }

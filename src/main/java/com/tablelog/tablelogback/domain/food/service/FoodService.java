@@ -12,4 +12,6 @@ import java.util.List;
 public interface FoodService {
     void createFood (FoodCreateServiceRequestDto requestDto) throws IOException;
     FoodReadAllServiceResponseDto readFood(Long id);
+    List<FoodReadAllServiceResponseDto> readAllFoods(Integer pageNumber);
+    List<FoodReadAllServiceResponseDto> searchFoods(String keyword, Integer page);
 }
