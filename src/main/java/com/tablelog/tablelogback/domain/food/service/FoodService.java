@@ -14,4 +14,5 @@ public interface FoodService {
     FoodReadAllServiceResponseDto readFood(Long id);
     List<FoodReadAllServiceResponseDto> readAllFoods(Integer pageNumber);
     List<FoodReadAllServiceResponseDto> searchFoods(String keyword, Integer page);
+    void updateFood (Long id, FoodUpdateServiceRequestDto requestDto) throws IOException;
 }

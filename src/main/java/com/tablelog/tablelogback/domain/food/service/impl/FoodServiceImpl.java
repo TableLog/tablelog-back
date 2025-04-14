@@ -68,4 +68,26 @@ public class FoodServiceImpl implements FoodService {
             return foodEntityMapper.toFoodReadAllResponseDto(foods.getContent());
         }
     }
+
+    @Transactional
+    public void updateFood(Long id, FoodUpdateServiceRequestDto requestDto) throws IOException {
+        Food food = foodRepository.findById(id)
+                .orElseThrow(()->new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+
+        // foodName
+        if(requestDto.foodName() != null && !Objects.equals(requestDto.foodName(), "")){
+            food.updateFoodName(requestDto.foodName());
+        }
+
+        // foodUnit
+        if(requestDto.foodUnit() != null && !Objects.equals(requestDto.foodUnit(), "")){
+            food.updateFoodUnit(requestDto.foodUnit());
+        }
+        
+        // cal
+        if(requestDto.cal() != null && requestDto.cal() > 0){
+            food.updateCal(requestDto.cal());
+        }
+        foodRepository.save(food);
+    }
 }

@@ -75,14 +75,15 @@ public class FoodController {
         }
     }
 
+    @Operation(summary = "식재료 수정", description = "바꾸는 것만 입력")
     @PutMapping("/foods/{foodId}")
-    public void updateFood(
+    public ResponseEntity<?> updateFood(
             @PathVariable Long foodId,
-            String name,
-            FoodUnit foodUnit,
-            Integer cal
+            @RequestBody FoodUpdateControllerRequestDto controllerRequestDto
     ) throws IOException {
-
+        FoodUpdateServiceRequestDto serviceRequestDto = foodDtoMapper.toFoodUpdateServiceDto(controllerRequestDto);
+        foodService.updateFood(foodId, serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @DeleteMapping("/foods/{foodId}")
