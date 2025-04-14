@@ -1,8 +1,21 @@
 package com.tablelog.tablelogback.domain.food.controller;
 
+import com.tablelog.tablelogback.domain.food.dto.controller.FoodCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.food.dto.controller.FoodUpdateControllerRequestDto;
+import com.tablelog.tablelogback.domain.food.dto.service.request.FoodCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.food.dto.service.request.FoodUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.food.dto.service.response.FoodReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.food.mapper.dto.FoodDtoMapper;
+import com.tablelog.tablelogback.domain.food.service.impl.FoodServiceImpl;
 import com.tablelog.tablelogback.global.enums.FoodUnit;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -16,13 +29,18 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 @Tag(name = "식재료 API", description = "")
 public class FoodController {
-    @PostMapping("/foods")
-    public void createFood(
-            String name,
-            FoodUnit foodUnit,
-            Integer cal
-    ) throws IOException {
+    private final FoodDtoMapper foodDtoMapper;
+    private final FoodServiceImpl foodService;
 
+    @Operation(summary = "식재료 생성")
+    @PostMapping("/foods")
+    public ResponseEntity<?> createFood(
+            @RequestBody FoodCreateControllerRequestDto controllerRequestDto
+    ) throws IOException {
+        FoodCreateServiceRequestDto serviceRequestDto =
+                foodDtoMapper.toFoodCreateServiceDto(controllerRequestDto);
+        foodService.createFood(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/foods/{foodId}")
