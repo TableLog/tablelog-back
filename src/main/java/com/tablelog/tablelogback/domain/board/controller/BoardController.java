@@ -2,7 +2,9 @@ package com.tablelog.tablelogback.domain.board.controller;
 
 
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.controller.BoardUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
@@ -37,7 +39,6 @@ public class BoardController {
             @RequestPart BoardCreateControllerRequestDto controllerRequestDto,
             @RequestPart(value = "multipartFile",required = false) MultipartFile multipartFile
     )  throws IOException{
-        System.out.println(controllerRequestDto);
         BoardCreateServiceRequestDto boardCreateServiceRequestDto =
                 boardDtoMapper.toBoardServiceRequestDto(controllerRequestDto);
         boardService.create(boardCreateServiceRequestDto,userDetails.user(),multipartFile);
@@ -45,14 +46,14 @@ public class BoardController {
     }
     @PutMapping("/boards/{board_id}")
     public void updateBoard(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable Long board_id,
-            String title,
-            String content,
-            BoardCategory category,
-            MultipartFile image_file,
-            String user
+            @RequestPart BoardUpdateControllerRequestDto controllerRequestDto,
+            @RequestPart(value = "multipartFile",required = false) MultipartFile multipartFile
     )throws IOException{
-
+        BoardUpdateServiceRequestDto boardUpdateServiceRequestDto =
+                boardDtoMapper.toBoardUpdateServiceRequestDto(controllerRequestDto);
+        boardService.update(boardUpdateServiceRequestDto,userDetails.user(),board_id,multipartFile);
     }
     @DeleteMapping("/boards/{board_id}")
     public void deleteBoard(
