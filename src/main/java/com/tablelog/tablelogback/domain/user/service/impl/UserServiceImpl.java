@@ -196,7 +196,15 @@ public class UserServiceImpl implements UserService {
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
-        userRepository.deleteById(user.getId());
+
+        if (user.getProfileImgUrl() == null){
+            userRepository.deleteById(user.getId());
+        } else {
+            String image_name = user.getProfileImgUrl().replace(url,"");
+            image_name = image_name.substring(image_name.lastIndexOf("/"));
+            userRepository.deleteById(user.getId());
+            s3Provider.delete(user.getFolderName() + image_name);
+        }
     }
 
     @Override
