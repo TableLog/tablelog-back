@@ -2,7 +2,10 @@ package com.tablelog.tablelogback.domain.board.service.impl;
 
 
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.entity.Board;
+import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
+import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.mapper.entity.BoardEntityMapper;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
@@ -63,7 +66,31 @@ public class BoardServiceImpl implements BoardService {
             s3Provider.saveFile(multipartFile, fileUrl);
         }
     }
-
+    @Override
+    public void update(final BoardUpdateServiceRequestDto boardRequestDto
+            , User user
+            , Long board_id
+            , MultipartFile multipartFile
+    )throws IOException
+    {
+        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
+                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        String folderName = user.getFolderName();
+        String fileName;
+        String fileUrl;
+        if (multipartFile.isEmpty()) {
+            fileUrl = board.getImage_url();
+            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),fileUrl,boardRequestDto.category().toString());
+            boardRepository.save(board);
+        } else {
+            fileName = s3Provider.originalFileName(multipartFile);
+            fileUrl = url + user.getFolderName() + SEPARATOR + fileName;
+            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),fileUrl,boardRequestDto.category().toString());
+            boardRepository.save(board);
+            fileUrl = user.getFolderName() + SEPARATOR + fileName;
+            s3Provider.saveFile(multipartFile, fileUrl);
+        }
+    }
     // Test -> TestCreateServiceRequestDto
 //    @Override
 //    public TestReadResponseDto get(Long id) {
