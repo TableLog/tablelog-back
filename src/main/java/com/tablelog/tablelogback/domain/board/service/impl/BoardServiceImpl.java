@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.board.service.impl;
 
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
@@ -12,6 +13,8 @@ import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.multipart.MultipartFile;
@@ -114,9 +117,9 @@ public class BoardServiceImpl implements BoardService {
 //    }
 //
 //    // List<Test> -> List<TestCreateServiceRequestDto>
-//    @Override
-//    public List<TestReadResponseDto> getAll(int pageNumber) {
-//        Slice<Board> tests = boardRepository.findAllBy(PageRequest.of(pageNumber, 9));
-//        return boardEntityMapper.toTestReadResponseDtos(tests.getContent());
-//    }
+    @Override
+    public List<BoardReadResponseDto> getAll(int pageNumber) {
+        Slice<Board> boards = boardRepository.findAllBy(PageRequest.of(pageNumber, 3));
+        return boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+    }
 }
