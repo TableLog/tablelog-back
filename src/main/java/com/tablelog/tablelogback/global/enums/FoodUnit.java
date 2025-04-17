@@ -6,7 +6,9 @@ public enum FoodUnit {
     kg,
     g,
     ml,
-    L;
+    L,
+    cup,
+    tbsp;
 
     @JsonCreator
     public static FoodUnit fromString(String inputValue) {
