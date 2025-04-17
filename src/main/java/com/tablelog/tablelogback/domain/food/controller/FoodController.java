@@ -86,11 +86,13 @@ public class FoodController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "식재료 삭제")
     @DeleteMapping("/foods/{foodId}")
-    public void deleteFood(
-            @PathVariable Long foodId
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
+    public ResponseEntity<?> deleteFood(
+            @PathVariable Long foodId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-
+        foodService.deleteFood(foodId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

@@ -83,11 +83,21 @@ public class FoodServiceImpl implements FoodService {
         if(requestDto.foodUnit() != null && !Objects.equals(requestDto.foodUnit(), "")){
             food.updateFoodUnit(requestDto.foodUnit());
         }
-        
+
         // cal
         if(requestDto.cal() != null && requestDto.cal() > 0){
             food.updateCal(requestDto.cal());
         }
         foodRepository.save(food);
+    }
+
+    @Override
+    public void deleteFood(Long id, User user) {
+        if(user.getUserRole() != UserRole.ADMIN){
+            throw new ForbiddenDeleteFoodException(FoodErrorCode.FORBIDDEN_DELETE_FOOD);
+        }
+        Food food = foodRepository.findById(id)
+                .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        foodRepository.delete(food);
     }
 }

@@ -15,4 +15,5 @@ public interface FoodService {
     List<FoodReadAllServiceResponseDto> readAllFoods(Integer pageNumber);
     List<FoodReadAllServiceResponseDto> searchFoods(String keyword, Integer page);
     void updateFood (Long id, FoodUpdateServiceRequestDto requestDto) throws IOException;
+    void deleteFood(Long id, User user);
 }
