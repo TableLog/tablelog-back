@@ -57,10 +57,10 @@ public class BoardController {
     }
     @DeleteMapping("/boards/{board_id}")
     public void deleteBoard(
-            @PathVariable Long board_id,
-            String user
+        @PathVariable Long board_id,
+        @AuthenticationPrincipal UserDetailsImpl userDetails
     )throws IOException{
-
+        boardService.delete(board_id,userDetails.user());
     }
 
     @GetMapping("/boards")

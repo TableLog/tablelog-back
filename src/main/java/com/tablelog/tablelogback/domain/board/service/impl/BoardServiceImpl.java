@@ -13,6 +13,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -89,6 +90,19 @@ public class BoardServiceImpl implements BoardService {
             boardRepository.save(board);
             fileUrl = user.getFolderName() + SEPARATOR + fileName;
             s3Provider.saveFile(multipartFile, fileUrl);
+        }
+    }
+    @DeleteMapping
+    public void deletBoard(Long board_id,User user){
+        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
+            .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        if (board.getImage_url()==null){
+            boardRepository.delete(board);
+        }else {
+            String image_name = board.getImage_url().replace(url,"");
+            image_name = image_name.substring(image_name.lastIndexOf("/"));
+            boardRepository.delete(board);
+            s3Provider.delete(user.getFolderName()+image_name);
         }
     }
     // Test -> TestCreateServiceRequestDto
