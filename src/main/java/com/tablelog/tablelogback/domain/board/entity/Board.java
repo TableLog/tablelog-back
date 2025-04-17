@@ -34,4 +34,10 @@ public class Board extends BaseEntity {
         this.category = category;
         this.user = user;
     }
+
+    public void updateBoard(String title,String content,String image_url,String category ){
+        this.title = title;
+        this.content = content;
+        this.image_url = image_url;
+    }
 }
