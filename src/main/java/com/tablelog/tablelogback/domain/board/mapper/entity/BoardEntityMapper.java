@@ -3,7 +3,7 @@ package com.tablelog.tablelogback.domain.board.mapper.entity;
 
 
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.TestReadResponseDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import org.mapstruct.Mapper;
@@ -24,8 +24,6 @@ public interface BoardEntityMapper {
     Board toBoard(BoardCreateServiceRequestDto BoardRequestDto,String fileUrl
 , User user
     );
-
-    TestReadResponseDto toTestReadResponseDto(Board board);
-
-    List<TestReadResponseDto> toTestReadResponseDtos(List<Board> board);
+    BoardReadResponseDto toTestReadResponseDto(Board board);
+    List<BoardReadResponseDto> toBoardReadResponseDtos(List<Board> board);
 }
