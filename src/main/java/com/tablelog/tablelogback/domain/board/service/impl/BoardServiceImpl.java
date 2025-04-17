@@ -93,7 +93,7 @@ public class BoardServiceImpl implements BoardService {
         }
     }
     @DeleteMapping
-    public void deletBoard(Long board_id,User user){
+    public void delete(Long board_id,User user){
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
         if (board.getImage_url()==null){
