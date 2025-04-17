@@ -45,7 +45,7 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PutMapping("/boards/{board_id}")
-    public void updateBoard(
+    public ResponseEntity<?> updateBoard(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable Long board_id,
             @RequestPart BoardUpdateControllerRequestDto controllerRequestDto,
@@ -54,13 +54,15 @@ public class BoardController {
         BoardUpdateServiceRequestDto boardUpdateServiceRequestDto =
                 boardDtoMapper.toBoardUpdateServiceRequestDto(controllerRequestDto);
         boardService.update(boardUpdateServiceRequestDto,userDetails.user(),board_id,multipartFile);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @DeleteMapping("/boards/{board_id}")
-    public void deleteBoard(
+    public ResponseEntity<?> deleteBoard(
         @PathVariable Long board_id,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     )throws IOException{
         boardService.delete(board_id,userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @GetMapping("/boards")
