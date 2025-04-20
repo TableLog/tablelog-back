@@ -14,6 +14,7 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
+import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class UserServiceImpl implements UserService {
     private final HttpServletResponse httpServletResponse;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
 //    private final KakaoService kakaoService;
 //    private final GoogleService googleService;
     private final S3Provider s3Provider;
@@ -174,6 +176,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         jwtUtil.deleteCookie("refreshToken", response);
+        if(user.getProvider() == UserProvider.kakao){
+            jwtUtil.deleteCookie("Kakao-Refresh-Token", response);
+            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+        }
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
     }
 
