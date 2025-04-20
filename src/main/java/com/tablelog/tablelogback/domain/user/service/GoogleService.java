@@ -176,43 +176,43 @@ public class GoogleService {
         jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
         return userEntityMapper.toUserLoginResponseDto(googleUser);
     }
-//
-//    public void refresh(String googleRefreshToken, User user) throws JacksonException {
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.add("Content-Type", "application/x-www-form-urlencoded");
-//
-//        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-//        body.add("grant_type", "refresh_token");
-//        body.add("client_id", clientId);
-//        body.add("client_secret", clientSecret);
-//        body.add("refresh_token", googleRefreshToken);
-//
-//        HttpEntity<MultiValueMap<String, String>> googleTokenRequest = new HttpEntity<>(body, headers);
-//
-//        RestTemplate rt = new RestTemplate();
-//        ResponseEntity<String> response = rt.exchange(
-//                "https://oauth2.googleapis.com/token",
-//                HttpMethod.POST,
-//                googleTokenRequest,
-//                String.class
-//        );
-//
-//        String responseBody = response.getBody();
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        JsonNode jsonNode = objectMapper.readTree(responseBody);
-//
-//        httpServletResponse.addHeader("Google-Access-Token", jsonNode.get("access_token").asText());
-//        log.info(jsonNode.get("access_token").asText());
-//
-//        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
-//            String newGoogleRefreshToken = jsonNode.get("refresh_token").asText();
-//            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
-//            jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
-//            GoogleRefreshToken googleRefresh = new GoogleRefreshToken(user.getId(), newGoogleRefreshToken, timeToLive);
-//            googleRefreshTokenRepository.save(googleRefresh);
-//        }
-//    }
-//
+
+    public void refresh(String googleRefreshToken, User user) throws JacksonException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/x-www-form-urlencoded");
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "refresh_token");
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("refresh_token", googleRefreshToken);
+
+        HttpEntity<MultiValueMap<String, String>> googleTokenRequest = new HttpEntity<>(body, headers);
+
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> response = rt.exchange(
+                "https://oauth2.googleapis.com/token",
+                HttpMethod.POST,
+                googleTokenRequest,
+                String.class
+        );
+
+        String responseBody = response.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+        httpServletResponse.addHeader("Google-Access-Token", jsonNode.get("access_token").asText());
+        log.info(jsonNode.get("access_token").asText());
+
+        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
+            String newGoogleRefreshToken = jsonNode.get("refresh_token").asText();
+            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+            jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
+            GoogleRefreshToken googleRefresh = new GoogleRefreshToken(user.getId(), newGoogleRefreshToken, timeToLive);
+            googleRefreshTokenRepository.save(googleRefresh);
+        }
+    }
+
 //    public void unlinkGoogle(String googleAccessToken) throws JacksonException {
 //        GoogleUserInfoDto googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
 //

@@ -7,6 +7,8 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.GoogleService;
+import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -40,8 +42,8 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
-//    private final KakaoService kakaoService;
-//    private final GoogleService googleService;
+    private final KakaoService kakaoService;
+    private final GoogleService googleService;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -240,21 +242,21 @@ public class UserServiceImpl implements UserService {
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
         // 카카오
-//        if(user.getKakaoEmail() != null){
-//            try {
-//                kakaoService.refresh(kakaoRefreshToken, user);
-//            } catch (Exception e){
-//                throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
-//            }
-//        }
-//        // 구글
-//        if(user.getGoogleEmail() != null){
-//            try {
-//                googleService.refresh(googleRefreshToken, user);
-//            } catch (Exception e){
-//                throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
-//            }
-//        }
+        if(user.getProvider() == UserProvider.kakao){
+            try {
+                kakaoService.refresh(kakaoRefreshToken, user);
+            } catch (Exception e){
+                throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+            }
+        }
+        // 구글
+        if(user.getProvider() == UserProvider.google){
+            try {
+                googleService.refresh(googleRefreshToken, user);
+            } catch (Exception e){
+                throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
+            }
+        }
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
