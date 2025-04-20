@@ -154,8 +154,8 @@ public class KakaoService {
     }
 
     public void unlinkKakao(String kakaoAccessToken) throws JacksonException {
-        SocialUserInfoDto kakaoUserInfo = getKakaoUserWithAccessToken(kakaoAccessToken);
-        User user = userRepository.findByEmail(kakaoUserInfo.email())
+        SocialUserInfoDto socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
+        User user = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
 
         HttpHeaders headers = new HttpHeaders();
@@ -172,7 +172,6 @@ public class KakaoService {
         );
 
         if (response.getStatusCode().is2xxSuccessful()) {
-//            user.deleteKakaoEmail();
             kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
             userRepository.save(user);
         } else {

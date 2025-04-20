@@ -13,7 +13,6 @@ import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.impl.UserServiceImpl;
 import com.tablelog.tablelogback.global.enums.UserProvider;
-import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
@@ -213,32 +212,31 @@ public class GoogleService {
         }
     }
 
-//    public void unlinkGoogle(String googleAccessToken) throws JacksonException {
-//        GoogleUserInfoDto googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
-//
-//        User user = userRepository.findByGoogleEmail(googleUserInfoDto.googleEmail())
-//                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-//        headers.set("Authorization", "Bearer " + googleAccessToken);
-//
-//        HttpEntity<?> entity = new HttpEntity<>(new LinkedMultiValueMap<>(), headers);
-//        RestTemplate restTemplate = new RestTemplate();
-//        ResponseEntity<String> response = restTemplate.exchange(
-//                "https://oauth2.googleapis.com/revoke?token=" + googleAccessToken,
-//                HttpMethod.POST,
-//                entity,
-//                String.class
-//        );
-//
-//        if (response.getStatusCode().is2xxSuccessful()) {
-////            user.deleteGoogleEmail();
-//            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
-//            userRepository.save(user);
-//        } else {
-//            log.error("구글 unlink 실패: {}", response.getBody());
-//            throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
-//        }
-//    }
+    public void unlinkGoogle(String googleAccessToken) throws JacksonException {
+        SocialUserInfoDto socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+
+        User user = userRepository.findByEmail(socialUserInfoDto.email())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.set("Authorization", "Bearer " + googleAccessToken);
+
+        HttpEntity<?> entity = new HttpEntity<>(new LinkedMultiValueMap<>(), headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(
+                "https://oauth2.googleapis.com/revoke?token=" + googleAccessToken,
+                HttpMethod.POST,
+                entity,
+                String.class
+        );
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+            userRepository.save(user);
+        } else {
+            log.error("구글 unlink 실패: {}", response.getBody());
+            throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
+        }
+    }
 }
