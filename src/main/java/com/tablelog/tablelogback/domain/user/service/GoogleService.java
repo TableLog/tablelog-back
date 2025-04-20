@@ -100,7 +100,7 @@ public class GoogleService {
         try{
             socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
         } catch (Exception e){
-            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
         }
         httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
         httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
@@ -161,7 +161,7 @@ public class GoogleService {
         try{
             socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
         } catch (Exception e){
-            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
         }
         User googleUser = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
