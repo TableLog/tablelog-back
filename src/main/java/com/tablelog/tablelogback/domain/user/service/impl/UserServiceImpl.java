@@ -159,18 +159,8 @@ public class UserServiceImpl implements UserService {
         }
 
         // 프로필 이미지
-        if(serviceRequestDto.imageChange()) {
-            String imageName;
-            if(multipartFile == null || multipartFile.isEmpty()){
-                imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
-                s3Provider.delete(imageName);
-                user.updateProfileImgUrl(null);
-            }
-            else {
-                imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
-                user.updateProfileImgUrl(imageName);
-            }
-        }
+        String imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
+        user.updateProfileImgUrl(imageName);
 
         userRepository.save(user);
     }

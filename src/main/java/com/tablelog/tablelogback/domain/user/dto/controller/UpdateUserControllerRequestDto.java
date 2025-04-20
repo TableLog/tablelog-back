@@ -5,7 +5,6 @@ public record UpdateUserControllerRequestDto(
         String newPassword,
         String confirmNewPassword,
         String nickname,
-        String profileImgUrl,
-        Boolean imageChange
+        String profileImgUrl
 ) {
 }
