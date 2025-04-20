@@ -36,7 +36,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -134,7 +133,7 @@ public class GoogleService {
                 UserProvider.google
         );
     }
-//
+
     public UserLoginResponseDto signupWithGoogle(
             UserSignUpServiceRequestDto serviceRequestDto,
             MultipartFile multipartFile,
@@ -154,83 +153,29 @@ public class GoogleService {
         googleRefreshTokenRepository.save(googleRefreshToken);
         return userEntityMapper.toUserLoginResponseDto(user);
     }
-//
-//    private User joinGoogleUser(GoogleUserInfoDto googleUserInfoDto,
-//                                MultipartFile multipartFile
-//    ) throws IOException {
-//        String googleEmail = googleUserInfoDto.googleEmail();
-//        // 구글 가입 여부 확인
-//        if(userRepository.existsByGoogleEmail(googleEmail)){
-//            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-//        }
-//        // 중복 가입 확인
-//        if(userRepository.existsByNameAndBirthday(googleUserInfoDto.name(), googleUserInfoDto.birthday())){
-//            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-//        }
-//        // 중복 이메일 가입 확인
-//        if(userRepository.existsByEmail(googleEmail)){
-//            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
-//        }
-//        // 닉네임 중복 확인
-//        if(userRepository.existsByNickname(googleUserInfoDto.nickname())){
-//            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
-//        }
-//        User googleUser;
-//        String uuid = UUID.randomUUID().toString();
-//        String fileName;
-//        String fileUrl;
-//        if (multipartFile == null || multipartFile.isEmpty()){
-//            googleUser = User.builder()
-//                    .email(googleEmail)
-//                    .password(passwordEncoder.encode(uuid))
-//                    .nickname(googleUserInfoDto.nickname())
-//                    .name(googleUserInfoDto.name())
-//                    .birthday(googleUserInfoDto.birthday())
-//                    .userRole(UserRole.NORMAL)
-////                    .googleEmail(googleEmail)
-//                    .build();
-//        } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + googleUserInfoDto.nickname() + SEPARATOR + fileName;
-//            googleUser = User.builder()
-//                    .email(googleEmail)
-//                    .password(passwordEncoder.encode(uuid))
-//                    .nickname(googleUserInfoDto.nickname())
-//                    .name(googleUserInfoDto.name())
-//                    .birthday(googleUserInfoDto.birthday())
-//                    .userRole(UserRole.NORMAL)
-//                    .profileImgUrl(fileUrl)
-////                    .googleEmail(googleEmail)
-//                    .build();
-//            fileUrl = googleUser.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.saveFile(multipartFile, fileUrl);
-//        }
-//        userRepository.save(googleUser);
-//        return googleUser;
-//    }
-//
-//    public UserLoginResponseDto loginWithGoogle(String code) throws JsonProcessingException {
-//        JsonNode jsonNode = getGoogleToken(code);
-//        String googleAccessToken = jsonNode.get("access_token").asText();
-//
-//        GoogleUserInfoDto googleUserInfoDto;
-//        try{
-//            googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
-//        } catch (Exception e){
-//            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
-//        }
-////        User googleUser = userRepository.findByGoogleEmail(googleUserInfoDto.googleEmail())
-////                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-//        // 서버 토큰 저장
-//        jwtUtil.addAccessTokenToHeader(googleUser, httpServletResponse);
-//        String refresh = jwtUtil.addRefreshTokenToCookie(googleUser, httpServletResponse);
-//        RefreshToken refreshToken = new RefreshToken(googleUser.getId(), refresh, timeToLive);
-//        refreshTokenRepository.save(refreshToken);
-//        // 카카오 토큰 저장
-//        httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
-//        jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
-//        return userEntityMapper.toUserLoginResponseDto(googleUser);
-//    }
+
+    public UserLoginResponseDto loginWithGoogle(String code) throws JsonProcessingException {
+        JsonNode jsonNode = getGoogleToken(code);
+        String googleAccessToken = jsonNode.get("access_token").asText();
+
+        SocialUserInfoDto socialUserInfoDto;
+        try{
+            socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+        } catch (Exception e){
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
+        }
+        User googleUser = userRepository.findByEmail(socialUserInfoDto.email())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        // 서버 토큰 저장
+        jwtUtil.addAccessTokenToHeader(googleUser, httpServletResponse);
+        String refresh = jwtUtil.addRefreshTokenToCookie(googleUser, httpServletResponse);
+        RefreshToken refreshToken = new RefreshToken(googleUser.getId(), refresh, timeToLive);
+        refreshTokenRepository.save(refreshToken);
+        // 구글 토큰 저장
+        httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
+        jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
+        return userEntityMapper.toUserLoginResponseDto(googleUser);
+    }
 //
 //    public void refresh(String googleRefreshToken, User user) throws JacksonException {
 //        HttpHeaders headers = new HttpHeaders();

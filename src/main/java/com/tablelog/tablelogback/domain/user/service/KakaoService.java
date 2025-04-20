@@ -126,78 +126,19 @@ public class KakaoService {
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
-//    private User joinKakaoUser(
-//            UserSignUpServiceRequestDto serviceRequestDto,
-//            MultipartFile multipartFile
-//    ) throws IOException {
-//        String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
-        // 카카오 가입 여부 확인
-//        if(userRepository.existsByKakaoEmail(kakaoEmail)){
-//            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-//        }
-        // 중복 가입 확인
-//        if(userRepository.existsByNameAndBirthday(serviceRequestDto.name(), serviceRequestDto.birthday())){
-//            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-//        }
-//        // 중복 이메일 가입 확인
-//        if(userRepository.existsByEmail(serviceRequestDto.email())){
-//            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
-//        }
-//        // 닉네임 중복 확인
-//        if(userRepository.existsByNickname(serviceRequestDto.nickname())){
-//            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
-//        }
-//        User kakaoUser;
-//        String uuid = UUID.randomUUID().toString();
-//        String fileName;
-//        String fileUrl;
-//        if (multipartFile == null || multipartFile.isEmpty()){
-//            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
-//                    fileUrl, serviceRequestDto.nickname());
-//            kakaoUser = User.builder()
-//                    .email(socialUserInfoDto.email())
-//                    .password(passwordEncoder.encode(uuid))
-//                    .nickname(socialUserInfoDto.nickname())
-//                    .name(socialUserInfoDto.name())
-//                    .birthday(socialUserInfoDto.birthday())
-//                    .provider(UserProvider.kakao)
-//                    .userRole(UserRole.NORMAL)
-//                    .kakaoEmail(kakaoEmail)
-//                    .build();
-//        } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + socialUserInfoDto.nickname() + SEPARATOR + fileName;
-//            kakaoUser = User.builder()
-//                    .email(socialUserInfoDto.email())
-//                    .password(passwordEncoder.encode(uuid))
-//                    .nickname(socialUserInfoDto.nickname())
-//                    .name(socialUserInfoDto.name())
-//                    .birthday(socialUserInfoDto.birthday())
-//                    .provider(UserProvider.kakao)
-//                    .userRole(UserRole.NORMAL)
-//                    .profileImgUrl(fileUrl)
-//                    .kakaoEmail(kakaoEmail)
-//                    .build();
-//            fileUrl = kakaoUser.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.saveFile(multipartFile, fileUrl);
-//        }
-//        userRepository.save(kakaoUser);
-//        return kakaoUser;
-//    }
-
     public UserLoginResponseDto loginWithKakao(String code) throws JsonProcessingException {
         JsonNode jsonNode = getKakaoToken(code);
         String kakaoAccessToken = jsonNode.get("access_token").asText();
         String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
         refreshTimeToLive = jsonNode.get("refresh_token_expires_in").asInt();
 
-        SocialUserInfoDto kakaoUserInfoDto;
+        SocialUserInfoDto socialUserInfoDto;
         try{
-            kakaoUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
+            socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
         } catch (Exception e){
             throw new NotFoundKakaoUserException(UserErrorCode.NOT_FOUND_USER);
         }
-        User kakaoUser = userRepository.findByEmail(kakaoUserInfoDto.email())
+        User kakaoUser = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(kakaoUser, httpServletResponse);

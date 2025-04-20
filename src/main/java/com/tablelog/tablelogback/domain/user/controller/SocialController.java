@@ -2,7 +2,8 @@ package com.tablelog.tablelogback.domain.user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
-import com.tablelog.tablelogback.domain.user.exception.NotFoundSocialProviderException;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.exception.InvalidProviderException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
@@ -28,15 +29,31 @@ public class SocialController {
             @RequestParam("provider") UserProvider provider,
             @RequestParam("code") String code
     ) throws JacksonException {
-        SocialUserInfoDto socialUserInfoDto;
+        SocialUserInfoDto socialUserInfoDto = null;
         if(provider == UserProvider.kakao) {
             socialUserInfoDto = kakaoService.getKakaoUserInfo(code);
         } else if(provider == UserProvider.google) {
             socialUserInfoDto = googleService.getGoogleUserInfo(code);
         } else {
-            socialUserInfoDto = null;
-            throw new NotFoundSocialProviderException(UserErrorCode.NOT_FOUND_SOCIAL_PROVIDER);
+            throw new InvalidProviderException(UserErrorCode.INVALID_PROVIDER);
         }
         return ResponseEntity.status(HttpStatus.OK).body(socialUserInfoDto);
+    }
+
+    @Operation(summary = "소셜 로그인")
+    @PostMapping("users/social/login")
+    public ResponseEntity<UserLoginResponseDto> loginWithSocial(
+            @RequestParam("provider") UserProvider provider,
+            @RequestParam("code") String code
+    ) throws JacksonException {
+        UserLoginResponseDto userLoginResponseDto = null;
+        if(provider == UserProvider.kakao) {
+            userLoginResponseDto = kakaoService.loginWithKakao(code);
+        } else if(provider == UserProvider.google) {
+            userLoginResponseDto = googleService.loginWithGoogle(code);
+        } else {
+            throw new InvalidProviderException(UserErrorCode.INVALID_PROVIDER);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginResponseDto);
     }
 }
