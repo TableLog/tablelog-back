@@ -7,9 +7,8 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
-import com.tablelog.tablelogback.domain.user.service.GoogleService;
-import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
@@ -27,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,8 +38,8 @@ public class UserServiceImpl implements UserService {
     private final HttpServletResponse httpServletResponse;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final KakaoService kakaoService;
-    private final GoogleService googleService;
+//    private final KakaoService kakaoService;
+//    private final GoogleService googleService;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -49,9 +49,8 @@ public class UserServiceImpl implements UserService {
     private Long timeToLive;
 
     @Override
-    public void signUp(final UserSignUpServiceRequestDto serviceRequestDto,
-                       MultipartFile multipartFile) throws IOException {
-        // 이름과 생년월일 중복 체크   
+    public void checkDuplicate(final UserSignUpServiceRequestDto serviceRequestDto){
+        // 이름과 생년월일 중복 체크
         if(userRepository.existsByNameAndBirthday(serviceRequestDto.name(), serviceRequestDto.birthday())){
             throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
         }
@@ -63,28 +62,42 @@ public class UserServiceImpl implements UserService {
         if(userRepository.existsByNickname(serviceRequestDto.nickname())) {
             throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
         }
-        // 비번 확인 체크
-        if(!serviceRequestDto.password().equals(serviceRequestDto.confirmPassword())) {
-            throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
-        }
-        // 프로필 이미지 업로드
+    }
+
+    @Override
+    public User signUp(
+            final UserSignUpServiceRequestDto serviceRequestDto,
+            MultipartFile multipartFile
+    ) throws IOException {
+        // 중복성 검사
+        checkDuplicate(serviceRequestDto);
+
         String fileName;
-        String fileUrl;
-        if (multipartFile == null || multipartFile.isEmpty()){
-            fileUrl = null;
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
-                    fileUrl, serviceRequestDto.nickname());
-            userRepository.save(user);
-        } else {
+        String fileUrl = null;
+        String folderName = serviceRequestDto.nickname();
+        User user;
+
+        if (multipartFile != null && !multipartFile.isEmpty()) {
             fileName = s3Provider.originalFileName(multipartFile);
-            fileUrl = url + serviceRequestDto.nickname() + SEPARATOR + fileName;
-            User user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL,
-                    fileUrl, serviceRequestDto.nickname());
-            userRepository.save(user);
-            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-            s3Provider.createFolder(serviceRequestDto.email());
-            s3Provider.saveFile(multipartFile, fileUrl);
+            fileUrl = url + folderName + SEPARATOR + fileName;
+            s3Provider.createFolder(folderName);
+            s3Provider.saveFile(multipartFile, folderName + SEPARATOR + fileName);
         }
+
+        if (serviceRequestDto.provider() == UserProvider.local) {
+            // local 회원가입
+            if (!serviceRequestDto.password().equals(serviceRequestDto.confirmPassword())) {
+                throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
+            }
+            user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL, fileUrl, folderName);
+        } else {
+            // social 회원가입
+            String encodedPassword = passwordEncoder.encode(UUID.randomUUID().toString());
+            fileUrl = serviceRequestDto.imgUrl();
+            user = userEntityMapper.toSocialUser(serviceRequestDto, encodedPassword, UserRole.NORMAL, fileUrl, folderName);
+        }
+        userRepository.save(user);
+        return user;
     }
 
     @Override
@@ -117,7 +130,7 @@ public class UserServiceImpl implements UserService {
                            UpdateUserServiceRequestDto serviceRequestDto,
                            MultipartFile multipartFile) throws IOException {
         // 소셜 미연동 시
-        if(user.getKakaoEmail() != null || user.getGoogleEmail() != null){
+        if(user.getProvider() == UserProvider.local){
             // 이메일
             if(!Objects.equals(serviceRequestDto.newPassword(), "")){
                 if(userRepository.existsByEmail(serviceRequestDto.newEmail())){
@@ -181,18 +194,18 @@ public class UserServiceImpl implements UserService {
     ) throws JacksonException {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        if(user.getKakaoEmail() != null) {
-            if(kakaoAccessToken == null || kakaoAccessToken.equals("")){
-                throw new FailedUnlinkKakaoException(UserErrorCode.FAILED_UNLINK_KAKAO);
-            }
-            kakaoService.unlinkKakao(kakaoAccessToken);
-        }
-        if(user.getGoogleEmail() != null) {
-            if(googleAccessToken == null || googleAccessToken.equals("")){
-                throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
-            }
-            googleService.unlinkGoogle(googleAccessToken);
-        }
+//        if(user.getKakaoEmail() != null) {
+//            if(kakaoAccessToken == null || kakaoAccessToken.equals("")){
+//                throw new FailedUnlinkKakaoException(UserErrorCode.FAILED_UNLINK_KAKAO);
+//            }
+//            kakaoService.unlinkKakao(kakaoAccessToken);
+//        }
+//        if(user.getGoogleEmail() != null) {
+//            if(googleAccessToken == null || googleAccessToken.equals("")){
+//                throw new FailedUnlinkGoogleException(UserErrorCode.FAILED_UNLINK_GOOGLE);
+//            }
+//            googleService.unlinkGoogle(googleAccessToken);
+//        }
         jwtUtil.expireAccessTokenToHeader(user, response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
@@ -231,21 +244,21 @@ public class UserServiceImpl implements UserService {
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
         // 카카오
-        if(user.getKakaoEmail() != null){
-            try {
-                kakaoService.refresh(kakaoRefreshToken, user);
-            } catch (Exception e){
-                throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
-            }
-        }
-        // 구글
-        if(user.getGoogleEmail() != null){
-            try {
-                googleService.refresh(googleRefreshToken, user);
-            } catch (Exception e){
-                throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
-            }
-        }
+//        if(user.getKakaoEmail() != null){
+//            try {
+//                kakaoService.refresh(kakaoRefreshToken, user);
+//            } catch (Exception e){
+//                throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+//            }
+//        }
+//        // 구글
+//        if(user.getGoogleEmail() != null){
+//            try {
+//                googleService.refresh(googleRefreshToken, user);
+//            } catch (Exception e){
+//                throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
+//            }
+//        }
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 

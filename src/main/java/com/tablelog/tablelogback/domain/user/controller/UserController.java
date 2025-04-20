@@ -4,10 +4,14 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
+import com.tablelog.tablelogback.domain.user.service.GoogleService;
+import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,16 +33,26 @@ import java.io.IOException;
 public class UserController {
     private final UserService userService;
     private final UserDtoMapper userDtoMapper;
+    private final KakaoService kakaoService;
+    private final GoogleService googleService;
 
     @Operation(summary = "회원가입")
     @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> signUp(
             @RequestPart UserSignUpControllerRequestDto controllerRequestDto,
-            @RequestPart(required = false) MultipartFile multipartFile
+            @RequestPart(required = false) MultipartFile multipartFile,
+            @RequestHeader(required = false) String socialAccessToken
     ) throws IOException {
         UserSignUpServiceRequestDto serviceRequestDto = userDtoMapper
-                .toUserSignUpServiceRequestDto(controllerRequestDto);
-        userService.signUp(serviceRequestDto, multipartFile);
+                .toUserSignUpServiceRequestDto(controllerRequestDto);;
+        if(controllerRequestDto.provider() == UserProvider.local){
+            userService.signUp(serviceRequestDto, multipartFile);
+        } else if(controllerRequestDto.provider() == UserProvider.kakao){
+            kakaoService.signupWithKakao(serviceRequestDto, multipartFile, socialAccessToken);
+        } else if(controllerRequestDto.provider() == UserProvider.google){
+            googleService.signupWithGoogle(serviceRequestDto, multipartFile, socialAccessToken);
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

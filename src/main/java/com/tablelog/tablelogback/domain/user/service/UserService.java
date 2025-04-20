@@ -10,7 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface UserService {
-    void signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
+    void checkDuplicate(UserSignUpServiceRequestDto serviceRequestDto);
+    User signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
     UserLoginResponseDto login(UserLoginServiceRequestDto userLoginServiceRequestDto);
     UserLoginResponseDto getUser(String token);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
