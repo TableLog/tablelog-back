@@ -9,14 +9,15 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum JwtErrorCode implements ErrorCode {
     // 400
-    FAILED_JWT_TOKEN(HttpStatus.BAD_REQUEST, "토큰 검증에 실패했습니다."),
+    FAILED_JWT_TOKEN(HttpStatus.BAD_REQUEST, "EJ400001"),
 
     // 401
-    EXPIRED_JWT_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 AccessToken입니다."),
-    EXPIRED_JWT_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 RefreshToken입니다."),
+    EXPIRED_JWT_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "EJ401001"),
+    EXPIRED_JWT_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "EJ401002"),
 
     // 404
-    NOT_FOUND_JWT(HttpStatus.NOT_FOUND, "토큰을 찾을 수 없습니다.");
+    NOT_FOUND_JWT(HttpStatus.NOT_FOUND, "EJ404001"),
+    NOT_FOUND_SOCIAL_ACCESS_TOKEN(HttpStatus.NOT_FOUND, "EJ404002");
 
     private final HttpStatus status;
     private final String message;
