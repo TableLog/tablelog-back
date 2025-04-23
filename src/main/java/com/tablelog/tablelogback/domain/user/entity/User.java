@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -38,11 +39,9 @@ public class User extends BaseEntity {
     @Column
     private String folderName;
 
-    @Column
-    private String kakaoEmail;
-
-    @Column
-    private String googleEmail;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserProvider provider;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -61,8 +60,7 @@ public class User extends BaseEntity {
             final UserRole userRole,
             final String profileImgUrl,
             final String folderName,
-            final String kakaoEmail,
-            final String googleEmail,
+            final UserProvider provider,
             final Integer pointBalance
     ){
         this.email = email;
@@ -73,9 +71,8 @@ public class User extends BaseEntity {
         this.userRole = UserRole.NORMAL;
         this.profileImgUrl = profileImgUrl;
         this.folderName = folderName;
-        this.kakaoEmail = kakaoEmail;
-        this.googleEmail = googleEmail;
-        this.pointBalance = pointBalance;
+        this.provider = provider;
+        this.pointBalance = 0;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -98,23 +95,11 @@ public class User extends BaseEntity {
         this.profileImgUrl = profileImgUrl;
     }
 
-//    public void updateKakaoEmail(String kakaoEmail){
-//        this.kakaoEmail = kakaoEmail;
-//    }
-
-//    public void updateGoogleEmail(String googleEmail){
-//        this.googleEmail = googleEmail;
-//    }
-
     public void updatePointBalance(Integer point){
         this.pointBalance = this.pointBalance + point;
     }
 
-    public void deleteKakaoEmail(){
-        this.kakaoEmail = null;
-    }
-
-    public void deleteGoogleEmail(){
-        this.googleEmail = null;
+    public void updateProvider(UserProvider provider){
+        this.provider = provider;
     }
 }

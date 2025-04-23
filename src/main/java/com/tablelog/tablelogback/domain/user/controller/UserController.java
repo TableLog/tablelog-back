@@ -6,8 +6,15 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerR
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.GoogleService;
+import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,16 +36,26 @@ import java.io.IOException;
 public class UserController {
     private final UserService userService;
     private final UserDtoMapper userDtoMapper;
+    private final KakaoService kakaoService;
+    private final GoogleService googleService;
+    private final UserRepository userRepository;
 
     @Operation(summary = "회원가입")
     @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> signUp(
             @RequestPart UserSignUpControllerRequestDto controllerRequestDto,
-            @RequestPart(required = false) MultipartFile multipartFile
+            @RequestPart(required = false) MultipartFile multipartFile,
+            @RequestHeader(required = false) String socialAccessToken
     ) throws IOException {
         UserSignUpServiceRequestDto serviceRequestDto = userDtoMapper
-                .toUserSignUpServiceRequestDto(controllerRequestDto);
-        userService.signUp(serviceRequestDto, multipartFile);
+                .toUserSignUpServiceRequestDto(controllerRequestDto);;
+        if(controllerRequestDto.provider() == UserProvider.local){
+            userService.signUp(serviceRequestDto, multipartFile);
+        } else if(controllerRequestDto.provider() == UserProvider.kakao){
+            kakaoService.signupWithKakao(serviceRequestDto, multipartFile, socialAccessToken);
+        } else if(controllerRequestDto.provider() == UserProvider.google){
+            googleService.signupWithGoogle(serviceRequestDto, multipartFile, socialAccessToken);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -89,11 +106,15 @@ public class UserController {
     @DeleteMapping("/users")
     public ResponseEntity<?> deleteUser(
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestHeader(value = "Kakao-Access-Token", required = false) String kakaoAccessToken,
-            @RequestHeader(value = "Google-Access-Token", required = false) String googleAccessToken,
+            @RequestHeader(value = "Social-Access-Token", required = false) String socialAccessToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
-        userService.deleteUser(userDetailsImpl.user(), kakaoAccessToken, googleAccessToken, httpServletResponse);
+        if(userDetailsImpl.user().getProvider() == UserProvider.kakao){
+            kakaoService.unlinkKakao(socialAccessToken);
+        } else if(userDetailsImpl.user().getProvider() == UserProvider.google){
+            googleService.unlinkGoogle(socialAccessToken);
+        }
+        userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -101,11 +122,18 @@ public class UserController {
     @PostMapping("/users/refresh")
     public ResponseEntity<?> refreshAccessToken(
             @RequestHeader("Refresh-Token") String refreshToken,
-            @RequestHeader(value = "Kakao-Refresh-Token", required = false) String kakaoRefreshToken,
-            @RequestHeader(value = "Google-Refresh-Token", required = false) String googleRefreshToken,
+            @RequestHeader(value = "Social-Refresh-Token", required = false) String socialRefreshToken,
             HttpServletResponse httpServletResponse
-    ) {
-        userService.refreshAccessToken(refreshToken, kakaoRefreshToken, googleRefreshToken, httpServletResponse);
+    ) throws JacksonException {
+        UserLoginResponseDto responseDto =
+                userService.refreshAccessToken(refreshToken, socialRefreshToken, httpServletResponse);
+        User user = userRepository.findByEmail(responseDto.email())
+                .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        if(responseDto.provider() == UserProvider.kakao){
+            kakaoService.refresh(socialRefreshToken, user);
+        } else if(responseDto.provider() == UserProvider.google){
+            googleService.refresh(socialRefreshToken, user);
+        }
         return ResponseEntity.ok().build();
     }
 
