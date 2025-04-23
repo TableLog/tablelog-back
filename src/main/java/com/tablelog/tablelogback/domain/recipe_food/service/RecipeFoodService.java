@@ -10,4 +10,5 @@ import java.util.List;
 
 public interface RecipeFoodService {
     void createRecipeFood(Long id, RecipeFoodCreateServiceRequestDto requestDto, User user);
+    RecipeFoodReadAllServiceResponseDto readRecipeFood(Long rId, Long rfId);
 }

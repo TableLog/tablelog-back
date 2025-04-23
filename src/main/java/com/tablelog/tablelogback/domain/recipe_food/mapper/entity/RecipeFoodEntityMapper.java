@@ -15,4 +15,6 @@ import java.util.List;
 public interface RecipeFoodEntityMapper {
     @Mapping(source = "recipe.id", target = "recipeId")
     RecipeFood toRecipeFood(RecipeFoodCreateServiceRequestDto requestDto, Recipe recipe, Food food);
+    RecipeFoodReadAllServiceResponseDto toRecipeFoodReadResponseDto(RecipeFood recipeFood);
+    List<RecipeFoodReadAllServiceResponseDto> toRecipeFoodReadAllResponseDto(List<RecipeFood> recipeFoods);
 }

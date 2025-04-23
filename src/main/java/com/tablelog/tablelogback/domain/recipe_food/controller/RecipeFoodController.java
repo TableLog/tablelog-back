@@ -39,4 +39,14 @@ public class RecipeFoodController {
         recipeFoodService.createRecipeFood(recipeId, serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "레시피 식재료 단건 조회")
+    @GetMapping("/recipes/{recipeId}/recipe-food/{recipeFoodId}")
+    public ResponseEntity<RecipeFoodReadAllServiceResponseDto> readRecipeFood(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeFoodId
+    ){
+        RecipeFoodReadAllServiceResponseDto responseDto = recipeFoodService.readRecipeFood(recipeId, recipeFoodId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }

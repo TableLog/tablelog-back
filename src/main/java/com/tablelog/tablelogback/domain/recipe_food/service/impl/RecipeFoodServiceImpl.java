@@ -43,4 +43,11 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipe, food);
         recipeFoodRepository.save(recipeFood);
     }
+
+    @Override
+    public RecipeFoodReadAllServiceResponseDto readRecipeFood(Long recipeId, Long recipeFoodId){
+        RecipeFood recipeFood = recipeFoodRepository.findByRecipeIdAndId(recipeId, recipeFoodId)
+                .orElseThrow(() -> new NotFoundRecipeFoodException(RecipeFoodErrorCode.NOT_FOUND_RECIPE_FOOD));
+        return recipeFoodEntityMapper.toRecipeFoodReadResponseDto(recipeFood);
+    }
 }
