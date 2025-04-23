@@ -74,6 +74,11 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
     }
 
+    @Override
+    public List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcessesByRecipeId(Long recipeId) {
+        List<RecipeProcess> recipeProcesses = recipeProcessRepository.findAllByRecipeId(recipeId);
+        return recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(recipeProcesses);
+    }
 
     private void validateRecipeProcess(Long recipeId, User user){
         Recipe recipe = recipeRepository.findById(recipeId)
