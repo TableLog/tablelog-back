@@ -65,8 +65,7 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
     ) throws IOException {
         validateRecipeFood(recipeId, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
-        recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit(),
-                recipeFoodId, requestDto.foodId());
+        recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit(), requestDto.foodId());
         recipeFoodRepository.save(recipeFood);
     }
 
