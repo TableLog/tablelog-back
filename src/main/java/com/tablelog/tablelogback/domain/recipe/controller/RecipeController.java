@@ -34,7 +34,7 @@ public class RecipeController {
             List<RecipeProcessCreateControllerRequestDto> RecipeProcessCreateControllerRequestDto,
             List<MultipartFile> recipeProcessImage,
             List<RecipeFoodCreateControllerRequestDto> RecipeFoodCreateControllerRequestDto,
-            String user
+            Long user
 //            @Valid @RequestPart(name = "recipeCreateRequestDto")
 //            @RequestBody RecipeCreateControllerRequestDto controllerRequestDto
 //            @RequestPart(name = "recipeCreateImage",required = false) MultipartFile recipeImage,

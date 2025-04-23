@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.recipe.entity;
 
-
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import com.tablelog.tablelogback.global.enums.RecipeCategory;
 import jakarta.persistence.*;
@@ -19,7 +18,7 @@ public class Recipe extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String user;
+    private Long userId;
 
     @Column(nullable = false)
     private String title;
@@ -58,11 +57,11 @@ public class Recipe extends BaseEntity {
     private Integer point;
 
     @Builder
-    public Recipe(final String user, final String title, final String intro, final String folderName,
+    public Recipe(final Long userId, final String title, final String intro, final String folderName,
                   final String imageUrl, final int state, final RecipeCategory recipeCategory,
                   final Byte star, final Integer price, final String memo, final String cookingTime,
                   final Boolean isPaid, final Integer point){
-        this.user = user;
+        this.userId = userId;
         this.title = title;
         this.intro = intro;
         this.folderName = folderName;
