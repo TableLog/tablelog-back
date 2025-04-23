@@ -49,4 +49,12 @@ public class RecipeFoodController {
         RecipeFoodReadAllServiceResponseDto responseDto = recipeFoodService.readRecipeFood(recipeId, recipeFoodId);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @Operation(summary = "레시피 식재료 전체 조회 By 레시피")
+    @GetMapping("/recipes/{recipeId}/recipe-food")
+    public ResponseEntity<List<RecipeFoodReadAllServiceResponseDto>> readAllRecipeFoodsByRecipeId(
+            @PathVariable Long recipeId
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(recipeFoodService.readAllRecipeFoodsByRecipeId(recipeId));
+    }
 }

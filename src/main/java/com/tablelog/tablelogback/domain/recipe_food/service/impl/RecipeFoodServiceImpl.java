@@ -50,4 +50,10 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
                 .orElseThrow(() -> new NotFoundRecipeFoodException(RecipeFoodErrorCode.NOT_FOUND_RECIPE_FOOD));
         return recipeFoodEntityMapper.toRecipeFoodReadResponseDto(recipeFood);
     }
+
+    @Override
+    public List<RecipeFoodReadAllServiceResponseDto> readAllRecipeFoodsByRecipeId(Long id){
+        List<RecipeFood> recipeFoods = recipeFoodRepository.findAllByRecipeId(id);
+        return recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(recipeFoods);
+    }
 }
