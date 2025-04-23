@@ -8,7 +8,7 @@ public enum UserProvider {
     google;
 
     @JsonCreator
-    public static FoodAmount fromString(String inputValue) {
-        return EnumUtils.fromString(FoodAmount.class, inputValue);
+    public static UserProvider fromString(String inputValue) {
+        return EnumUtils.fromString(UserProvider.class, inputValue);
     }
 }

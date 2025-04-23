@@ -9,11 +9,13 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum FoodErrorCode implements ErrorCode {
     // 403
-    FORBIDDEN_DELETE_FOOD(HttpStatus.FORBIDDEN, "식재료를 삭제할 권한이 없습니다."),
-    ALREADY_EXISTS_FOOD_NAME(HttpStatus.BAD_REQUEST, "이미 존재하는 식재료입니다."),
+    ALREADY_EXISTS_FOOD_NAME(HttpStatus.BAD_REQUEST, "EF403001"),
+    FORBIDDEN_CREATE_FOOD(HttpStatus.FORBIDDEN, "EF403002"),
+    FORBIDDEN_UPDATE_FOOD(HttpStatus.FORBIDDEN, "EF403003"),
+    FORBIDDEN_DELETE_FOOD(HttpStatus.FORBIDDEN, "EF403004"),
 
     // 404
-    NOT_FOUND_FOOD(HttpStatus.NOT_FOUND, "식재료를 찾을 수 없습니다.");
+    NOT_FOUND_FOOD(HttpStatus.NOT_FOUND, "EF404001");
 
     private final HttpStatus status;
     private final String message;

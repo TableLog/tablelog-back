@@ -38,15 +38,9 @@ public class Food extends BaseEntity {
         this.cal = cal;
     }
 
-    public void updateFoodName(String foodName){
+    public void updateFood(String foodName, FoodUnit foodUnit, Integer cal){
         this.foodName = foodName;
-    }
-
-    public void updateFoodUnit(FoodUnit foodUnit){
         this.foodUnit = foodUnit;
-    }
-
-    public void updateCal(Integer cal){
         this.cal = cal;
     }
 }

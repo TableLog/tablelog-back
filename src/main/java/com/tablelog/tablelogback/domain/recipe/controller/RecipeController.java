@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe.controller;
 
-import com.tablelog.tablelogback.domain.recipe_food.controller.dto.controller.RecipeFoodCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.controller.dto.controller.RecipeProcessCreateControllerRequestDto;
 import com.tablelog.tablelogback.global.enums.RecipeCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,7 +34,7 @@ public class RecipeController {
             List<RecipeProcessCreateControllerRequestDto> RecipeProcessCreateControllerRequestDto,
             List<MultipartFile> recipeProcessImage,
             List<RecipeFoodCreateControllerRequestDto> RecipeFoodCreateControllerRequestDto,
-            String user
+            Long user
 //            @Valid @RequestPart(name = "recipeCreateRequestDto")
 //            @RequestBody RecipeCreateControllerRequestDto controllerRequestDto
 //            @RequestPart(name = "recipeCreateImage",required = false) MultipartFile recipeImage,
