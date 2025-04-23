@@ -16,4 +16,5 @@ public interface RecipeProcessService {
     List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcessesByRecipeId(Long recipeId);
     void updateRecipeProcess(Long rId, Long rfId, RecipeProcessUpdateServiceRequestDto requestDto,
                              List<MultipartFile> recipeProcessImages, User user) throws IOException;
+    void deleteRecipeProcess(Long rId, Long rfId, User user);
 }

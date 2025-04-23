@@ -112,6 +112,21 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         recipeProcessRepository.save(recipeProcess);
     }
 
+    @Override
+    public void deleteRecipeProcess(Long recipeId, Long recipeProcessId, User user) {
+        validateRecipeProcess(recipeId, user);
+        RecipeProcess recipeProcess = findRecipeProcess(recipeProcessId);
+
+        if (recipeProcess.getRecipeProcessImageUrls() != null){
+            for(int i = 0; i < recipeProcess.getRecipeProcessImageUrls().size(); i++) {
+                String image_name = recipeProcess.getRecipeProcessImageUrls().get(i).replace(url, "");
+                image_name = image_name.substring(image_name.lastIndexOf("/"));
+                s3Provider.delete(user.getFolderName() + image_name);
+            }
+        }
+        recipeProcessRepository.delete(recipeProcess);
+    }
+
     private void validateRecipeProcess(Long recipeId, User user){
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));

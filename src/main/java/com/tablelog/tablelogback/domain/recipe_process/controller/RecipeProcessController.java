@@ -79,4 +79,15 @@ public class RecipeProcessController {
                 serviceRequestDto, recipeProcessImages, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "레시피 조리과정 삭제")
+    @DeleteMapping("/recipes/{recipeId}/recipe-process/{recipeProcessId}")
+    public ResponseEntity<?> deleteRecipeProcess(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeProcessId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeProcessService.deleteRecipeProcess(recipeId, recipeProcessId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
