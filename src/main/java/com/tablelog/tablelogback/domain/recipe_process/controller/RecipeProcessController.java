@@ -1,93 +1,93 @@
 package com.tablelog.tablelogback.domain.recipe_process.controller;
 
+import com.tablelog.tablelogback.domain.recipe_process.dto.controller.RecipeProcessCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.controller.RecipeProcessUpdateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.mapper.dto.RecipeProcessDtoMapper;
+import com.tablelog.tablelogback.domain.recipe_process.service.impl.RecipeProcessServiceImpl;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "레시피 조리과정 API", description = "")
 public class RecipeProcessController {
-    @PostMapping("/recipe-process/{recipeId}")
-    public void createRecipeProcess(
-            @PathVariable Long recipeId,
-            short sequence,
-            String description,
-            MultipartFile multipartFile
-    ) throws IOException {
+    private final RecipeProcessDtoMapper recipeProcessDtoMapper;
+    private final RecipeProcessServiceImpl recipeProcessService;
 
+    @Operation(summary = "레시피 조리과정 생성")
+    @PostMapping(value = "/recipes/{recipeId}/recipe-process", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createRecipeProcess(
+            @PathVariable Long recipeId,
+            @RequestPart RecipeProcessCreateControllerRequestDto controllerRequestDto,
+            @RequestPart(value = "recipeProcessImages", required = false) List<MultipartFile> recipeProcessImages,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException {
+        RecipeProcessCreateServiceRequestDto serviceRequestDto =
+                recipeProcessDtoMapper.toRecipeProcessServiceRequestDto(controllerRequestDto);
+        recipeProcessService.createRecipeProcess(recipeId, serviceRequestDto, recipeProcessImages, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/recipe-process/{recipeProcessId}")
-    public Map<String, Object> readRecipeProcess(
+    @Operation(summary = "레시피 조리과정 단건 조회")
+    @GetMapping("/recipes/{recipeId}/recipe-process/{recipeProcessId}")
+    public ResponseEntity<RecipeProcessReadAllServiceResponseDto> readRecipeProcess(
+            @PathVariable Long recipeId,
             @PathVariable Long recipeProcessId
     ){
-        Map<String, Object> recipe_process1 = new HashMap<>();
-        recipe_process1.put("sequence", 1);
-        recipe_process1.put("description", "나나나");
-        recipe_process1.put("image_url", "https://example.com/image1.jpg");
-        recipe_process1.put("user", "user");
-        return recipe_process1;
-//        return ResponseEntity.status(HttpStatus.OK)
-//                .body(recipeProcessService.readRecipeProcess(recipeProcessId));
+        RecipeProcessReadAllServiceResponseDto responseDto =
+                recipeProcessService.readRecipeProcess(recipeId, recipeProcessId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "레시피 조리과정 전체 조회 By 레시피")
     @GetMapping("/recipes/{recipeId}/recipe-process")
-    public List<Map<String, Object>> readAllRecipeProcessesByRecipeId(
+    public ResponseEntity<List<RecipeProcessReadAllServiceResponseDto>> readAllRecipeProcessByRecipeId(
             @PathVariable Long recipeId
     ){
-        List<Map<String, Object>> recipe_processes = new ArrayList<>();
-        Map<String, Object> recipe_process1 = new HashMap<>();
-        recipe_process1.put("sequence", 1);
-        recipe_process1.put("description", "나나나");
-        recipe_process1.put("image_url", "https://example.com/image1.jpg");
-        recipe_process1.put("user", "user");
-        Map<String, Object> recipe_process2 = new HashMap<>();
-        recipe_process2.put("sequence", 2);
-        recipe_process2.put("description", "나나나");
-        recipe_process2.put("image_url", "https://example.com/image1.jpg");
-        recipe_process2.put("user", "user");
-
-        recipe_processes.add(recipe_process1);
-        recipe_processes.add(recipe_process2);
-        return recipe_processes;
-//        return ResponseEntity.status(HttpStatus.OK)
-//                .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
     }
 
-    @PutMapping("/recipe-process/{recipeProcessId}")
-    public void updateRecipeProcess(
+    @Operation(summary = "레시피 조리과정 수정")
+    @PutMapping(value = "/recipes/{recipeId}/recipe-process/{recipeProcessId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateRecipeProcess(
+            @PathVariable Long recipeId,
             @PathVariable Long recipeProcessId,
-            short sequence,
-            String description,
-            Boolean imageChange,
-            MultipartFile multipartFile
-//            @RequestBody RecipeProcessUpdateControllerRequestDto controllerRequestDto
-//            @AuthenticationPrincipal UserDetailsImpl userDetails,
-//            @RequestPart(required = false)MultipartFile multipartFile
+            @RequestPart RecipeProcessUpdateControllerRequestDto controllerRequestDto,
+            @RequestPart(value = "recipeProcessImages", required = false) List<MultipartFile> recipeProcessImages,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
-//        RecipeProcessUpdateServiceRequestDto serviceRequestDto =
-//                recipeProcessDtoMapper.toRecipeProcessUpdateServiceRequestDto(controllerRequestDto);
-//        recipeProcessService.updateRecipeProcess(recipeProcessId, serviceRequestDto
-////                multipartFile,userDetails.user()
-//        );
-//        return ResponseEntity.status(HttpStatus.OK).build();
+        RecipeProcessUpdateServiceRequestDto serviceRequestDto =
+                recipeProcessDtoMapper.toRecipeProcessUpdateServiceDto(controllerRequestDto);
+        recipeProcessService.updateRecipeProcess(recipeId, recipeProcessId,
+                serviceRequestDto, recipeProcessImages, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @DeleteMapping("/recipe-process/{recipeProcessId}")
-    public void deleteRecipeProcess(
-            @PathVariable Long recipeProcessId
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
+    @Operation(summary = "레시피 조리과정 삭제")
+    @DeleteMapping("/recipes/{recipeId}/recipe-process/{recipeProcessId}")
+    public ResponseEntity<?> deleteRecipeProcess(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeProcessId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-//        recipeProcessService.deleteRecipeProcess(recipeProcessId); //user
-//        return ResponseEntity.status(HttpStatus.OK).build();
+        recipeProcessService.deleteRecipeProcess(recipeId, recipeProcessId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
