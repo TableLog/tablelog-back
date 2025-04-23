@@ -36,11 +36,9 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
 
     @Override
     public void createRecipeFood(Long recipeId, final RecipeFoodCreateServiceRequestDto serviceRequestDto, User user) {
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         Food food = foodRepository.findById(serviceRequestDto.foodId())
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
-        RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipe, food);
+        RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipeId, food);
         recipeFoodRepository.save(recipeFood);
     }
 
@@ -55,5 +53,17 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
     public List<RecipeFoodReadAllServiceResponseDto> readAllRecipeFoodsByRecipeId(Long id){
         List<RecipeFood> recipeFoods = recipeFoodRepository.findAllByRecipeId(id);
         return recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(recipeFoods);
+    }
+
+    @Transactional
+    public void updateRecipeFood(
+            Long recipeId, Long recipeFoodId,
+            RecipeFoodUpdateServiceRequestDto requestDto, User user
+    ) throws IOException {
+        RecipeFood recipeFood = recipeFoodRepository.findByRecipeIdAndId(recipeId, recipeFoodId)
+                .orElseThrow(() -> new NotFoundRecipeFoodException(RecipeFoodErrorCode.NOT_FOUND_RECIPE_FOOD));
+        recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit(),
+                recipeFoodId, requestDto.foodId());
+        recipeFoodRepository.save(recipeFood);
     }
 }

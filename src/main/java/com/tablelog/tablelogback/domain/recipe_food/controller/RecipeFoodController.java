@@ -57,4 +57,18 @@ public class RecipeFoodController {
     ){
         return ResponseEntity.status(HttpStatus.OK).body(recipeFoodService.readAllRecipeFoodsByRecipeId(recipeId));
     }
+
+    @Operation(summary = "레시피 식재료 수정")
+    @PutMapping("/recipes/{recipeId}/recipe-food/{recipeFoodId}")
+    public ResponseEntity<?> updateRecipeFood(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeFoodId,
+            @RequestBody RecipeFoodUpdateControllerRequestDto controllerRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException {
+        RecipeFoodUpdateServiceRequestDto serviceRequestDto =
+                recipeFoodDtoMapper.toRecipeFoodUpdateServiceDto(controllerRequestDto);
+        recipeFoodService.updateRecipeFood(recipeId, recipeFoodId, serviceRequestDto, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

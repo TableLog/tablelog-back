@@ -12,4 +12,8 @@ public interface RecipeFoodDtoMapper {
     RecipeFoodCreateServiceRequestDto toRecipeFoodServiceRequestDto(
             RecipeFoodCreateControllerRequestDto controllerRequestDto
     );
+
+    RecipeFoodUpdateServiceRequestDto toRecipeFoodUpdateServiceDto(
+            RecipeFoodUpdateControllerRequestDto controllerRequestDto
+    );
 }
