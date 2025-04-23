@@ -8,7 +8,8 @@ public enum FoodUnit {
     ml,
     L,
     cup,
-    tbsp;
+    tbsp,
+    개;
 
     @JsonCreator
     public static FoodUnit fromString(String inputValue) {
