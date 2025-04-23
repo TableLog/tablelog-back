@@ -12,4 +12,5 @@ import java.util.List;
 public interface RecipeProcessService {
     void createRecipeProcess(Long rId, RecipeProcessCreateServiceRequestDto serviceRequestDto,
                              List<MultipartFile> recipeProcessImages, User user) throws IOException;
+    RecipeProcessReadAllServiceResponseDto readRecipeProcess(Long rId, Long rfId);
 }

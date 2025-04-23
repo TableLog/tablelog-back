@@ -42,4 +42,15 @@ public class RecipeProcessController {
         recipeProcessService.createRecipeProcess(recipeId, serviceRequestDto, recipeProcessImages, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "레시피 조리과정 단건 조회")
+    @GetMapping("/recipes/{recipeId}/recipe-process/{recipeProcessId}")
+    public ResponseEntity<RecipeProcessReadAllServiceResponseDto> readRecipeProcess(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeProcessId
+    ){
+        RecipeProcessReadAllServiceResponseDto responseDto =
+                recipeProcessService.readRecipeProcess(recipeId, recipeProcessId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }

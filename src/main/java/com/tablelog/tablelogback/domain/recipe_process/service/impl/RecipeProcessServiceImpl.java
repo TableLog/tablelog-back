@@ -5,6 +5,7 @@ import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.exception.ForbiddenAccessRecipeProcessException;
 import com.tablelog.tablelogback.domain.recipe_process.exception.NotFoundRecipeProcessException;
@@ -66,6 +67,13 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
                 recipeId, serviceRequestDto, recipeProcessImageUrls);
         recipeProcessRepository.save(recipeProcess);
     }
+
+    @Override
+    public RecipeProcessReadAllServiceResponseDto readRecipeProcess(Long recipeId, Long recipeProcessId){
+        RecipeProcess recipeProcess = findRecipeProcess(recipeProcessId);
+        return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+    }
+
 
     private void validateRecipeProcess(Long recipeId, User user){
         Recipe recipe = recipeRepository.findById(recipeId)
