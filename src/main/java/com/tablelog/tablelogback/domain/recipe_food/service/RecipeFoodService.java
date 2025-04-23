@@ -14,4 +14,5 @@ public interface RecipeFoodService {
     List<RecipeFoodReadAllServiceResponseDto> readAllRecipeFoodsByRecipeId(Long recipeId);
     void updateRecipeFood (Long rId, Long rfId, RecipeFoodUpdateServiceRequestDto requestDto,
                            User user) throws IOException;
+    void deleteRecipeFood(Long rId, Long rfId, User user);
 }

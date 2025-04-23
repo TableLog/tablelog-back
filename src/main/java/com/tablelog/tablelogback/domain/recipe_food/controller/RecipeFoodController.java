@@ -71,4 +71,15 @@ public class RecipeFoodController {
         recipeFoodService.updateRecipeFood(recipeId, recipeFoodId, serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "레시피 식재료 삭제")
+    @DeleteMapping("/recipes/{recipeId}/recipe-foods/{recipeFoodId}")
+    public ResponseEntity<?> deleteRecipeFood(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeFoodId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeFoodService.deleteRecipeFood(recipeId, recipeFoodId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

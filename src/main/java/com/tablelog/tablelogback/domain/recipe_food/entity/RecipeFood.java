@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.recipe_food.entity;
 
-import com.tablelog.tablelogback.domain.food.entity.Food;
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import com.tablelog.tablelogback.global.enums.FoodUnit;
 import jakarta.persistence.*;
