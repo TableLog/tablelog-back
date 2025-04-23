@@ -1,7 +1,12 @@
 package com.tablelog.tablelogback.domain.board_comment.controller;
 
 
+import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.mapper.dto.BoardCommentDtoMapper;
+import com.tablelog.tablelogback.domain.board_comment.service.BoardCommentService;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
@@ -20,15 +25,18 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 @Tag(name = "게시판 댓글 API", description = "게시판에 대한 댓글 CRUD")
 public class BoardCommentController {
+    private final BoardCommentDtoMapper boardCommentDtoMapper;
+    private final BoardCommentService boardCommentService;
 
     @PostMapping("boards/{board_id}/board_comment")
     public void createBoard(
             @PathVariable Long board_id,
-            String content,
-            String user
+            @RequestBody BoardCommentCreateControllerRequestDto requestDto,
             // BoardCreateControllerRequestDto controllerRequestDto
-            // @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
+        BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
+        boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user());
 
     }
     @PutMapping("/boards/{board_id}/board_comments/{board_comment_id}")
