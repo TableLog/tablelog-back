@@ -62,4 +62,21 @@ public class RecipeProcessController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId));
     }
+
+    @Operation(summary = "레시피 조리과정 수정")
+    @PutMapping(value = "/recipes/{recipeId}/recipe-process/{recipeProcessId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateRecipeProcess(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeProcessId,
+            @RequestPart RecipeProcessUpdateControllerRequestDto controllerRequestDto,
+            @RequestPart(value = "recipeProcessImages", required = false) List<MultipartFile> recipeProcessImages,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException {
+        RecipeProcessUpdateServiceRequestDto serviceRequestDto =
+                recipeProcessDtoMapper.toRecipeProcessUpdateServiceDto(controllerRequestDto);
+        recipeProcessService.updateRecipeProcess(recipeId, recipeProcessId,
+                serviceRequestDto, recipeProcessImages, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

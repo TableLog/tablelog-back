@@ -6,6 +6,7 @@ import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.exception.ForbiddenAccessRecipeProcessException;
 import com.tablelog.tablelogback.domain.recipe_process.exception.NotFoundRecipeProcessException;
@@ -19,6 +20,7 @@ import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -78,6 +80,36 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     public List<RecipeProcessReadAllServiceResponseDto> readAllRecipeProcessesByRecipeId(Long recipeId) {
         List<RecipeProcess> recipeProcesses = recipeProcessRepository.findAllByRecipeId(recipeId);
         return recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(recipeProcesses);
+    }
+
+    @Transactional
+    public void updateRecipeProcess(
+            Long recipeId, Long recipeProcessId, RecipeProcessUpdateServiceRequestDto requestDto,
+            List<MultipartFile> recipeProcessImages, User user
+    ) throws IOException {
+        validateRecipeProcess(recipeId, user);
+        RecipeProcess recipeProcess = findRecipeProcess(recipeProcessId);
+
+        List<String> recipeProcessImageUrls = new ArrayList<>();
+        String folderName = user.getFolderName();
+
+        if (recipeProcessImages != null && !recipeProcessImages.isEmpty()) {
+            for (int i = 0; i < recipeProcessImages.size(); i++) {
+                MultipartFile image = recipeProcessImages.get(i);
+                if (!image.isEmpty()) {
+                    String fileName = s3Provider.originalFileName(image);
+                    String filePath = folderName + S3Provider.SEPARATOR + fileName;
+                    String fileUrl = url + filePath;
+
+                    s3Provider.saveFile(image, filePath);
+                    recipeProcessImageUrls.add(fileUrl);
+                }
+            }
+        }
+
+        recipeProcess.updateRecipeProcess(requestDto.sequence(), requestDto.rpTitle(),
+                requestDto.description(), recipeProcessImageUrls);
+        recipeProcessRepository.save(recipeProcess);
     }
 
     private void validateRecipeProcess(Long recipeId, User user){
