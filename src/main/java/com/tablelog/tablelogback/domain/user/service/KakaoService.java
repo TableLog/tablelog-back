@@ -4,13 +4,15 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tablelog.tablelogback.domain.user.dto.oauth2.KakaoUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
-import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.domain.user.service.impl.UserServiceImpl;
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
@@ -31,7 +33,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -57,6 +58,7 @@ public class KakaoService {
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
     private final S3Provider s3Provider;
+    private final UserServiceImpl userService;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -87,29 +89,29 @@ public class KakaoService {
         return jsonNode;
     }
 
-    public KakaoUserInfoDto getKakaoUserInfo(String code) throws JsonProcessingException {
+    public SocialUserInfoDto getKakaoUserInfo(String code) throws JsonProcessingException {
         JsonNode jsonNode = getKakaoToken(code);
         String kakaoAccessToken = jsonNode.get("access_token").asText();
         String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
         refreshTimeToLive = jsonNode.get("refresh_token_expires_in").asInt();
 
-        KakaoUserInfoDto kakaoUserInfoDto;
+        SocialUserInfoDto socialUserInfoDto;
         try{
-            kakaoUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
+            socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
         } catch (Exception e){
             throw new NotFoundKakaoUserException(UserErrorCode.NOT_FOUND_USER);
         }
         httpServletResponse.addHeader("Kakao-Access-Token", kakaoAccessToken);
         httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
-        return kakaoUserInfoDto;
+        return socialUserInfoDto;
     }
 
     public UserLoginResponseDto signupWithKakao(
-            KakaoUserInfoDto kakaoUserInfoDto,
+            UserSignUpServiceRequestDto serviceRequestDto,
             MultipartFile multipartFile,
             String kakaoAccessToken
     ) throws IOException {
-        User user = joinKakaoUser(kakaoUserInfoDto, multipartFile);
+        User user = userService.signUp(serviceRequestDto, multipartFile);
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
         String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
@@ -124,73 +126,19 @@ public class KakaoService {
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
-    private User joinKakaoUser(KakaoUserInfoDto kakaoUserInfoDto,
-                               MultipartFile multipartFile
-    ) throws IOException {
-        String kakaoEmail = kakaoUserInfoDto.kakaoEmail();
-        // 카카오 가입 여부 확인
-        if(userRepository.existsByKakaoEmail(kakaoEmail)){
-            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-        }
-        // 중복 가입 확인
-        if(userRepository.existsByNameAndBirthday(kakaoUserInfoDto.name(), kakaoUserInfoDto.birthday())){
-            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-        }
-        // 중복 이메일 가입 확인
-        if(userRepository.existsByEmail(kakaoEmail)){
-            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
-        }
-        // 닉네임 중복 확인
-        if(userRepository.existsByNickname(kakaoUserInfoDto.nickname())){
-            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
-        }
-        User kakaoUser;
-        String uuid = UUID.randomUUID().toString();
-        String fileName;
-        String fileUrl;
-        if (multipartFile == null || multipartFile.isEmpty()){
-            kakaoUser = User.builder()
-                    .email(kakaoEmail)
-                    .password(passwordEncoder.encode(uuid))
-                    .nickname(kakaoUserInfoDto.nickname())
-                    .name(kakaoUserInfoDto.name())
-                    .birthday(kakaoUserInfoDto.birthday())
-                    .userRole(UserRole.NORMAL)
-                    .kakaoEmail(kakaoEmail)
-                    .build();
-        } else {
-            fileName = s3Provider.originalFileName(multipartFile);
-            fileUrl = url + kakaoUserInfoDto.nickname() + SEPARATOR + fileName;
-            kakaoUser = User.builder()
-                    .email(kakaoEmail)
-                    .password(passwordEncoder.encode(uuid))
-                    .nickname(kakaoUserInfoDto.nickname())
-                    .name(kakaoUserInfoDto.name())
-                    .birthday(kakaoUserInfoDto.birthday())
-                    .userRole(UserRole.NORMAL)
-                    .profileImgUrl(fileUrl)
-                    .kakaoEmail(kakaoEmail)
-                    .build();
-            fileUrl = kakaoUser.getFolderName() + SEPARATOR + fileName;
-            s3Provider.saveFile(multipartFile, fileUrl);
-        }
-        userRepository.save(kakaoUser);
-        return kakaoUser;
-    }
-
     public UserLoginResponseDto loginWithKakao(String code) throws JsonProcessingException {
         JsonNode jsonNode = getKakaoToken(code);
         String kakaoAccessToken = jsonNode.get("access_token").asText();
         String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
         refreshTimeToLive = jsonNode.get("refresh_token_expires_in").asInt();
 
-        KakaoUserInfoDto kakaoUserInfoDto;
+        SocialUserInfoDto socialUserInfoDto;
         try{
-            kakaoUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
+            socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
         } catch (Exception e){
             throw new NotFoundKakaoUserException(UserErrorCode.NOT_FOUND_USER);
         }
-        User kakaoUser = userRepository.findByKakaoEmail(kakaoUserInfoDto.kakaoEmail())
+        User kakaoUser = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(kakaoUser, httpServletResponse);
@@ -206,8 +154,8 @@ public class KakaoService {
     }
 
     public void unlinkKakao(String kakaoAccessToken) throws JacksonException {
-        KakaoUserInfoDto kakaoUserInfo = getKakaoUserWithAccessToken(kakaoAccessToken);
-        User user = userRepository.findByKakaoEmail(kakaoUserInfo.kakaoEmail())
+        SocialUserInfoDto socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
+        User user = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
 
         HttpHeaders headers = new HttpHeaders();
@@ -224,7 +172,6 @@ public class KakaoService {
         );
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            user.deleteKakaoEmail();
             kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
             userRepository.save(user);
         } else {
@@ -233,7 +180,7 @@ public class KakaoService {
         }
     }
 
-    private KakaoUserInfoDto getKakaoUserWithAccessToken(String kakaoAccessToken) throws JacksonException {
+    private SocialUserInfoDto getKakaoUserWithAccessToken(String kakaoAccessToken) throws JacksonException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + kakaoAccessToken);
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -250,7 +197,7 @@ public class KakaoService {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-        String kakaoEmail = jsonNode.get("kakao_account").get("email").asText();
+        String email = jsonNode.get("kakao_account").get("email").asText();
         String nickname = jsonNode.get("kakao_account").get("profile").get("nickname").asText();
         String name = jsonNode.get("kakao_account").get("name").asText();
         String birth = jsonNode.get("kakao_account").get("birthyear").asText()+"-"
@@ -263,7 +210,7 @@ public class KakaoService {
         else {
             profileImgUrl = "";
         }
-        return new KakaoUserInfoDto(kakaoEmail, nickname, name, birth, profileImgUrl);
+        return new SocialUserInfoDto(email, nickname, name, birth, profileImgUrl, UserProvider.kakao);
     }
 
     public void refresh(String kakaoRefreshToken, User user) throws JacksonException {

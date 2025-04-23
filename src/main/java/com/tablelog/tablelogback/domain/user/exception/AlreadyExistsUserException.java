@@ -4,7 +4,7 @@ import com.tablelog.tablelogback.global.exception.CustomException;
 import com.tablelog.tablelogback.global.exception.ErrorCode;
 
 public class AlreadyExistsUserException extends CustomException {
-    public AlreadyExistsUserException(ErrorCode errorCode){
+    public AlreadyExistsUserException(final ErrorCode errorCode){
         super(errorCode);
     }
 }

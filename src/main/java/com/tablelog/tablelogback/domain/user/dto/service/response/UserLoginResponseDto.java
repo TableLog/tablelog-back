@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.user.dto.service.response;
 
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
 
 public record UserLoginResponseDto(
@@ -10,8 +11,7 @@ public record UserLoginResponseDto(
         String birthday,
         UserRole userRole,
         String profileImgUrl,
-        String kakaoEmail,
-        String googleEmail,
+        UserProvider provider,
         Integer pointBalance
 ) {
 }

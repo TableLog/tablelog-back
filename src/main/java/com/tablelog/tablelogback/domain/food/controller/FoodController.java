@@ -7,22 +7,17 @@ import com.tablelog.tablelogback.domain.food.dto.service.request.FoodUpdateServi
 import com.tablelog.tablelogback.domain.food.dto.service.response.FoodReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.food.mapper.dto.FoodDtoMapper;
 import com.tablelog.tablelogback.domain.food.service.impl.FoodServiceImpl;
-import com.tablelog.tablelogback.global.enums.FoodUnit;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -35,11 +30,12 @@ public class FoodController {
     @Operation(summary = "식재료 생성")
     @PostMapping("/foods")
     public ResponseEntity<?> createFood(
-            @RequestBody FoodCreateControllerRequestDto controllerRequestDto
+            @RequestBody FoodCreateControllerRequestDto controllerRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         FoodCreateServiceRequestDto serviceRequestDto =
                 foodDtoMapper.toFoodCreateServiceDto(controllerRequestDto);
-        foodService.createFood(serviceRequestDto);
+        foodService.createFood(serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -75,14 +71,15 @@ public class FoodController {
         }
     }
 
-    @Operation(summary = "식재료 수정", description = "바꾸는 것만 입력")
+    @Operation(summary = "식재료 수정")
     @PutMapping("/foods/{foodId}")
     public ResponseEntity<?> updateFood(
             @PathVariable Long foodId,
-            @RequestBody FoodUpdateControllerRequestDto controllerRequestDto
+            @RequestBody FoodUpdateControllerRequestDto controllerRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         FoodUpdateServiceRequestDto serviceRequestDto = foodDtoMapper.toFoodUpdateServiceDto(controllerRequestDto);
-        foodService.updateFood(foodId, serviceRequestDto);
+        foodService.updateFood(foodId, serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
