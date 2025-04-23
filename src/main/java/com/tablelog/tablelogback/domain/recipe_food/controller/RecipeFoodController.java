@@ -1,74 +1,42 @@
 package com.tablelog.tablelogback.domain.recipe_food.controller;
 
-import com.tablelog.tablelogback.global.enums.FoodAmount;
+import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodUpdateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_food.mapper.dto.RecipeFoodDtoMapper;
+import com.tablelog.tablelogback.domain.recipe_food.service.impl.RecipeFoodServiceImpl;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "레시피 식재료 API", description = "")
 public class RecipeFoodController {
+    private final RecipeFoodDtoMapper recipeFoodDtoMapper;
+    private final RecipeFoodServiceImpl recipeFoodService;
 
-    @PostMapping("/recipe-food/{recipeId}")
-    public void createRecipeFood(
+    @Operation(summary = "레시피 식재료 생성")
+    @PostMapping("/recipes/{recipeId}/recipe-food")
+    public ResponseEntity<?> createRecipeFood(
             @PathVariable Long recipeId,
-            FoodAmount foodAmount,
-            String foodName
+            @RequestBody RecipeFoodCreateControllerRequestDto controllerRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
-
-    }
-
-    @GetMapping("/recipe-food/{recipeFoodId}")
-    public Map<String, Object> readRecipeFood(
-            @PathVariable Long recipeFoodId
-    ){
-        Map<String, Object> recipe_food1 = new HashMap<>();
-        recipe_food1.put("foodAmount", "ts");
-        recipe_food1.put("foodName", "사과");
-        recipe_food1.put("user", "user1");
-        return recipe_food1;
-    }
-
-    @GetMapping("/recipes/{recipeId}/recipe-food")
-    public List<Map<String, Object>> readAllRecipeFoodsByRecipeId(
-            @PathVariable Long recipeId
-    ){
-        List<Map<String, Object>> recipe_foods = new ArrayList<>();
-        Map<String, Object> recipe_food1 = new HashMap<>();
-        recipe_food1.put("foodAmount", "ts");
-        recipe_food1.put("foodName", "사과");
-        recipe_food1.put("user", "user1");
-        Map<String, Object> recipe_food2 = new HashMap<>();
-        recipe_food2.put("foodAmount", "ts");
-        recipe_food2.put("foodName", "사과");
-        recipe_food2.put("user", "user1");
-        recipe_foods.add(recipe_food1);;
-        recipe_foods.add(recipe_food2);
-        return recipe_foods;
-    }
-
-    @PutMapping("/recipe-food/{recipeFoodId}")
-    public void updateRecipeFood(
-            @PathVariable Long recipeFoodId,
-            FoodAmount foodAmount,
-            String foodName
-    ) throws IOException {
-
-    }
-
-    @DeleteMapping("/recipe-food/{recipeFoodId}")
-    public void deleteRecipeFood(
-            @PathVariable Long recipeFoodId
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
-
+        RecipeFoodCreateServiceRequestDto serviceRequestDto =
+                recipeFoodDtoMapper.toRecipeFoodServiceRequestDto(controllerRequestDto);
+        recipeFoodService.createRecipeFood(recipeId, serviceRequestDto, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
