@@ -19,6 +19,9 @@ public class Recipe extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
+    private String user;
+
+    @Column(nullable = false)
     private String title;
 
     @Column
@@ -55,10 +58,11 @@ public class Recipe extends BaseEntity {
     private Integer point;
 
     @Builder
-    public Recipe(final String title, final String intro, final String folderName,
+    public Recipe(final String user, final String title, final String intro, final String folderName,
                   final String imageUrl, final int state, final RecipeCategory recipeCategory,
                   final Byte star, final Integer price, final String memo, final String cookingTime,
                   final Boolean isPaid, final Integer point){
+        this.user = user;
         this.title = title;
         this.intro = intro;
         this.folderName = folderName;
