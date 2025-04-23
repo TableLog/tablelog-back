@@ -10,17 +10,15 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface UserService {
-    void signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
+    void checkDuplicate(UserSignUpServiceRequestDto serviceRequestDto);
+    User signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
     UserLoginResponseDto login(UserLoginServiceRequestDto userLoginServiceRequestDto);
     UserLoginResponseDto getUser(String token);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
-    void deleteUser(User user, String kakaoAccessToken,
-                    String googleAccessToken, HttpServletResponse httpServletResponse)
-            throws JacksonException;
-    UserLoginResponseDto refreshAccessToken(String refreshToken, String kakaoRefresh,
-                                            String googleRefresh, HttpServletResponse response);
+    void deleteUser(User user, HttpServletResponse httpServletResponse) throws JacksonException;
+    UserLoginResponseDto refreshAccessToken(String refreshToken, String socialRefresh, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
     void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto);

@@ -4,13 +4,15 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tablelog.tablelogback.domain.user.dto.oauth2.GoogleUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
+import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
-import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.domain.user.service.impl.UserServiceImpl;
+import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
@@ -33,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -60,6 +61,7 @@ public class GoogleService {
     private final HttpServletRequest httpServletRequest;
     private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
     private final S3Provider s3Provider;
+    private final UserServiceImpl userService;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -89,23 +91,23 @@ public class GoogleService {
         return objectMapper.readTree(response.getBody());
     }
 
-    public GoogleUserInfoDto getGoogleUserInfo(String code) throws JsonProcessingException {
+    public SocialUserInfoDto getGoogleUserInfo(String code) throws JsonProcessingException {
         JsonNode jsonNode = getGoogleToken(code);
         String googleAccessToken = jsonNode.get("access_token").asText();
         String googleRefreshToken = jsonNode.get("refresh_token").asText();
 
-        GoogleUserInfoDto googleUserInfoDto;
+        SocialUserInfoDto socialUserInfoDto;
         try{
-            googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+            socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
         } catch (Exception e){
-            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
         }
         httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
         httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
-        return googleUserInfoDto;
+        return socialUserInfoDto;
     }
 
-    public GoogleUserInfoDto getGoogleUserInfoWithAccessToken(String accessToken) throws JsonProcessingException {
+    public SocialUserInfoDto getGoogleUserInfoWithAccessToken(String accessToken) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
 
@@ -121,21 +123,22 @@ public class GoogleService {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
-        return new GoogleUserInfoDto(
+        return new SocialUserInfoDto(
                 jsonNode.get("email").asText(),
                 jsonNode.get("name").asText(),
                 jsonNode.get("family_name").asText() + jsonNode.get("given_name").asText(),
                 null,
-                jsonNode.get("picture").asText()
+                jsonNode.get("picture").asText(),
+                UserProvider.google
         );
     }
 
     public UserLoginResponseDto signupWithGoogle(
-            GoogleUserInfoDto googleUserInfoDto,
+            UserSignUpServiceRequestDto serviceRequestDto,
             MultipartFile multipartFile,
             String googleAccessToken
     ) throws IOException {
-        User user = joinGoogleUser(googleUserInfoDto, multipartFile);
+        User user = userService.signUp(serviceRequestDto, multipartFile);
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
         String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
@@ -150,78 +153,24 @@ public class GoogleService {
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
-    private User joinGoogleUser(GoogleUserInfoDto googleUserInfoDto,
-                                MultipartFile multipartFile
-    ) throws IOException {
-        String googleEmail = googleUserInfoDto.googleEmail();
-        // 구글 가입 여부 확인
-        if(userRepository.existsByGoogleEmail(googleEmail)){
-            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-        }
-        // 중복 가입 확인
-        if(userRepository.existsByNameAndBirthday(googleUserInfoDto.name(), googleUserInfoDto.birthday())){
-            throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
-        }
-        // 중복 이메일 가입 확인
-        if(userRepository.existsByEmail(googleEmail)){
-            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
-        }
-        // 닉네임 중복 확인
-        if(userRepository.existsByNickname(googleUserInfoDto.nickname())){
-            throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
-        }
-        User googleUser;
-        String uuid = UUID.randomUUID().toString();
-        String fileName;
-        String fileUrl;
-        if (multipartFile == null || multipartFile.isEmpty()){
-            googleUser = User.builder()
-                    .email(googleEmail)
-                    .password(passwordEncoder.encode(uuid))
-                    .nickname(googleUserInfoDto.nickname())
-                    .name(googleUserInfoDto.name())
-                    .birthday(googleUserInfoDto.birthday())
-                    .userRole(UserRole.NORMAL)
-                    .googleEmail(googleEmail)
-                    .build();
-        } else {
-            fileName = s3Provider.originalFileName(multipartFile);
-            fileUrl = url + googleUserInfoDto.nickname() + SEPARATOR + fileName;
-            googleUser = User.builder()
-                    .email(googleEmail)
-                    .password(passwordEncoder.encode(uuid))
-                    .nickname(googleUserInfoDto.nickname())
-                    .name(googleUserInfoDto.name())
-                    .birthday(googleUserInfoDto.birthday())
-                    .userRole(UserRole.NORMAL)
-                    .profileImgUrl(fileUrl)
-                    .googleEmail(googleEmail)
-                    .build();
-            fileUrl = googleUser.getFolderName() + SEPARATOR + fileName;
-            s3Provider.saveFile(multipartFile, fileUrl);
-        }
-        userRepository.save(googleUser);
-        return googleUser;
-    }
-
     public UserLoginResponseDto loginWithGoogle(String code) throws JsonProcessingException {
         JsonNode jsonNode = getGoogleToken(code);
         String googleAccessToken = jsonNode.get("access_token").asText();
 
-        GoogleUserInfoDto googleUserInfoDto;
+        SocialUserInfoDto socialUserInfoDto;
         try{
-            googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+            socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
         } catch (Exception e){
-            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_USER);
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
         }
-        User googleUser = userRepository.findByGoogleEmail(googleUserInfoDto.googleEmail())
+        User googleUser = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         // 서버 토큰 저장
         jwtUtil.addAccessTokenToHeader(googleUser, httpServletResponse);
         String refresh = jwtUtil.addRefreshTokenToCookie(googleUser, httpServletResponse);
         RefreshToken refreshToken = new RefreshToken(googleUser.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
-        // 카카오 토큰 저장
+        // 구글 토큰 저장
         httpServletResponse.addHeader("Google-Access-Token", googleAccessToken);
         jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
         return userEntityMapper.toUserLoginResponseDto(googleUser);
@@ -264,9 +213,9 @@ public class GoogleService {
     }
 
     public void unlinkGoogle(String googleAccessToken) throws JacksonException {
-        GoogleUserInfoDto googleUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+        SocialUserInfoDto socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
 
-        User user = userRepository.findByGoogleEmail(googleUserInfoDto.googleEmail())
+        User user = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
 
         HttpHeaders headers = new HttpHeaders();
@@ -283,7 +232,6 @@ public class GoogleService {
         );
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            user.deleteGoogleEmail();
             googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
             userRepository.save(user);
         } else {
