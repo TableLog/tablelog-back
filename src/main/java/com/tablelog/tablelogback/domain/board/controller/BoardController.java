@@ -76,15 +76,10 @@ public class BoardController {
     }
 
     @GetMapping("/boards/{board_id}")
-    public Map<String, Object> readAllBoards(
+    public ResponseEntity<BoardReadResponseDto> readAllBoards(
             @PathVariable Long board_id
-    )throws  IOException{
-        Map<String, Object> board1 = new HashMap<>();
-        board1.put("title", "첫 번째 게시글");
-        board1.put("content", "이것은 첫 번째 게시글의 내용입니다.");
-        board1.put("category", "공지사항");
-        board1.put("image_url", "https://example.com/image1.jpg");
-        board1.put("user", "admin");
-        return board1;
+    ){
+        BoardReadResponseDto readResponseDto = boardService.getOnce(board_id);
+        return ResponseEntity.ok(readResponseDto);
     }
 }

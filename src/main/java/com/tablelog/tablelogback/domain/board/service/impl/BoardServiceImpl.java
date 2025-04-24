@@ -122,4 +122,10 @@ public class BoardServiceImpl implements BoardService {
         Slice<Board> boards = boardRepository.findAllBy(PageRequest.of(pageNumber, 3));
         return boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
     }
+    @Override
+    public  BoardReadResponseDto getOnce(Long id){
+        Board board = boardRepository.findById(id)
+            .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        return boardEntityMapper.toTestReadResponseDto(board);
+    }
 }
