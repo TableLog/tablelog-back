@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board_comment.service;
 
 
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 
 import java.io.IOException;
@@ -16,11 +17,11 @@ public interface BoardCommentService {
     , User user
     ) throws IOException;
 
-//    void update(BoardUpdateServiceRequestDto requestDto
-//            ,User user
-//            ,Long id
-//            ,MultipartFile multipartFile
-//    ) throws IOException;
+    void update(BoardCommentUpdateServiceRequestDto requestDto
+            ,User user
+            ,Long board_id
+            ,Long boardComment_id
+    ) throws IOException;
 //     void delete(
 //         Long id,
 //         User user

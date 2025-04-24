@@ -6,7 +6,10 @@ import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
+import com.tablelog.tablelogback.domain.board_comment.exception.BoardCommentErrorCode;
+import com.tablelog.tablelogback.domain.board_comment.exception.NotFoundBoardCommentException;
 import com.tablelog.tablelogback.domain.board_comment.mapper.entity.BoardCommentEntityMapper;
 import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.board_comment.service.BoardCommentService;
@@ -44,31 +47,21 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
         boardCommentRepository.save(boardComment);
 
     }
-//    @Override
-//    public void update(final BoardUpdateServiceRequestDto boardRequestDto
-//            , User user
-//            , Long board_id
-//            , MultipartFile multipartFile
-//    )throws IOException
-//    {
-//        Board board = boardCommentRepository.findByIdAndUser(board_id,user.getNickname())
-//                .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARD));
-//        String folderName = user.getFolderName();
-//        String fileName;
-//        String fileUrl;
-//        if (multipartFile.isEmpty()) {
-//            fileUrl = board.getImage_url();
-//            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),fileUrl,boardRequestDto.category().toString());
-//            boardCommentRepository.save(board);
-//        } else {
-//            fileName = s3Provider.originalFileName(multipartFile);
-//            fileUrl = url + user.getFolderName() + SEPARATOR + fileName;
-//            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),fileUrl,boardRequestDto.category().toString());
-//            boardCommentRepository.save(board);
-//            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-//            s3Provider.saveFile(multipartFile, fileUrl);
-//        }
-//    }
+    @Override
+    public void update(final BoardCommentUpdateServiceRequestDto boardCommentRequestDto
+            , User user
+            , Long board_id
+            , Long boardComment_id
+    )throws IOException
+    {
+        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
+                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        BoardComment boardComment = boardCommentRepository.findByIdAndUser(boardComment_id,user.getNickname())
+                .orElseThrow(()-> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
+        boardComment.update(boardCommentRequestDto.content());
+        boardCommentRepository.save(boardComment);
+    }
+
 //    @DeleteMapping
 //    public void delete(Long board_id,User user){
 //        Board board = boardCommentRepository.findByIdAndUser(board_id,user.getNickname())

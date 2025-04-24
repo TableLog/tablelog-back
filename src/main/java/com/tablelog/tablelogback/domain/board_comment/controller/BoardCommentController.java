@@ -2,7 +2,9 @@ package com.tablelog.tablelogback.domain.board_comment.controller;
 
 
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.mapper.dto.BoardCommentDtoMapper;
 import com.tablelog.tablelogback.domain.board_comment.service.BoardCommentService;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
@@ -10,6 +12,8 @@ import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,7 +33,7 @@ public class BoardCommentController {
     private final BoardCommentService boardCommentService;
 
     @PostMapping("boards/{board_id}/board_comment")
-    public void createBoard(
+    public ResponseEntity<?> createBoard(
             @PathVariable Long board_id,
             @RequestBody BoardCommentCreateControllerRequestDto requestDto,
             // BoardCreateControllerRequestDto controllerRequestDto
@@ -37,16 +41,18 @@ public class BoardCommentController {
     ) throws IOException {
         BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
         boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user());
-
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PutMapping("/boards/{board_id}/board_comments/{board_comment_id}")
-    public void updateBoardComment(
+    public ResponseEntity<?> updateBoardComment(
             @PathVariable Long board_id,
             @PathVariable Long board_comment_id,
-            String content,
-            String user
+            @RequestBody BoardCommentUpdateControllerRequestDto requestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     )throws IOException{
-
+        BoardCommentUpdateServiceRequestDto boardCommentUpdateServiceRequestDto = boardCommentDtoMapper.toBoardCommentUpdateServiceRequestDto(requestDto);
+        boardCommentService.update(boardCommentUpdateServiceRequestDto,userDetails.user(),board_id,board_comment_id);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @DeleteMapping("/boards/{board_id}/board_comments/{board_comment_id}")
     public void deleteBoardComment(
