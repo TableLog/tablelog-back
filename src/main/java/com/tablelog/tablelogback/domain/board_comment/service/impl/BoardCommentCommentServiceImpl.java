@@ -6,6 +6,7 @@ import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
 import com.tablelog.tablelogback.domain.board_comment.exception.BoardCommentErrorCode;
@@ -17,9 +18,13 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -56,43 +61,35 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     {
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        BoardComment boardComment = boardCommentRepository.findByIdAndUser(boardComment_id,user.getNickname())
+        BoardComment boardComment = boardCommentRepository.findByBoardidAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
                 .orElseThrow(()-> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         boardComment.update(boardCommentRequestDto.content());
         boardCommentRepository.save(boardComment);
     }
+    public void delete(Long board_id,Long boardComment_id,User user){
+        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
+            .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        BoardComment boardComment = boardCommentRepository.findByBoardidAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
+                .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
+        boardCommentRepository.delete(boardComment);
+        }
+    @Override
+    public BoardCommentReadResponseDto getOnce(Long boardComment_id) {
+        BoardComment boardComment = boardCommentRepository.findById(boardComment_id)
+                .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
+        return boardCommentEntityMapper.toBoardCommentReadResponseDto(boardComment);
+    }
 
-//    @DeleteMapping
-//    public void delete(Long board_id,User user){
-//        Board board = boardCommentRepository.findByIdAndUser(board_id,user.getNickname())
-//            .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARD));
-//        if (board.getImage_url()==null){
-//            boardCommentRepository.delete(board);
-//        }else {
-//            String image_name = board.getImage_url().replace(url,"");
-//            image_name = image_name.substring(image_name.lastIndexOf("/"));
-//            boardCommentRepository.delete(board);
-//            s3Provider.delete(user.getFolderName()+image_name);
-//        }
-//    }
-//    // Test -> TestCreateServiceRequestDto
-////    @Override
-////    public TestReadResponseDto get(Long id) {
-////        Board board = boardRepository.findById(id)
-////            .orElseThrow(() -> new NotFoundTestException(BoardErrorCode.NOT_FOUND_BOARD));
-////        return boardEntityMapper.toTestReadResponseDto(board);
-////    }
-////
-////    // List<Test> -> List<TestCreateServiceRequestDto>
-//    @Override
-//    public List<BoardReadResponseDto> getAll(int pageNumber) {
-//        Slice<Board> boards = boardCommentRepository.findAllBy(PageRequest.of(pageNumber, 3));
-//        return boardCommentEntityMapper.toBoardReadResponseDtos(boards.getContent());
-//    }
-//    @Override
-//    public  BoardReadResponseDto getOnce(Long id){
-//        Board board = boardCommentRepository.findById(id)
-//            .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARD));
-//        return boardCommentEntityMapper.toTestReadResponseDto(board);
-//    }
+    @Override
+    public Slice<BoardCommentReadResponseDto> getAll(Long boardId, int pageNumber) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+
+        PageRequest pageRequest = PageRequest.of(pageNumber, 3); // 3개씩 가져오기
+        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardid(board.getId().toString(), pageRequest);
+
+        List<BoardCommentReadResponseDto> content = boardCommentEntityMapper.toBoardCommentReadResponseDtos(commentSlice.getContent());
+        return new SliceImpl<>(content, pageRequest, commentSlice.hasNext());
+    }
+
 }
