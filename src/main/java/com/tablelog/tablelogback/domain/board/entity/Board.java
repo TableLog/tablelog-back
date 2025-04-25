@@ -39,5 +39,6 @@ public class Board extends BaseEntity {
         this.title = title;
         this.content = content;
         this.image_url = image_url;
+        this.category = category;
     }
 }

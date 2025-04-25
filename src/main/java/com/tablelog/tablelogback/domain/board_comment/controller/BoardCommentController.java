@@ -2,7 +2,10 @@ package com.tablelog.tablelogback.domain.board_comment.controller;
 
 
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.mapper.dto.BoardCommentDtoMapper;
 import com.tablelog.tablelogback.domain.board_comment.service.BoardCommentService;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
@@ -10,6 +13,9 @@ import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
+import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,7 +35,7 @@ public class BoardCommentController {
     private final BoardCommentService boardCommentService;
 
     @PostMapping("boards/{board_id}/board_comment")
-    public void createBoard(
+    public ResponseEntity<?> createBoard(
             @PathVariable Long board_id,
             @RequestBody BoardCommentCreateControllerRequestDto requestDto,
             // BoardCreateControllerRequestDto controllerRequestDto
@@ -37,16 +43,18 @@ public class BoardCommentController {
     ) throws IOException {
         BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
         boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user());
-
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PutMapping("/boards/{board_id}/board_comments/{board_comment_id}")
-    public void updateBoardComment(
+    public ResponseEntity<?> updateBoardComment(
             @PathVariable Long board_id,
             @PathVariable Long board_comment_id,
-            String content,
-            String user
+            @RequestBody BoardCommentUpdateControllerRequestDto requestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     )throws IOException{
-
+        BoardCommentUpdateServiceRequestDto boardCommentUpdateServiceRequestDto = boardCommentDtoMapper.toBoardCommentUpdateServiceRequestDto(requestDto);
+        boardCommentService.update(boardCommentUpdateServiceRequestDto,userDetails.user(),board_id,board_comment_id);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @DeleteMapping("/boards/{board_id}/board_comments/{board_comment_id}")
     public void deleteBoardComment(
@@ -57,33 +65,21 @@ public class BoardCommentController {
 
     }
     @GetMapping("/boards/{board_id}/board_comments")
-    public List<Map<String, Object>> readAllBoardComments(
-            @PathVariable Long board_id
-    ) {
-        List<Map<String, Object>> board_comments = new ArrayList<>();
-
-        Map<String, Object> board_comment1 = new HashMap<>();
-        board_comment1.put("content", "이것은 첫 번째 게시글의 댓글입니다.");
-        board_comment1.put("user", "admin");
-
-        Map<String, Object> board_comment2 = new HashMap<>();
-        board_comment2.put("content", "이것은 두 번째 게시글의 내용입니다.");
-        board_comment2.put("user", "user1");
-
-        board_comments.add(board_comment1);
-        board_comments.add(board_comment2);
-
-        return board_comments;
-    }
-
-    @GetMapping("/boards/{board_id}/board_comments/{board_comment_id}")
-    public Map<String, Object> readAllBoards(
+    public Slice<BoardCommentReadResponseDto> readAllBoardComments(
             @PathVariable Long board_id,
-            @PathVariable Long board_comment_id
-    )throws  IOException{
-        Map<String, Object> board_comment1 = new HashMap<>();
-        board_comment1.put("content", "이것은 첫 번째 게시글의 내용입니다.");
-        board_comment1.put("user", "admin");
-        return board_comment1;
+            @RequestParam int pageNumber
+    ) {
+        return boardCommentService.getAll(board_id,pageNumber);
     }
+
+//    @GetMapping("/boards/{board_id}/board_comments/{board_comment_id}")
+//    public Map<String, Object> readAllBoards(
+//            @PathVariable Long board_id,
+//            @PathVariable Long board_comment_id
+//    )throws  IOException{
+//        Map<String, Object> board_comment1 = new HashMap<>();
+//        board_comment1.put("content", "이것은 첫 번째 게시글의 내용입니다.");
+//        board_comment1.put("user", "admin");
+//        return board_comment1;
+//    }
 }
