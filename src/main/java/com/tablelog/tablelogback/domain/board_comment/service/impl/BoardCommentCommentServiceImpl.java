@@ -7,6 +7,7 @@ import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentSliceResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
 import com.tablelog.tablelogback.domain.board_comment.exception.BoardCommentErrorCode;
@@ -20,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -81,15 +81,15 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     }
 
     @Override
-    public Slice<BoardCommentReadResponseDto> getAll(Long boardId, int pageNumber) {
+    public BoardCommentSliceResponseDto getAll(Long boardId, int pageNumber) {
+        Boolean nextPage;
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
 
-        PageRequest pageRequest = PageRequest.of(pageNumber, 3); // 3개씩 가져오기
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 5개씩 가져오기
         Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardid(board.getId().toString(), pageRequest);
-
         List<BoardCommentReadResponseDto> content = boardCommentEntityMapper.toBoardCommentReadResponseDtos(commentSlice.getContent());
-        return new SliceImpl<>(content, pageRequest, commentSlice.hasNext());
+        return new BoardCommentSliceResponseDto(content, commentSlice.hasNext());
     }
 
 }

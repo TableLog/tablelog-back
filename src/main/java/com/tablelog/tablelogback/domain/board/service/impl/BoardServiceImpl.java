@@ -119,7 +119,7 @@ public class BoardServiceImpl implements BoardService {
 //    // List<Test> -> List<TestCreateServiceRequestDto>
     @Override
     public List<BoardReadResponseDto> getAll(int pageNumber) {
-        Slice<Board> boards = boardRepository.findAllBy(PageRequest.of(pageNumber, 3));
+        Slice<Board> boards = boardRepository.findAllBy(PageRequest.of(pageNumber, 5));
         return boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
     }
     @Override
