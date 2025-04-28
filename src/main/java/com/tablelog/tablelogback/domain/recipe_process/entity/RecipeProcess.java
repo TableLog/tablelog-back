@@ -28,7 +28,9 @@ public class RecipeProcess extends BaseEntity {
     @Column(nullable = false)
     private String description;
 
-    @Column
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "recipe_process_image_urls")
+    @Column(name = "image_url")
     private List<String> recipeProcessImageUrls = new ArrayList<>();
 
     @Column(nullable = false)
