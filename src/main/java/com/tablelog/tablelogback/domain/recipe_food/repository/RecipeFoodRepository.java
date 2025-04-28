@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface RecipeFoodRepository extends JpaRepository<RecipeFood, Long> {
     List<RecipeFood> findAllByRecipeId(Long id);
     Optional<RecipeFood> findByRecipeIdAndId(Long recipeId, Long recipeFoodId);
+    void deleteAllByRecipeId(Long recipeId);
 }
