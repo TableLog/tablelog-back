@@ -19,8 +19,8 @@ import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreate
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
-import com.tablelog.tablelogback.domain.recipe_process.dto.RecipeProcessCreateRequestDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.RecipeProcessDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;

@@ -1,4 +1,4 @@
-package com.tablelog.tablelogback.domain.recipe_process.dto;
+package com.tablelog.tablelogback.domain.recipe_process.dto.service;
 
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;

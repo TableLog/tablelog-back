@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_process.mapper.entity;
 
-import com.tablelog.tablelogback.domain.recipe_process.dto.RecipeProcessDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
