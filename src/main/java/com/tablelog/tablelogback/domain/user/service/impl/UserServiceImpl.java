@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void checkDuplicate(final UserSignUpServiceRequestDto serviceRequestDto){
         // 이름과 생년월일 중복 체크
-        if(userRepository.existsByNameAndBirthday(serviceRequestDto.name(), serviceRequestDto.birthday())){
+        if(userRepository.existsByNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())){
             throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
         }
         // 이메일 중복 체크

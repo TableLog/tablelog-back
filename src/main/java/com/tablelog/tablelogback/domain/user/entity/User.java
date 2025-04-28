@@ -28,7 +28,7 @@ public class User extends BaseEntity {
     private String nickname;
 
     @Column(nullable = false)
-    private String name;
+    private String userName;
 
     @Column(nullable = false)
     private String birthday;
@@ -55,7 +55,7 @@ public class User extends BaseEntity {
             final String email,
             final String password,
             final String nickname,
-            final String name,
+            final String userName,
             final String birthday,
             final UserRole userRole,
             final String profileImgUrl,
@@ -66,7 +66,7 @@ public class User extends BaseEntity {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.name = name;
+        this.userName = userName;
         this.birthday = birthday;
         this.userRole = UserRole.NORMAL;
         this.profileImgUrl = profileImgUrl;

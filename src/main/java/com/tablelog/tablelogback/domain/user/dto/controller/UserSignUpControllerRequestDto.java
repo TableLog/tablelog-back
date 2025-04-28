@@ -7,7 +7,7 @@ public record UserSignUpControllerRequestDto(
         String password,
         String confirmPassword,
         String nickname,
-        String name,
+        String userName,
         String birthday,
         UserProvider provider,
         String imgUrl
