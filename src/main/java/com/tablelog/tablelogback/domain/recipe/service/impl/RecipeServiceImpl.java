@@ -7,6 +7,7 @@ import com.tablelog.tablelogback.domain.food.repository.FoodRepository;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.ForbiddenAccessRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
@@ -175,6 +176,30 @@ public class RecipeServiceImpl implements RecipeService {
         List<RecipeReadAllServiceResponseDto> recipes =
                 recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Transactional
+    public void updateRecipe(
+            Long id, RecipeUpdateServiceRequestDto requestDto,
+            User user, MultipartFile multipartFile
+    ) throws  IOException{
+        Recipe recipe = validateRecipe(id, user);
+
+        String folderName = recipe.getFolderName();
+        String fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
+
+        recipe.updateRecipe(requestDto.title(), requestDto.intro(), folderName, fileUrl,
+                requestDto.recipeCategoryList(), requestDto.price(), requestDto.memo(), requestDto.cookingTime(),
+                requestDto.isPaid(), requestDto.recipePoint()
+        );
+
+        // 전문가 & 유료 확인
+        if (user.getUserRole() != UserRole.EXPERT || !requestDto.isPaid()) {
+            recipe.updateIsPaid(false);
+            recipe.updateRecipePoint(0);
+        }
+
+        recipeRepository.save(recipe);
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

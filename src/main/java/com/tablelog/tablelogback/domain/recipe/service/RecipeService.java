@@ -23,4 +23,6 @@ public interface RecipeService {
     RecipeReadAllServiceResponseDto readRecipe(Long id);
     RecipeSliceResponseDto readAllRecipes(int pageNum);
     RecipeSliceResponseDto readAllRecipeByUser(Long userId, int pageNum);
+    void updateRecipe(Long id, RecipeUpdateServiceRequestDto requestDto, User user,
+                      MultipartFile multipartFile) throws IOException;
 }

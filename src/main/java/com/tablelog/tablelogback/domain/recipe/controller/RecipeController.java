@@ -82,4 +82,18 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readAllRecipeByUser(userId, pageNumber));
     }
+
+    @Operation(summary = "레시피 수정")
+    @PutMapping(value = "/recipes/{recipeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateRecipe(
+            @PathVariable Long recipeId,
+            @RequestPart RecipeUpdateControllerRequestDto controllerRequestDto,
+            @RequestPart(required = false) MultipartFile multipartFile,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException {
+        RecipeUpdateServiceRequestDto serviceRequestDto =
+                recipeDtoMapper.toRecipeUpdateServiceDto(controllerRequestDto);
+        recipeService.updateRecipe(recipeId, serviceRequestDto, userDetails.user(), multipartFile);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
