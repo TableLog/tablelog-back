@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void checkDuplicate(final UserSignUpServiceRequestDto serviceRequestDto){
         // 이름과 생년월일 중복 체크
-        if(userRepository.existsByNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())){
+        if(userRepository.existsByUserNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())){
             throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
         }
         // 이메일 중복 체크
@@ -85,13 +85,8 @@ public class UserServiceImpl implements UserService {
         }
 
         if (serviceRequestDto.provider() == UserProvider.local) {
-            // local 회원가입
-            if (!serviceRequestDto.password().equals(serviceRequestDto.confirmPassword())) {
-                throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
-            }
             user = userEntityMapper.toUser(serviceRequestDto, UserRole.NORMAL, fileUrl, folderName);
         } else {
-            // social 회원가입
             String encodedPassword = passwordEncoder.encode(UUID.randomUUID().toString());
             fileUrl = serviceRequestDto.imgUrl();
             user = userEntityMapper.toSocialUser(serviceRequestDto, encodedPassword, UserRole.NORMAL, fileUrl, folderName);
@@ -142,9 +137,6 @@ public class UserServiceImpl implements UserService {
             if(!Objects.equals(serviceRequestDto.newPassword(), "")){
                 if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
                     throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
-                }
-                if (!serviceRequestDto.newPassword().equals(serviceRequestDto.confirmNewPassword())) {
-                    throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
                 }
                 user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
             }
@@ -249,16 +241,13 @@ public class UserServiceImpl implements UserService {
             if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
                 throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
             }
-            if (!serviceRequestDto.newPassword().equals(serviceRequestDto.confirmNewPassword())) {
-                throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
-            }
             user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
         }
     }
 
     @Override
     public String findEmail(findEmailServiceRequestDto serviceRequestDto){
-        User user = userRepository.findByNameAndBirthday(serviceRequestDto.name(), serviceRequestDto.birthday())
+        User user = userRepository.findByUserNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         return user.getEmail();
     }
