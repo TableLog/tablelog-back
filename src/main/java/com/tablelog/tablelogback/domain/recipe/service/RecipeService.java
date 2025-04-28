@@ -8,6 +8,7 @@ import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRe
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.RecipeProcessCreateRequestDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.global.enums.RecipeCategory;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -21,4 +22,5 @@ public interface RecipeService {
     ) throws IOException;
     RecipeReadAllServiceResponseDto readRecipe(Long id);
     RecipeSliceResponseDto readAllRecipes(int pageNum);
+    RecipeSliceResponseDto readAllRecipeByUser(Long userId, int pageNum);
 }

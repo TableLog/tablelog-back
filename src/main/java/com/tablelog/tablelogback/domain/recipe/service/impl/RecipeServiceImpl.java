@@ -168,6 +168,15 @@ public class RecipeServiceImpl implements RecipeService {
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
+    @Override
+    public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes =
+                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
     private Recipe validateRecipe(Long recipeId, User user){
         Recipe recipe = findRecipe(recipeId);
         if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {

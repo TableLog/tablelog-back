@@ -72,4 +72,14 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readAllRecipes(pageNumber));
     }
+
+    @Operation(summary = "레시피 전체 조회 By 사용자")
+    @GetMapping("/users/{userId}/recipes")
+    public ResponseEntity<?> readAllRecipesByUser(
+            @PathVariable Long userId,
+            @RequestParam int pageNumber
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readAllRecipeByUser(userId, pageNumber));
+    }
 }
