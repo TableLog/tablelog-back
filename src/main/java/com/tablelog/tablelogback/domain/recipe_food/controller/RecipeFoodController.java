@@ -4,6 +4,7 @@ import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodCre
 import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.dto.RecipeFoodDtoMapper;
 import com.tablelog.tablelogback.domain.recipe_food.service.impl.RecipeFoodServiceImpl;
@@ -52,10 +53,12 @@ public class RecipeFoodController {
 
     @Operation(summary = "레시피 식재료 전체 조회 By 레시피")
     @GetMapping("/recipes/{recipeId}/recipe-food")
-    public ResponseEntity<List<RecipeFoodReadAllServiceResponseDto>> readAllRecipeFoodsByRecipeId(
-            @PathVariable Long recipeId
+    public ResponseEntity<RecipeFoodSliceResponseDto> readAllRecipeFoodsByRecipeId(
+            @PathVariable Long recipeId,
+            @RequestParam int page
     ){
-        return ResponseEntity.status(HttpStatus.OK).body(recipeFoodService.readAllRecipeFoodsByRecipeId(recipeId));
+        return ResponseEntity.status(HttpStatus.OK).body(
+                recipeFoodService.readAllRecipeFoodsByRecipeId(recipeId, page));
     }
 
     @Operation(summary = "레시피 식재료 수정")
