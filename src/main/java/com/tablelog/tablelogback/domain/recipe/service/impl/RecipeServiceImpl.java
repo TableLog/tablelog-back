@@ -202,6 +202,15 @@ public class RecipeServiceImpl implements RecipeService {
         recipeRepository.save(recipe);
     }
 
+    @Transactional
+    public void deleteRecipe(Long id, User user) {
+        Recipe recipe = validateRecipe(id, user);
+        recipeFoodRepository.deleteAllByRecipeId(id);
+        recipeProcessRepository.deleteAllByRecipeId(id);
+        recipeRepository.delete(recipe);
+        s3Provider.delete(recipe.getFolderName());
+    }
+
     private Recipe validateRecipe(Long recipeId, User user){
         Recipe recipe = findRecipe(recipeId);
         if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {
