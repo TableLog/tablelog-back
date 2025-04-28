@@ -6,7 +6,7 @@ import com.tablelog.tablelogback.domain.food.exception.NotFoundFoodException;
 import com.tablelog.tablelogback.domain.food.repository.FoodRepository;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.ForbiddenAccessRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
@@ -28,6 +28,8 @@ import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -155,6 +157,15 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeReadAllServiceResponseDto readRecipe(Long id){
         Recipe recipe = findRecipe(id);
         return recipeEntityMapper.toRecipeReadResponseDto(recipe);
+    }
+
+    @Override
+    public RecipeSliceResponseDto readAllRecipes(int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes =
+                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

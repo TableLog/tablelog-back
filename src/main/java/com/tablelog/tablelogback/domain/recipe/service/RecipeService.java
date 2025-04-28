@@ -1,7 +1,9 @@
 package com.tablelog.tablelogback.domain.recipe.service;
 
+import com.tablelog.tablelogback.domain.food.dto.service.response.FoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.RecipeProcessCreateRequestDto;
@@ -18,4 +20,5 @@ public interface RecipeService {
                       User user
     ) throws IOException;
     RecipeReadAllServiceResponseDto readRecipe(Long id);
+    RecipeSliceResponseDto readAllRecipes(int pageNum);
 }
