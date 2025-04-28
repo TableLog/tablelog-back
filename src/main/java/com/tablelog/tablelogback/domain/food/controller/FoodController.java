@@ -5,6 +5,7 @@ import com.tablelog.tablelogback.domain.food.dto.controller.FoodUpdateController
 import com.tablelog.tablelogback.domain.food.dto.service.request.FoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.food.dto.service.request.FoodUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.food.dto.service.response.FoodReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.food.dto.service.response.FoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.food.mapper.dto.FoodDtoMapper;
 import com.tablelog.tablelogback.domain.food.service.impl.FoodServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -17,7 +18,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -50,24 +50,14 @@ public class FoodController {
 
     @Operation(summary = "식재료 전체 조회 (페이징 + 검색)")
     @GetMapping("/foods")
-    public ResponseEntity<List<FoodReadAllServiceResponseDto>> readAllFoods(
+    public ResponseEntity<FoodSliceResponseDto> readAllFoods(
             @RequestParam(required = false) String search,
             @RequestParam(name = "page", required = false) Integer page
     ){
-        if (search != null && !search.isBlank()) {
-            if (page != null) {
-                return ResponseEntity.ok(foodService.searchFoods(search, page)); // 검색 + 페이징
-            }
-            else {
-                return ResponseEntity.ok(foodService.searchFoods(search, -1)); // 전체 검색
-            }
-        }
-
-        if (page != null) {
-            return ResponseEntity.ok(foodService.readAllFoods(page)); // 페이징
-        }
-        else {
-            return ResponseEntity.ok(foodService.readAllFoods(-1)); // 전체 조회
+        if(search != null && !search.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(foodService.searchFoods(search, page));
+        } else {
+            return ResponseEntity.status(HttpStatus.OK).body(foodService.readAllFoods(page));
         }
     }
 
