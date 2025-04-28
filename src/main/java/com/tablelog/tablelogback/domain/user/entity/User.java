@@ -50,6 +50,9 @@ public class User extends BaseEntity {
     @Column
     private Integer pointBalance;
 
+    @Column(nullable = false)
+    private Boolean marketingOptIn;
+
     @Builder
     public User(
             final String email,
@@ -61,7 +64,8 @@ public class User extends BaseEntity {
             final String profileImgUrl,
             final String folderName,
             final UserProvider provider,
-            final Integer pointBalance
+            final Integer pointBalance,
+            final Boolean marketingOptIn
     ){
         this.email = email;
         this.password = password;
@@ -73,6 +77,7 @@ public class User extends BaseEntity {
         this.folderName = folderName;
         this.provider = provider;
         this.pointBalance = 0;
+        this.marketingOptIn = marketingOptIn;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -101,5 +106,9 @@ public class User extends BaseEntity {
 
     public void updateProvider(UserProvider provider){
         this.provider = provider;
+    }
+
+    public void updateMarketingOptIn(Boolean marketingOptIn){
+        this.marketingOptIn = marketingOptIn;
     }
 }

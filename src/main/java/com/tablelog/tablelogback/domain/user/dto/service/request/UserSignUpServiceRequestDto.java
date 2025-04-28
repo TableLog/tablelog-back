@@ -10,6 +10,7 @@ public record UserSignUpServiceRequestDto(
         String userName,
         String birthday,
         UserProvider provider,
-        String imgUrl
+        String imgUrl,
+        Boolean marketingOptIn
 ) {
 }

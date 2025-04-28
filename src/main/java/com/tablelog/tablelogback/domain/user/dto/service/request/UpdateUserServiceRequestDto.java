@@ -5,6 +5,7 @@ public record UpdateUserServiceRequestDto(
         String newPassword,
         String confirmNewPassword,
         String nickname,
-        String profileImgUrl
+        String profileImgUrl,
+        Boolean marketingOptIn
 ) {
 }

@@ -12,6 +12,7 @@ public record UserLoginResponseDto(
         UserRole userRole,
         String profileImgUrl,
         UserProvider provider,
-        Integer pointBalance
+        Integer pointBalance,
+        Boolean marketingOptIn
 ) {
 }
