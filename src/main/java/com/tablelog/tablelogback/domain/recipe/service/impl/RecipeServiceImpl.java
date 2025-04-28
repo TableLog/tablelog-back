@@ -151,6 +151,12 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
+    @Override
+    public RecipeReadAllServiceResponseDto readRecipe(Long id){
+        Recipe recipe = findRecipe(id);
+        return recipeEntityMapper.toRecipeReadResponseDto(recipe);
+    }
+
     private Recipe validateRecipe(Long recipeId, User user){
         Recipe recipe = findRecipe(recipeId);
         if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {

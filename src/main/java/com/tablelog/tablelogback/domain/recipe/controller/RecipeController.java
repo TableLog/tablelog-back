@@ -54,4 +54,13 @@ public class RecipeController {
         recipeService.createRecipe(serviceRequestDto, recipeImage, rfDtos, rpDtos, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "레시피 단건 조회")
+    @GetMapping("/recipes/{recipeId}")
+    public ResponseEntity<?> readRecipe(
+            @PathVariable Long recipeId
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readRecipe(recipeId));
+    }
 }
