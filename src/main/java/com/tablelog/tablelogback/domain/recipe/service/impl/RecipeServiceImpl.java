@@ -107,10 +107,10 @@ public class RecipeServiceImpl implements RecipeService {
         List<String> rpImageNames = new ArrayList<>();
         List<MultipartFile> recipeProcessImages = new ArrayList<>();
 
-        for (RecipeProcessDto rpDto : rpRequestDtos.getDtos()) {
+        for (RecipeProcessDto rpDto : rpRequestDtos.dtos()) {
             List<String> imageUrls = new ArrayList<>();
 
-            List<MultipartFile> files = rpDto.getFiles();
+            List<MultipartFile> files = rpDto.files();
             if (files != null) {
                 for (MultipartFile image : files) {
                     if (image != null && !image.isEmpty()) {
