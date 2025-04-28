@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_process.mapper.entity;
 
+import com.tablelog.tablelogback.domain.recipe_process.dto.RecipeProcessDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
@@ -13,6 +14,10 @@ import java.util.List;
 public interface RecipeProcessEntityMapper {
     @Mapping(source = "recipeProcessImageUrls", target = "recipeProcessImageUrls")
     RecipeProcess toRecipeProcess(Long recipeId, RecipeProcessCreateServiceRequestDto serviceRequestDto,
+                                  List<String> recipeProcessImageUrls);
+
+    @Mapping(source = "recipeProcessImageUrls", target = "recipeProcessImageUrls")
+    RecipeProcess toRecipeProcess(Long recipeId, RecipeProcessDto serviceRequestDto,
                                   List<String> recipeProcessImageUrls);
 
     RecipeProcessReadAllServiceResponseDto toRecipeProcessReadResponseDto(RecipeProcess recipeProcess);
