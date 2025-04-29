@@ -83,6 +83,16 @@ public class RecipeController {
                 .body(recipeService.readAllRecipeByUser(userId, pageNumber));
     }
 
+    @Operation(summary = "레시피 전체 조회 By 식재료")
+    @GetMapping("/recipes/filter/food")
+    public ResponseEntity<?> readAllRecipesByFoodName(
+            @RequestParam String keyword,
+            @RequestParam int pageNumber
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readAllRecipeByFoodName(keyword, pageNumber));
+    }
+
     @Operation(summary = "레시피 필터링")
     @GetMapping("/recipes/filter")
     public ResponseEntity<?> filterRecipes (

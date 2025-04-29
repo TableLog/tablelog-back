@@ -39,7 +39,7 @@ public class Recipe extends BaseEntity {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "recipe_recipe_category_list", joinColumns = @JoinColumn(name = "recipe_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "recipe_category", nullable = false)
+    @Column(nullable = false)
     private List<RecipeCategory> recipeCategoryList;
 
     @Column(nullable = false)
