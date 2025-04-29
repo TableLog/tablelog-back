@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.recipe.controller;
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFilterConditionDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.mapper.dto.RecipeDtoMapper;
 import com.tablelog.tablelogback.domain.recipe.service.impl.RecipeServiceImpl;
@@ -80,6 +81,16 @@ public class RecipeController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readAllRecipeByUser(userId, pageNumber));
+    }
+
+    @Operation(summary = "레시피 필터링")
+    @GetMapping("/recipes/filter")
+    public ResponseEntity<?> filterRecipes (
+            @ModelAttribute RecipeFilterConditionDto condition,
+            @RequestParam int pageNumber
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.filterRecipes(condition, pageNumber));
     }
 
     @Operation(summary = "레시피 수정")

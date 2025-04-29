@@ -4,16 +4,14 @@ import com.tablelog.tablelogback.domain.food.entity.Food;
 import com.tablelog.tablelogback.domain.food.exception.FoodErrorCode;
 import com.tablelog.tablelogback.domain.food.exception.NotFoundFoodException;
 import com.tablelog.tablelogback.domain.food.repository.FoodRepository;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.ForbiddenAccessRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.mapper.entity.RecipeEntityMapper;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
+import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepositoryImpl;
 import com.tablelog.tablelogback.domain.recipe.service.RecipeService;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
@@ -52,6 +50,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeFoodEntityMapper recipeFoodEntityMapper;
     private final RecipeProcessEntityMapper recipeProcessEntityMapper;
     private final S3Provider s3Provider;
+    private final RecipeRepositoryImpl recipeRepositoryImpl;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -173,6 +172,15 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5);
         Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes =
+                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes =
                 recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

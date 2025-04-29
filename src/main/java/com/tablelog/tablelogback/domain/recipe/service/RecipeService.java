@@ -1,9 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe.service;
 
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateRequestDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -21,6 +18,7 @@ public interface RecipeService {
     RecipeReadAllServiceResponseDto readRecipe(Long id);
     RecipeSliceResponseDto readAllRecipes(int pageNum);
     RecipeSliceResponseDto readAllRecipeByUser(Long userId, int pageNum);
+    RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum);
     void updateRecipe(Long id, RecipeUpdateServiceRequestDto requestDto, User user,
                       MultipartFile multipartFile) throws IOException;
     void deleteRecipe(Long id, User user);
