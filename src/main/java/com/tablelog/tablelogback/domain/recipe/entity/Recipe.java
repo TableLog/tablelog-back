@@ -36,7 +36,10 @@ public class Recipe extends BaseEntity {
     @Column
     private String imageUrl;
 
-    @Column(nullable = false)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "recipe_recipe_category_list", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recipe_category", nullable = false)
     private List<RecipeCategory> recipeCategoryList;
 
     @Column(nullable = false)
