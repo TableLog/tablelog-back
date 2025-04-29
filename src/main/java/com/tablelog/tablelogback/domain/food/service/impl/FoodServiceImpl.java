@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.food.service.impl;
 import com.tablelog.tablelogback.domain.food.dto.service.request.FoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.food.dto.service.request.FoodUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.food.dto.service.response.FoodReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.food.dto.service.response.FoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.food.entity.Food;
 import com.tablelog.tablelogback.domain.food.exception.*;
 import com.tablelog.tablelogback.domain.food.mapper.entity.FoodEntityMapper;
@@ -46,25 +47,21 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public List<FoodReadAllServiceResponseDto> readAllFoods(Integer pageNumber) {
-        if(pageNumber < 0){
-            List<Food> foods = foodRepository.findAll();
-            return foodEntityMapper.toFoodReadAllResponseDto(foods);
-        } else {
-            Slice<Food> foods = foodRepository.findAllBy(PageRequest.of(pageNumber, 9));
-            return foodEntityMapper.toFoodReadAllResponseDto(foods.getContent());
-        }
+    public FoodSliceResponseDto readAllFoods(Integer pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        Slice<Food> slice = foodRepository.findAll(pageRequest);
+        List<FoodReadAllServiceResponseDto> foods =
+                foodEntityMapper.toFoodReadAllResponseDto(slice.getContent());
+        return new FoodSliceResponseDto(foods, slice.hasNext());
     }
 
     @Override
-    public List<FoodReadAllServiceResponseDto> searchFoods(String keyword, Integer pageNumber) {
-        if(pageNumber < 0){
-            List<Food> foods = foodRepository.findAllByFoodNameContaining(keyword);
-            return foodEntityMapper.toFoodReadAllResponseDto(foods);
-        } else {
-            Slice<Food> foods = foodRepository.findByFoodNameContaining(keyword, PageRequest.of(pageNumber, 9));
-            return foodEntityMapper.toFoodReadAllResponseDto(foods.getContent());
-        }
+    public FoodSliceResponseDto searchFoods(String keyword, Integer pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        Slice<Food> slice = foodRepository.findByFoodNameContaining(keyword, pageRequest);
+        List<FoodReadAllServiceResponseDto> foods =
+                foodEntityMapper.toFoodReadAllResponseDto(slice.getContent());
+        return new FoodSliceResponseDto(foods, slice.hasNext());
     }
 
     @Transactional

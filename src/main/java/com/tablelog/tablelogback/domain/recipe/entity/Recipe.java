@@ -1,12 +1,16 @@
 package com.tablelog.tablelogback.domain.recipe.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
+import com.tablelog.tablelogback.global.enums.CookingTime;
 import com.tablelog.tablelogback.global.enums.RecipeCategory;
+import com.tablelog.tablelogback.global.enums.RecipePrice;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,47 +36,82 @@ public class Recipe extends BaseEntity {
     @Column
     private String imageUrl;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "recipe_recipe_category_list", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private int state;
+    private List<RecipeCategory> recipeCategoryList;
 
     @Column(nullable = false)
-    private RecipeCategory recipeCategory;
-
-    @Column(nullable = false)
-    private Byte star;
+    private Float star = 0F;
 
     @Column
-    private Integer price;
+    private RecipePrice price;
 
     @Column(nullable = false)
     private String memo;
 
     @Column(nullable = false)
-    private String cookingTime;
+    private CookingTime cookingTime;
 
     @Column(nullable = false)
-    private Boolean isPaid;
+    private Integer totalCal = 0;
 
     @Column(nullable = false)
-    private Integer point;
+    private Boolean isPaid = false;
+
+    @Column(nullable = false)
+    private Integer recipePoint = 0;
 
     @Builder
     public Recipe(final Long userId, final String title, final String intro, final String folderName,
-                  final String imageUrl, final int state, final RecipeCategory recipeCategory,
-                  final Byte star, final Integer price, final String memo, final String cookingTime,
-                  final Boolean isPaid, final Integer point){
+                  final String imageUrl, final List<RecipeCategory> recipeCategoryList,
+                  final RecipePrice price, final String memo, final CookingTime cookingTime,
+                  final Integer totalCal, final Boolean isPaid, final Integer recipePoint){
         this.userId = userId;
         this.title = title;
         this.intro = intro;
         this.folderName = folderName;
         this.imageUrl = imageUrl;
-        this.state = state;
-        this.recipeCategory = recipeCategory;
-        this.star = star;
+        this.recipeCategoryList = recipeCategoryList;
+        this.star = 0F;
+        this.price = price;
+        this.memo = memo;
+        this.cookingTime = cookingTime;
+        this.totalCal = totalCal;
+        this.isPaid = isPaid;
+        this.recipePoint = recipePoint;
+    }
+
+    public void updateRecipe(final String title, final String intro, final String folderName,
+                             final String imageUrl, final List<RecipeCategory> recipeCategoryList,
+                             final RecipePrice price, final String memo, final CookingTime cookingTime,
+                             final Boolean isPaid, final Integer recipePoint){
+        this.title = title;
+        this.intro = intro;
+        this.folderName = folderName;
+        this.imageUrl = imageUrl;
+        this.recipeCategoryList = recipeCategoryList;
         this.price = price;
         this.memo = memo;
         this.cookingTime = cookingTime;
         this.isPaid = isPaid;
-        this.point = 0;
+        this.recipePoint = recipePoint;
+    }
+
+    public void updateTotalCal(Integer totalCal){
+        this.totalCal = totalCal;
+    }
+
+    public void updateIsPaid(Boolean isPaid){
+        this.isPaid = isPaid;
+    }
+
+    public void updateRecipePoint(Integer recipePoint){
+        this.recipePoint = recipePoint;
+    }
+
+    public void updateStar(Float star){
+        this.star = star;
     }
 }

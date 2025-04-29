@@ -5,7 +5,7 @@ import com.tablelog.tablelogback.global.enums.UserProvider;
 public record SocialUserInfoDto(
         String email,
         String nickname,
-        String name,
+        String userName,
         String birthday,
         String imgUrl,
         UserProvider provider

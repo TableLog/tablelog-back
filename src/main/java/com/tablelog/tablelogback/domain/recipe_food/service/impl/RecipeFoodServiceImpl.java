@@ -10,6 +10,7 @@ import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.exception.ForbiddenAccessRecipeFoodException;
@@ -21,6 +22,8 @@ import com.tablelog.tablelogback.domain.recipe_food.service.RecipeFoodService;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,9 +56,14 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
     }
 
     @Override
-    public List<RecipeFoodReadAllServiceResponseDto> readAllRecipeFoodsByRecipeId(Long id){
-        List<RecipeFood> recipeFoods = recipeFoodRepository.findAllByRecipeId(id);
-        return recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(recipeFoods);
+    public RecipeFoodSliceResponseDto readAllRecipeFoodsByRecipeId(Long id, int pageNum){
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(recipe.getId(), pageRequest);
+        List<RecipeFoodReadAllServiceResponseDto> recipeFoods =
+                recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(slice.getContent());
+        return new RecipeFoodSliceResponseDto(recipeFoods, slice.hasNext());
     }
 
     @Transactional

@@ -7,11 +7,12 @@ public record UserLoginResponseDto(
         Long id,
         String email,
         String nickname,
-        String name,
+        String userName,
         String birthday,
         UserRole userRole,
         String profileImgUrl,
         UserProvider provider,
-        Integer pointBalance
+        Integer pointBalance,
+        Boolean marketingOptIn
 ) {
 }

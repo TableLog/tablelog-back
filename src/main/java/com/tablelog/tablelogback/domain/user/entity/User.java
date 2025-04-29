@@ -28,7 +28,7 @@ public class User extends BaseEntity {
     private String nickname;
 
     @Column(nullable = false)
-    private String name;
+    private String userName;
 
     @Column(nullable = false)
     private String birthday;
@@ -50,29 +50,34 @@ public class User extends BaseEntity {
     @Column
     private Integer pointBalance;
 
+    @Column(nullable = false)
+    private Boolean marketingOptIn;
+
     @Builder
     public User(
             final String email,
             final String password,
             final String nickname,
-            final String name,
+            final String userName,
             final String birthday,
             final UserRole userRole,
             final String profileImgUrl,
             final String folderName,
             final UserProvider provider,
-            final Integer pointBalance
+            final Integer pointBalance,
+            final Boolean marketingOptIn
     ){
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.name = name;
+        this.userName = userName;
         this.birthday = birthday;
         this.userRole = UserRole.NORMAL;
         this.profileImgUrl = profileImgUrl;
         this.folderName = folderName;
         this.provider = provider;
         this.pointBalance = 0;
+        this.marketingOptIn = marketingOptIn;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -101,5 +106,9 @@ public class User extends BaseEntity {
 
     public void updateProvider(UserProvider provider){
         this.provider = provider;
+    }
+
+    public void updateMarketingOptIn(Boolean marketingOptIn){
+        this.marketingOptIn = marketingOptIn;
     }
 }
