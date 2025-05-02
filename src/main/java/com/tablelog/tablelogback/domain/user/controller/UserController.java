@@ -159,10 +159,9 @@ public class UserController {
     @Operation(summary = "비밀번호만 변경")
     @PutMapping("users/password")
     public ResponseEntity<?> updatePassword(
-            @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @RequestBody UpdatePasswordServiceRequestDto serviceRequestDto
     ){
-        userService.updatePassword(userDetailsImpl.user(), serviceRequestDto);
+        userService.updatePassword(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 

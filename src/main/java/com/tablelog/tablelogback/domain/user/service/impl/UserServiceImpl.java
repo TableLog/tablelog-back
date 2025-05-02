@@ -182,7 +182,7 @@ public class UserServiceImpl implements UserService {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
 
-        jwtUtil.expireAccessTokenToHeader(user, response);
+//        jwtUtil.expireAccessTokenToHeader(user, response);
 //        jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
@@ -241,13 +241,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto){
+    public void updatePassword(UpdatePasswordServiceRequestDto serviceRequestDto){
         // 이메일로 유저 찾기
-
+        User user = userRepository.findByEmail(serviceRequestDto.email())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!Objects.equals(serviceRequestDto.newPassword(), "")){
-            if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
-                throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
-            }
             user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
         }
     }
