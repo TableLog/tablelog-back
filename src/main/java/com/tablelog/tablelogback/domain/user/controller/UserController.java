@@ -111,9 +111,9 @@ public class UserController {
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
         if(userDetailsImpl.user().getProvider() == UserProvider.kakao){
-            kakaoService.unlinkKakao(socialAccessToken);
+            kakaoService.unlinkKakao(socialAccessToken, httpServletResponse);
         } else if(userDetailsImpl.user().getProvider() == UserProvider.google){
-            googleService.unlinkGoogle(socialAccessToken);
+            googleService.unlinkGoogle(socialAccessToken, httpServletResponse);
         }
         userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -133,7 +133,7 @@ public class UserController {
         if(responseDto.provider() == UserProvider.kakao){
             kakaoService.refresh(socialRefreshToken, user);
         } else if(responseDto.provider() == UserProvider.google){
-            googleService.refresh(socialRefreshToken, user);
+            googleService.refresh(user);
         }
         return ResponseEntity.ok().build();
     }

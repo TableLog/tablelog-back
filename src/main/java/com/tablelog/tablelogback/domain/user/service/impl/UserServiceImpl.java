@@ -15,6 +15,7 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
+import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,6 +42,7 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
+    private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -103,8 +105,7 @@ public class UserServiceImpl implements UserService {
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
             throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
         }
-        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
-//        jwtUtil.addTokenToCookie(user, httpServletResponse, "accessToken");
+        jwtUtil.addTokenToCookie(user, httpServletResponse, "accessToken");
         String refresh = jwtUtil.addTokenToCookie(user, httpServletResponse, "refreshToken");
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
@@ -167,10 +168,16 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.getUserInfoFromToken(token).getSubject();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
         if(user.getProvider() == UserProvider.kakao){
+            jwtUtil.deleteCookie("Kakao-Access-Token", response);
             jwtUtil.deleteCookie("Kakao-Refresh-Token", response);
             kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+        } else if(user.getProvider() == UserProvider.google){
+            jwtUtil.deleteCookie("Google-Access-Token", response);
+            jwtUtil.deleteCookie("Google-Refresh-Token", response);
+            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
         }
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
     }
@@ -181,9 +188,7 @@ public class UserServiceImpl implements UserService {
     ) throws JacksonException {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-
-//        jwtUtil.expireAccessTokenToHeader(user, response);
-//        jwtUtil.deleteCookie("accessToken", response);
+        jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
 
@@ -214,9 +219,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
 
         // accessToken과 refreshToken 둘 다 refresh
-        jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
-//        jwtUtil.deleteCookie("accessToken", response);
-//        jwtUtil.addTokenToCookie(user, response, "accessToken");
+        jwtUtil.deleteCookie("accessToken", response);
+        jwtUtil.addTokenToCookie(user, response, "accessToken");
         jwtUtil.deleteCookie("refreshToken", response);
         String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
@@ -227,7 +231,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto) {
         if (userRepository.existsByEmail(serviceRequestDto.email())) {
-            log.info("중복된 이메일입니다.");
             throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
     }
@@ -235,14 +238,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto){
         if(userRepository.existsByNickname(serviceRequestDto.nickname())) {
-            log.info("중복된 닉네임입니다.");
             throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
         }
     }
 
     @Override
     public void updatePassword(UpdatePasswordServiceRequestDto serviceRequestDto){
-        // 이메일로 유저 찾기
         User user = userRepository.findByEmail(serviceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!Objects.equals(serviceRequestDto.newPassword(), "")){
