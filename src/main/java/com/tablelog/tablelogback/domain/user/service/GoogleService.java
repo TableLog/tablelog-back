@@ -29,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,16 +80,21 @@ public class GoogleService {
         body.add("redirect_uri", redirectUri);
         body.add("grant_type", "authorization_code");
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-        RestTemplate rt = new RestTemplate();
-        ResponseEntity<String> response = rt.postForEntity(
-                "https://oauth2.googleapis.com/token",
-                request,
-                String.class
-        );
+        try {
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+            RestTemplate rt = new RestTemplate();
+            ResponseEntity<String> response = rt.postForEntity(
+                    "https://oauth2.googleapis.com/token",
+                    request,
+                    String.class
+            );
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readTree(response.getBody());
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readTree(response.getBody());
+
+        } catch(HttpClientErrorException e){
+            throw new InvalidGrantException(UserErrorCode.INVALID_GRANT);
+        }
     }
 
     public SocialUserInfoDto getGoogleUserInfo(String code) throws JsonProcessingException {

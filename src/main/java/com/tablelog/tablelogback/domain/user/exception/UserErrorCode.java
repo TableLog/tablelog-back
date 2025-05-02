@@ -19,6 +19,7 @@ public enum UserErrorCode implements ErrorCode {
     FAILED_REFRESH_KAKAO(HttpStatus.BAD_REQUEST, "EU400009"),
     FAILED_REFRESH_GOOGLE(HttpStatus.BAD_REQUEST, "EU400010"),
     INVALID_PROVIDER(HttpStatus.BAD_REQUEST, "EU400011"),
+    INVALID_GRANT(HttpStatus.BAD_REQUEST, "EU400012"),
 
     //403
     NOT_ADMIN(HttpStatus.FORBIDDEN, "EU403001"),
