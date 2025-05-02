@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
+import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
@@ -103,7 +104,8 @@ public class UserServiceImpl implements UserService {
             throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
         }
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
-        String refresh = jwtUtil.addRefreshTokenToCookie(user, httpServletResponse);
+//        jwtUtil.addTokenToCookie(user, httpServletResponse, "accessToken");
+        String refresh = jwtUtil.addTokenToCookie(user, httpServletResponse, "refreshToken");
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
         return userEntityMapper.toUserLoginResponseDto(user);
@@ -181,6 +183,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
 
         jwtUtil.expireAccessTokenToHeader(user, response);
+//        jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
 
@@ -212,8 +215,10 @@ public class UserServiceImpl implements UserService {
 
         // accessToken과 refreshToken 둘 다 refresh
         jwtUtil.addAccessTokenToHeader(user, httpServletResponse);
+//        jwtUtil.deleteCookie("accessToken", response);
+//        jwtUtil.addTokenToCookie(user, response, "accessToken");
         jwtUtil.deleteCookie("refreshToken", response);
-        String newToken = jwtUtil.addRefreshTokenToCookie(user, response);
+        String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
         return userEntityMapper.toUserLoginResponseDto(user);
@@ -237,6 +242,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto){
+        // 이메일로 유저 찾기
+
         if(!Objects.equals(serviceRequestDto.newPassword(), "")){
             if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
                 throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
@@ -246,9 +253,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String findEmail(findEmailServiceRequestDto serviceRequestDto){
+    public FindEmailResponseDto findEmail(findEmailServiceRequestDto serviceRequestDto){
         User user = userRepository.findByUserNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        return user.getEmail();
+        return userEntityMapper.toFindEmailResponseDto(user);
     }
 }

@@ -5,6 +5,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserController
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
+import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
@@ -170,7 +171,7 @@ public class UserController {
     public ResponseEntity<?> findEmail(
             @RequestBody findEmailServiceRequestDto serviceRequestDto
     ){
-        String email = userService.findEmail(serviceRequestDto);
-        return ResponseEntity.status(HttpStatus.OK).body(email);
+        FindEmailResponseDto responseDto = userService.findEmail(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

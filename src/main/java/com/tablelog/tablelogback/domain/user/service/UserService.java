@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.user.service;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
+import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,5 +23,5 @@ public interface UserService {
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
     void updatePassword(User user, UpdatePasswordServiceRequestDto serviceRequestDto);
-    String findEmail(findEmailServiceRequestDto serviceRequestDto);
+    FindEmailResponseDto findEmail(findEmailServiceRequestDto serviceRequestDto);
 }
