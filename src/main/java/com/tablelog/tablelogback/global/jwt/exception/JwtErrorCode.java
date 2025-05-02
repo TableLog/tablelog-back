@@ -17,7 +17,8 @@ public enum JwtErrorCode implements ErrorCode {
 
     // 404
     NOT_FOUND_JWT(HttpStatus.NOT_FOUND, "EJ404001"),
-    NOT_FOUND_SOCIAL_ACCESS_TOKEN(HttpStatus.NOT_FOUND, "EJ404002");
+    NOT_FOUND_SOCIAL_ACCESS_TOKEN(HttpStatus.NOT_FOUND, "EJ404002"),
+    NOT_FOUND_SOCIAL_REFRESH_TOKEN(HttpStatus.NOT_FOUND, "EJ404003");
 
     private final HttpStatus status;
     private final String message;
