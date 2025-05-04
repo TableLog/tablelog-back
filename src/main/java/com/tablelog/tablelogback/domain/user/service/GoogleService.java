@@ -113,8 +113,6 @@ public class GoogleService {
             httpServletResponse.addCookie(jwtUtil.createCookie("Google-Access-Token", googleAccessToken));
             if(googleRefreshToken != null && !googleRefreshToken.isEmpty()){
                 httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
-            } else {
-                jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
             }
         } catch (Exception e){
             throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
@@ -127,11 +125,18 @@ public class GoogleService {
             String refresh = jwtUtil.addTokenToCookie(googleUser, httpServletResponse, "refreshToken");
             RefreshToken refreshToken = new RefreshToken(googleUser.getId(), refresh, timeToLive);
             refreshTokenRepository.save(refreshToken);
-
-            GoogleRefreshToken googleRefresh =
-                    new GoogleRefreshToken(googleUser.getId(), googleRefreshToken, timeToLive);
+            GoogleRefreshToken googleRefresh;
+            if(googleRefreshToken != null && !googleRefreshToken.isEmpty()){
+                googleRefresh =
+                        new GoogleRefreshToken(googleUser.getId(), googleRefreshToken, timeToLive);
+            } else {
+                googleRefresh = googleRefreshTokenRepository.findById(String.valueOf(googleUser.getId()))
+                        .orElseThrow(() -> new NotFoundSocialRefreshTokenException(
+                                JwtErrorCode.NOT_FOUND_SOCIAL_REFRESH_TOKEN));
+                googleRefreshToken = googleRefresh.getGoogleRefreshToken();
+            }
+            httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
             googleRefreshTokenRepository.save(googleRefresh);
-            jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
             return userEntityMapper.toUserLoginResponseDto(googleUser);
         } else {
             return socialUserInfoDto;
@@ -184,7 +189,7 @@ public class GoogleService {
         String googleRefresh = jwtUtil.getTokenFromCookie(httpServletRequest, "Google-Refresh-Token");
         GoogleRefreshToken googleRefreshToken = new GoogleRefreshToken(user.getId(), googleRefresh, timeToLive);
         googleRefreshTokenRepository.save(googleRefreshToken);
-        jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
+        httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefresh));
         return userEntityMapper.toUserLoginResponseDto(user);
     }
 
@@ -223,8 +228,10 @@ public class GoogleService {
                 String newGoogleRefreshToken = jsonNode.get("refresh_token").asText();
                 googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
                 jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
-                GoogleRefreshToken newGoogleRefresh = new GoogleRefreshToken(user.getId(), newGoogleRefreshToken, timeToLive);
+                GoogleRefreshToken newGoogleRefresh = new GoogleRefreshToken(
+                        user.getId(), newGoogleRefreshToken, timeToLive);
                 googleRefreshTokenRepository.save(newGoogleRefresh);
+                httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", newGoogleRefreshToken));
             }
         } catch (HttpClientErrorException e){
             throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);

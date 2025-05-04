@@ -177,7 +177,6 @@ public class UserServiceImpl implements UserService {
         } else if(user.getProvider() == UserProvider.google){
             jwtUtil.deleteCookie("Google-Access-Token", response);
             jwtUtil.deleteCookie("Google-Refresh-Token", response);
-            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
         }
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
     }
