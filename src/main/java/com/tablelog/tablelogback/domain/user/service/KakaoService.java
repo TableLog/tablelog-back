@@ -122,6 +122,7 @@ public class KakaoService {
             KakaoRefreshToken kakaoRefresh =
                     new KakaoRefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive);
             kakaoRefreshTokenRepository.save(kakaoRefresh);
+            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
             return userEntityMapper.toUserLoginResponseDto(kakaoUser);
         } else {
             return socialUserInfoDto;
@@ -252,8 +253,7 @@ public class KakaoService {
                 KakaoRefreshToken kakaoRefresh =
                         new KakaoRefreshToken(user.getId(), newKakaoRefreshToken, refreshTimeToLive);
                 kakaoRefreshTokenRepository.save(kakaoRefresh);
-                httpServletResponse.addCookie(
-                        jwtUtil.createCookie("Kakao-Refresh-Token", newKakaoRefreshToken));
+                httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", newKakaoRefreshToken));
             }
         } catch (HttpClientErrorException e){
             throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
