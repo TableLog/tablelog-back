@@ -7,6 +7,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
+
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Slice<Recipe> findAllByUserId(Long id, PageRequest pageRequest);
 
@@ -30,4 +32,12 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
         """,
             nativeQuery = true)
     Slice<Recipe> searchRecipesByFoodName(@Param("keyword") String keyword, PageRequest pageRequest);
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.created_at >= :oneWeekAgo
+        ORDER BY r.star DESC, r.comment_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, PageRequest pageRequest);
 }

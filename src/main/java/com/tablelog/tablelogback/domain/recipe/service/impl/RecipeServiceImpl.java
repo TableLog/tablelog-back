@@ -29,11 +29,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -161,7 +163,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public RecipeSliceResponseDto readAllRecipes(int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes =
                 recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
@@ -169,8 +171,18 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public RecipeSliceResponseDto readPopularRecipes(int pageNumber) {
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes =
+                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
     public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes =
                 recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
@@ -179,7 +191,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByFoodName(keyword, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes =
                 recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
@@ -188,12 +200,14 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes =
                 recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
+
+    // 인기순
 
     @Transactional
     public void updateRecipe(
