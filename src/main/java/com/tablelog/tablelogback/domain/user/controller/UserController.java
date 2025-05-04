@@ -60,7 +60,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "로그인", description = "Authorize에 token 넣고 Authorization에는 공백 주면 됨")
+    @Operation(summary = "로그인")
     @PostMapping("/users/login")
     public ResponseEntity<?> login(
             @RequestBody UserLoginControllerRequestDto controllerRequestDto
@@ -71,10 +71,10 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "사용자 정보")
+    @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
     @GetMapping("/users")
     public ResponseEntity<UserLoginResponseDto> getUser(
-            @RequestHeader("Authorization") String token
+            @CookieValue("accessToken") String token
     ){
         UserLoginResponseDto responseDto = userService.getUser(token);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
@@ -96,7 +96,7 @@ public class UserController {
     @Operation(summary = "로그아웃")
     @PostMapping("/users/logout")
     public ResponseEntity<?> logout(
-            @RequestHeader("Authorization") String token,
+            @CookieValue("accessToken") String token,
             HttpServletResponse httpServletResponse
     ){
         userService.logout(token, httpServletResponse);
@@ -119,10 +119,10 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "토큰 갱신")
+    @Operation(summary = "토큰 갱신", description = "스웨거에서 refreshToken은 빈 칸 하나로 가능")
     @PostMapping("/users/refresh")
     public ResponseEntity<?> refreshAccessToken(
-            @RequestHeader("Refresh-Token") String refreshToken,
+            @CookieValue("refreshToken") String refreshToken,
             @RequestHeader(value = "Social-Refresh-Token", required = false) String socialRefreshToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
