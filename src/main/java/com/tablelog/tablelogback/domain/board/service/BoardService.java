@@ -33,5 +33,7 @@ public interface BoardService {
 //    TestReadResponseDto get(Long id);
 //
     List<BoardReadResponseDto> getAll(int pageNumber);
+    List<BoardReadResponseDto> getAllByDesc(int pageNumber);
+    List<BoardReadResponseDto> getAllByAsc(int pageNumber);
     BoardReadResponseDto getOnce(Long id);
 }
