@@ -13,6 +13,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.Objects;
+import java.util.List;
+import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
@@ -76,12 +78,10 @@ public class S3Provider {
 
     public void delete(String imageName) {
         if (imageName == null) return;
-
         DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
                 .bucket(bucket)
                 .key(imageName)
                 .build();
-
         s3Client.deleteObject(deleteRequest);
     }
     public String updateImage(String imageName, String folderName, MultipartFile multipartFile)
@@ -119,4 +119,25 @@ public class S3Provider {
     private String extractKeyFromUrl(String imageUrl) {
         return imageUrl.replace(url, "");
     }
+    /*TODO - 다중 이미지 처리 로직 구현
+    1. 리스트 타입으로 들어온다
+    2. 리스트의 길이를 구해서 처리한다
+    */
+    public List<String> updateImages(List<MultipartFile> multipartFiles, String folderName) throws IOException {
+        if (multipartFiles == null || multipartFiles.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<String> imageUrls = new ArrayList<>();
+        String encodedFolderName = URLEncoder.encode(folderName, StandardCharsets.UTF_8);
+        for (MultipartFile file : multipartFiles) {
+            if (!file.isEmpty()) {
+                String newFileName = originalFileName(file);
+                String key = folderName + SEPARATOR + newFileName;
+                saveFile(file, key);
+                imageUrls.add(url + encodedFolderName + SEPARATOR + newFileName);
+            }
+        }
+        return imageUrls;
+    }
+
 }
