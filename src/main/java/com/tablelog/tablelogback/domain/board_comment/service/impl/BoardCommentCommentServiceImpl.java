@@ -85,8 +85,8 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
 
-        PageRequest pageRequest = PageRequest.of(pageNumber, 3); // 3개씩 가져오기
-        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardid(board.getId().toString(), pageRequest);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 3개씩 가져오기
+        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardId(board.getId().toString(), pageRequest);
 
         List<BoardCommentReadResponseDto> content = boardCommentEntityMapper.toBoardCommentReadResponseDtos(commentSlice.getContent());
         return new SliceImpl<>(content, pageRequest, commentSlice.hasNext());

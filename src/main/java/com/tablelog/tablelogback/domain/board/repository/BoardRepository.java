@@ -16,4 +16,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 //    List<Board> findByName(String name);
 //
     Slice<Board> findAllBy(Pageable pageable);
+    Slice<Board> findAllByOrderByIdDesc(Pageable pageable);
+    Slice<Board> findAllByOrderByIdAsc(Pageable pageable);
+    
 }
+

@@ -18,13 +18,13 @@ public interface BoardService {
 
     void create(BoardCreateServiceRequestDto requestDto
     , User user
-    , MultipartFile multipartFile
+    , List<MultipartFile> multipartFiles
     ) throws IOException;
 
     void update(BoardUpdateServiceRequestDto requestDto
             ,User user
             ,Long id
-            ,MultipartFile multipartFile
+            ,List<MultipartFile> multipartFiles
     ) throws IOException;
      void delete(
          Long id,
@@ -33,5 +33,7 @@ public interface BoardService {
 //    TestReadResponseDto get(Long id);
 //
     List<BoardReadResponseDto> getAll(int pageNumber);
+    List<BoardReadResponseDto> getAllByDesc(int pageNumber);
+    List<BoardReadResponseDto> getAllByAsc(int pageNumber);
     BoardReadResponseDto getOnce(Long id);
 }
