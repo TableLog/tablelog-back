@@ -18,13 +18,13 @@ public interface BoardService {
 
     void create(BoardCreateServiceRequestDto requestDto
     , User user
-    , MultipartFile multipartFile
+    , List<MultipartFile> multipartFiles
     ) throws IOException;
 
     void update(BoardUpdateServiceRequestDto requestDto
             ,User user
             ,Long id
-            ,MultipartFile multipartFile
+            ,List<MultipartFile> multipartFiles
     ) throws IOException;
      void delete(
          Long id,

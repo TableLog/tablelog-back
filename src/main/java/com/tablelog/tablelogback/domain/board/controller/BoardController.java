@@ -39,11 +39,11 @@ public class BoardController {
     public ResponseEntity<?> createBoard(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestPart BoardCreateControllerRequestDto controllerRequestDto,
-            @RequestPart(value = "multipartFile",required = false) MultipartFile multipartFile
+            @RequestPart(value = "multipartFiles",required = false) List<MultipartFile> multipartFiles
     )  throws IOException{
         BoardCreateServiceRequestDto boardCreateServiceRequestDto =
                 boardDtoMapper.toBoardServiceRequestDto(controllerRequestDto);
-        boardService.create(boardCreateServiceRequestDto,userDetails.user(),multipartFile);
+        boardService.create(boardCreateServiceRequestDto,userDetails.user(),multipartFiles);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PutMapping("/boards/{board_id}")
@@ -51,11 +51,11 @@ public class BoardController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable Long board_id,
             @RequestPart BoardUpdateControllerRequestDto controllerRequestDto,
-            @RequestPart(value = "multipartFile",required = false) MultipartFile multipartFile
+            @RequestPart(value = "multipartFiles",required = false) List<MultipartFile> multipartFiles
     )throws IOException{
         BoardUpdateServiceRequestDto boardUpdateServiceRequestDto =
                 boardDtoMapper.toBoardUpdateServiceRequestDto(controllerRequestDto);
-        boardService.update(boardUpdateServiceRequestDto,userDetails.user(),board_id,multipartFile);
+        boardService.update(boardUpdateServiceRequestDto,userDetails.user(),board_id,multipartFiles);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @DeleteMapping("/boards/{board_id}")

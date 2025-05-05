@@ -41,71 +41,50 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public void create(final BoardCreateServiceRequestDto boardRequestDto
             , User user
-            , MultipartFile multipartFile
+            , List<MultipartFile> multipartFiles
             )throws IOException
     {
-        // Mapper로 만들기
-
-        String fileName;
-        String fileUrl;
-        /* Builder로 만들기
-            Test test = Test.builder()
-            .name(testRequestDto.name())
-            .age(testRequestDto.age())
-            .build();
-         */
-        if (multipartFile.isEmpty()) {
-            fileUrl = null;
-            Board board = boardEntityMapper.toBoard(boardRequestDto,fileUrl
-                    ,user
-            );
-            boardRepository.save(board);
+        List<String> imageUrls;
+        if (multipartFiles == null || multipartFiles.isEmpty()) {
+            imageUrls = null;
         } else {
-            fileName = s3Provider.originalFileName(multipartFile);
-            fileUrl = url + user.getFolderName() + SEPARATOR + fileName;
-            Board board = boardEntityMapper.toBoard(boardRequestDto,fileUrl
-                    ,user);
-            boardRepository.save(board);
-            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-            s3Provider.saveFile(multipartFile, fileUrl);
+            imageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
         }
+        Board board = boardEntityMapper.toBoard(boardRequestDto, imageUrls, user);
+        boardRepository.save(board);
     }
     @Override
     public void update(final BoardUpdateServiceRequestDto boardRequestDto
             , User user
             , Long board_id
-            , MultipartFile multipartFile
+            , List<MultipartFile> multipartFiles
     )throws IOException
     {
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        String folderName = user.getFolderName();
-        String fileName;
-        String fileUrl;
-        if (multipartFile.isEmpty()) {
-            fileUrl = board.getImage_url();
-            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),fileUrl,boardRequestDto.category().toString());
-            boardRepository.save(board);
+        List<String> imageUrls;
+        if (multipartFiles == null || multipartFiles.isEmpty()) {
+            imageUrls = board.getImage_urls();
+            System.out.println(imageUrls);
         } else {
-            fileName = s3Provider.originalFileName(multipartFile);
-            fileUrl = url + user.getFolderName() + SEPARATOR + fileName;
-            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),fileUrl,boardRequestDto.category().toString());
-            boardRepository.save(board);
-            fileUrl = user.getFolderName() + SEPARATOR + fileName;
-            s3Provider.saveFile(multipartFile, fileUrl);
+            imageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
         }
+        board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+        boardRepository.save(board);
     }
     @DeleteMapping
     public void delete(Long board_id,User user){
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        if (board.getImage_url()==null){
+        if (board.getImage_urls()==null){
             boardRepository.delete(board);
         }else {
-            String image_name = board.getImage_url().replace(url,"");
-            image_name = image_name.substring(image_name.lastIndexOf("/"));
+            for (String imageUrl : board.getImage_urls()) {
+                String image_name = imageUrl.replace(url,"");
+                image_name = image_name.substring(image_name.lastIndexOf("/"));
+                s3Provider.delete(user.getFolderName()+image_name);
+            }
             boardRepository.delete(board);
-            s3Provider.delete(user.getFolderName()+image_name);
         }
     }
     // Test -> TestCreateServiceRequestDto
