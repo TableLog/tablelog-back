@@ -64,13 +64,20 @@ public class RecipeController {
                 .body(recipeService.readRecipe(recipeId));
     }
 
-    @Operation(summary = "레시피 전체 조회")
-    @GetMapping("/recipes")
+    @Operation(summary = "레시피 전체 조회 최신순 10개씩")
+    @GetMapping("/recipes/latest")
     public ResponseEntity<?> readAllRecipes(
             @RequestParam int pageNumber
     ) {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.readAllRecipes(pageNumber));
+        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber));
+    }
+
+    @Operation(summary = "레시피 전체 조회 인기순")
+    @GetMapping("/recipes/popular")
+    public ResponseEntity<?> readPopularRecipes(
+            @RequestParam int pageNumber
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber));
     }
 
     @Operation(summary = "레시피 전체 조회 By 사용자")

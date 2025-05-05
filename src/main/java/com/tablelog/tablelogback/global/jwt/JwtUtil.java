@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.util.Base64;
@@ -46,8 +45,8 @@ public class JwtUtil {
 
     public String createAccessToken(String email, UserRole userRole) {
         Date date = new Date();
-        return BEARER_PREFIX +
-                Jwts.builder()
+//        return BEARER_PREFIX +
+                return Jwts.builder()
                         .subject(email)
                         .claim(AUTHORIZATION_KEY, userRole)
                         .expiration(new Date(date.getTime() + accessTokenExpirationPeriod))
@@ -109,36 +108,30 @@ public class JwtUtil {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
 
-    public String getAccessTokenFromHeader(HttpServletRequest request) {
-        String token = request.getHeader(AUTHORIZATION_HEADER);
-        if (StringUtils.hasText(token) && token.startsWith(BEARER_PREFIX)) {
-            return token.substring(7);
+    public String addTokenToCookie(final User user, final HttpServletResponse httpServletResponse, String tokenName) {
+        String token;
+        if (tokenName.equals("accessToken")) {
+            token = createAccessToken(user.getEmail(), user.getUserRole());
+        } else {
+            token = createRefreshToken(user.getEmail(), user.getUserRole());
         }
-        return null;
-    }
-
-    public String addAccessTokenToHeader(final User user, final HttpServletResponse httpServletResponse) {
-        String token = createAccessToken(user.getEmail(), user.getUserRole());
-        logger.info("header에 AccessToken 추가");
-        httpServletResponse.addHeader(ACCESS_TOKEN_HEADER, token);
-        return token;
-    }
-
-    public String addRefreshTokenToCookie(final User user, final HttpServletResponse httpServletResponse) {
-        String token = createRefreshToken(user.getEmail(), user.getUserRole());
-        httpServletResponse.addCookie(createCookie("refreshToken", token));
+        httpServletResponse.addCookie(createCookie(tokenName, token));
         return token;
     }
 
     public Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(Math.toIntExact(refreshTokenExpirationPeriod));
+        if(key.equals("accessToken")){
+            cookie.setMaxAge(Math.toIntExact(accessTokenExpirationPeriod));
+        } else {
+            cookie.setMaxAge(Math.toIntExact(refreshTokenExpirationPeriod));
+        }
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         return cookie;
     }
 
-    public String getRefreshTokenFromCookie(HttpServletRequest request, String cookieName) {
+    public String getTokenFromCookie(HttpServletRequest request, String cookieName) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
@@ -170,7 +163,23 @@ public class JwtUtil {
         }
     }
 
-    public void expireAccessTokenToHeader(final User user, final HttpServletResponse httpServletResponse) {
-        httpServletResponse.setHeader(ACCESS_TOKEN_HEADER, "");
-    }
+
+//    public String getAccessTokenFromHeader(HttpServletRequest request) {
+//        String token = request.getHeader(AUTHORIZATION_HEADER);
+//        if (StringUtils.hasText(token) && token.startsWith(BEARER_PREFIX)) {
+//            return token.substring(7);
+//        }
+//        return null;
+//    }
+//
+//    public String addAccessTokenToHeader(final User user, final HttpServletResponse httpServletResponse) {
+//        String token = createAccessToken(user.getEmail(), user.getUserRole());
+//        logger.info("header에 AccessToken 추가");
+//        httpServletResponse.addHeader(ACCESS_TOKEN_HEADER, token);
+//        return token;
+//    }
+//
+//    public void expireAccessTokenToHeader(final User user, final HttpServletResponse httpServletResponse) {
+//        httpServletResponse.setHeader(ACCESS_TOKEN_HEADER, "");
+//    }
 }

@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user.mapper.entity;
 
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -27,4 +28,6 @@ public interface UserEntityMapper {
                       UserRole userRole, String profileImgUrl, String folderName);
 
     UserLoginResponseDto toUserLoginResponseDto(User user);
+
+    FindEmailResponseDto toFindEmailResponseDto(User user);
 }

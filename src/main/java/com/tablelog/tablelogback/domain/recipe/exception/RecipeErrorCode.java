@@ -12,7 +12,7 @@ public enum RecipeErrorCode implements ErrorCode{
     FORBIDDEN_ACCESS_RECIPE(HttpStatus.FORBIDDEN, "ER403001"),
 
     // 404
-    NOT_FOUND_RECIPE(HttpStatus.NOT_FOUND, "식재료를 찾을 수 없습니다.");
+    NOT_FOUND_RECIPE(HttpStatus.NOT_FOUND, "ER404001");
 
     private final HttpStatus status;
     private final String message;

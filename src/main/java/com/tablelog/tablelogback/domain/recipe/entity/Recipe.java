@@ -63,11 +63,16 @@ public class Recipe extends BaseEntity {
     @Column(nullable = false)
     private Integer recipePoint = 0;
 
+    @Column(nullable = false)
+    private Integer commentCount = 0;
+
     @Builder
     public Recipe(final Long userId, final String title, final String intro, final String folderName,
                   final String imageUrl, final List<RecipeCategory> recipeCategoryList,
                   final RecipePrice price, final String memo, final CookingTime cookingTime,
-                  final Integer totalCal, final Boolean isPaid, final Integer recipePoint){
+                  final Integer totalCal, final Boolean isPaid, final Integer recipePoint,
+                  final Integer commentCount
+    ){
         this.userId = userId;
         this.title = title;
         this.intro = intro;
@@ -81,6 +86,7 @@ public class Recipe extends BaseEntity {
         this.totalCal = totalCal;
         this.isPaid = isPaid;
         this.recipePoint = recipePoint;
+        this.commentCount = 0;
     }
 
     public void updateRecipe(final String title, final String intro, final String folderName,
@@ -113,5 +119,9 @@ public class Recipe extends BaseEntity {
 
     public void updateStar(Float star){
         this.star = star;
+    }
+
+    public void updateCommentCount(Integer commentCount){
+        this.commentCount = commentCount;
     }
 }

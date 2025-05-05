@@ -1,8 +1,6 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.exception.InvalidProviderException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
@@ -23,37 +21,20 @@ public class SocialController {
     private final KakaoService kakaoService;
     private final GoogleService googleService;
 
-    @Operation(summary = "소셜 연동", description = "소셜 연동 시 정보 불러오기")
-    @GetMapping("/users/social/login/callback")
-    public ResponseEntity<SocialUserInfoDto> getSocial(
-            @RequestParam("provider") UserProvider provider,
-            @RequestParam("code") String code
-    ) throws JacksonException {
-        SocialUserInfoDto socialUserInfoDto = null;
-        if(provider == UserProvider.kakao) {
-            socialUserInfoDto = kakaoService.getKakaoUserInfo(code);
-        } else if(provider == UserProvider.google) {
-            socialUserInfoDto = googleService.getGoogleUserInfo(code);
-        } else {
-            throw new InvalidProviderException(UserErrorCode.INVALID_PROVIDER);
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(socialUserInfoDto);
-    }
-
     @Operation(summary = "소셜 로그인")
     @PostMapping("users/social/login")
-    public ResponseEntity<UserLoginResponseDto> loginWithSocial(
+    public ResponseEntity<Object> loginWithSocial(
             @RequestParam("provider") UserProvider provider,
             @RequestParam("code") String code
     ) throws JacksonException {
-        UserLoginResponseDto userLoginResponseDto = null;
+        Object objectDto = null;
         if(provider == UserProvider.kakao) {
-            userLoginResponseDto = kakaoService.loginWithKakao(code);
+            objectDto = kakaoService.handleKakaoLogin(code);
         } else if(provider == UserProvider.google) {
-            userLoginResponseDto = googleService.loginWithGoogle(code);
+            objectDto = googleService.handleGoogleLogin(code);
         } else {
             throw new InvalidProviderException(UserErrorCode.INVALID_PROVIDER);
         }
-        return ResponseEntity.status(HttpStatus.OK).body(userLoginResponseDto);
+        return ResponseEntity.status(HttpStatus.OK).body(objectDto);
     }
 }

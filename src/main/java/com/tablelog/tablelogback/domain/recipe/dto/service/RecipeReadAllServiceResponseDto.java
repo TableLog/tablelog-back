@@ -16,6 +16,7 @@ public record RecipeReadAllServiceResponseDto(
         CookingTime cookingTime,
         String memo,
         Boolean isPaid,
-        Integer recipePoint
+        Integer recipePoint,
+        Integer commentCount
 ) {
 }

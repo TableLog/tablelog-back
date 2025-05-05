@@ -5,6 +5,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserController
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
+import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
@@ -59,7 +60,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "로그인", description = "Authorize에 token 넣고 Authorization에는 공백 주면 됨")
+    @Operation(summary = "로그인")
     @PostMapping("/users/login")
     public ResponseEntity<?> login(
             @RequestBody UserLoginControllerRequestDto controllerRequestDto
@@ -70,10 +71,10 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "사용자 정보")
+    @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
     @GetMapping("/users")
     public ResponseEntity<UserLoginResponseDto> getUser(
-            @RequestHeader("Authorization") String token
+            @CookieValue("accessToken") String token
     ){
         UserLoginResponseDto responseDto = userService.getUser(token);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
@@ -95,7 +96,7 @@ public class UserController {
     @Operation(summary = "로그아웃")
     @PostMapping("/users/logout")
     public ResponseEntity<?> logout(
-            @RequestHeader("Authorization") String token,
+            @CookieValue("accessToken") String token,
             HttpServletResponse httpServletResponse
     ){
         userService.logout(token, httpServletResponse);
@@ -110,18 +111,18 @@ public class UserController {
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
         if(userDetailsImpl.user().getProvider() == UserProvider.kakao){
-            kakaoService.unlinkKakao(socialAccessToken);
+            kakaoService.unlinkKakao(socialAccessToken, httpServletResponse);
         } else if(userDetailsImpl.user().getProvider() == UserProvider.google){
-            googleService.unlinkGoogle(socialAccessToken);
+            googleService.unlinkGoogle(socialAccessToken, httpServletResponse);
         }
         userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "토큰 갱신")
+    @Operation(summary = "토큰 갱신", description = "스웨거에서 refreshToken은 빈 칸 하나로 가능")
     @PostMapping("/users/refresh")
     public ResponseEntity<?> refreshAccessToken(
-            @RequestHeader("Refresh-Token") String refreshToken,
+            @CookieValue("refreshToken") String refreshToken,
             @RequestHeader(value = "Social-Refresh-Token", required = false) String socialRefreshToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
@@ -132,7 +133,7 @@ public class UserController {
         if(responseDto.provider() == UserProvider.kakao){
             kakaoService.refresh(socialRefreshToken, user);
         } else if(responseDto.provider() == UserProvider.google){
-            googleService.refresh(socialRefreshToken, user);
+            googleService.refresh(user);
         }
         return ResponseEntity.ok().build();
     }
@@ -158,10 +159,9 @@ public class UserController {
     @Operation(summary = "비밀번호만 변경")
     @PutMapping("users/password")
     public ResponseEntity<?> updatePassword(
-            @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @RequestBody UpdatePasswordServiceRequestDto serviceRequestDto
     ){
-        userService.updatePassword(userDetailsImpl.user(), serviceRequestDto);
+        userService.updatePassword(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -170,7 +170,7 @@ public class UserController {
     public ResponseEntity<?> findEmail(
             @RequestBody findEmailServiceRequestDto serviceRequestDto
     ){
-        String email = userService.findEmail(serviceRequestDto);
-        return ResponseEntity.status(HttpStatus.OK).body(email);
+        FindEmailResponseDto responseDto = userService.findEmail(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }
