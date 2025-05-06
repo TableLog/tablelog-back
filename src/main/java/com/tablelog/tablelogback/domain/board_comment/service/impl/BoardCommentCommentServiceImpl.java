@@ -61,7 +61,7 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     {
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        BoardComment boardComment = boardCommentRepository.findByBoardidAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
+        BoardComment boardComment = boardCommentRepository.findByBoardIdAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
                 .orElseThrow(()-> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         boardComment.update(boardCommentRequestDto.content());
         boardCommentRepository.save(boardComment);
@@ -69,7 +69,7 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     public void delete(Long board_id,Long boardComment_id,User user){
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        BoardComment boardComment = boardCommentRepository.findByBoardidAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
+        BoardComment boardComment = boardCommentRepository.findByBoardIdAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
                 .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         boardCommentRepository.delete(boardComment);
         }

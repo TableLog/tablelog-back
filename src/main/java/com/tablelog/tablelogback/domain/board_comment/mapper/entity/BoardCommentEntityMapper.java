@@ -20,7 +20,7 @@ import java.util.List;
 public interface BoardCommentEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "BoardCommentRequestDto.content",target = "content")
-    @Mapping(source = "board.id",target = "boardid")
+    @Mapping(source = "board.id",target = "boardId")
     BoardComment toBoardComment(BoardCommentCreateServiceRequestDto BoardCommentRequestDto,Board board ,User user
     );
     BoardCommentReadResponseDto toBoardCommentReadResponseDto(BoardComment boardComment);

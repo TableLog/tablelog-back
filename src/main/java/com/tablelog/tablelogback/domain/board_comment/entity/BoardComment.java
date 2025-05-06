@@ -17,15 +17,15 @@ public class BoardComment extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column
-    private String  boardid;
+    private String  boardId;
     @Column
     private String user;
     @Column
     private String content;
 
     @Builder
-    public BoardComment(final String boardid, final String user, final String content) {
-        this.boardid = boardid;
+    public BoardComment(final String boardId, final String user, final String content) {
+        this.boardId = boardId;
         this.user = user;
         this.content = content;
     }

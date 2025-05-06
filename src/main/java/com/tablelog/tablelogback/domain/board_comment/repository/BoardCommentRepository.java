@@ -14,7 +14,7 @@ public interface BoardCommentRepository extends JpaRepository<BoardComment, Long
     Optional<BoardComment> findByIdAndUser(Long id, String user);
 //    List<Board> findByName(String name);
 //
-    Optional<BoardComment> findByBoardidAndIdAndUser(String board_id,Long id,String user);
+    Optional<BoardComment> findByBoardIdAndIdAndUser(String board_id,Long id,String user);
 
     Slice<BoardComment> findAllByBoardId(String board_Id, Pageable pageable);
 
