@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board.service;
 
 
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -32,8 +33,8 @@ public interface BoardService {
      ) throws IOException;
 //    TestReadResponseDto get(Long id);
 //
-    List<BoardReadResponseDto> getAll(int pageNumber);
-    List<BoardReadResponseDto> getAllByDesc(int pageNumber);
-    List<BoardReadResponseDto> getAllByAsc(int pageNumber);
+    BoardListResponseDto getAll(int pageNumber);
+    BoardListResponseDto getAllByDesc(int pageNumber);
+    BoardListResponseDto getAllByAsc(int pageNumber);
     BoardReadResponseDto getOnce(Long id);
 }

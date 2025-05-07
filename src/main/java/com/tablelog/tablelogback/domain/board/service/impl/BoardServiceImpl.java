@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board.service.impl;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
@@ -97,19 +98,22 @@ public class BoardServiceImpl implements BoardService {
 //
 //    // List<Test> -> List<TestCreateServiceRequestDto>
     @Override
-    public List<BoardReadResponseDto> getAll(int pageNumber) {
-        Slice<Board> boards = boardRepository.findAllBy(PageRequest.of(pageNumber, 5));
-        return boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
-    }
-    @Override
-    public List<BoardReadResponseDto> getAllByDesc(int pageNumber) {
+    public BoardListResponseDto getAll(int pageNumber) {
         Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
-        return boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+        List<BoardReadResponseDto> responseDtos = boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
     @Override
-    public List<BoardReadResponseDto> getAllByAsc(int pageNumber) {
+    public BoardListResponseDto getAllByDesc(int pageNumber) {
+        Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
+        List<BoardReadResponseDto> responseDtos = boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
+    }
+    @Override
+    public BoardListResponseDto getAllByAsc(int pageNumber) {
         Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
-        return boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+        List<BoardReadResponseDto> responseDtos = boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
     @Override
     public  BoardReadResponseDto getOnce(Long id){
