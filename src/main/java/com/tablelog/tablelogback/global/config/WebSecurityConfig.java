@@ -65,7 +65,8 @@ public class WebSecurityConfig {
             config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080"));
             config.setMaxAge(3600L);
             config.setAllowCredentials(true);
-            config.setExposedHeaders(List.of("Access-Token", "Set-Cookie", "Cookie", "refreshToken", "Kakao-Refresh-Token"));
+            config.setExposedHeaders(List.of("accessToken", "Set-Cookie", "Cookie", "refreshToken",
+                    "Kakao-Access-Token", "Kakao-Refresh-Token", "Google-Access-Token", "Google-Refresh-Token"));
             return config;
         };
     }
