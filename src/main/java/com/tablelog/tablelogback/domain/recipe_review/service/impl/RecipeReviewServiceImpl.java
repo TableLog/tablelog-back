@@ -28,7 +28,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 
 @RequiredArgsConstructor
@@ -45,6 +44,12 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user);
         recipeReviewRepository.save(recipeReview);
+    }
+
+    @Override
+    public RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id) {
+        RecipeReview recipeReview = findRecipeReview(recipeId, id);
+        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview);
     }
 
     private RecipeReview validateRecipeReview(Long recipeId, Long id, User user){

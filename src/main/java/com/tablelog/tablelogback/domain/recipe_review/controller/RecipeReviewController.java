@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.recipe_review.controller;
 
 import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseDto;
 import com.tablelog.tablelogback.domain.recipe_review.mapper.dto.RecipeReviewDtoMapper;
 import com.tablelog.tablelogback.domain.recipe_review.service.impl.RecipeReviewServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -34,5 +35,15 @@ public class RecipeReviewController {
                 recipeReviewDtoMapper.toRecipeReviewServiceRequestDto(requestDto);
         recipeReviewService.createRecipeReview(serviceRequestDto, recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "레시피 댓글 단건 조회")
+    @GetMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
+    public ResponseEntity<RecipeReviewReadResponseDto> readRecipeReview(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeReviewId
+    ){
+        RecipeReviewReadResponseDto responseDto = recipeReviewService.readRecipeReview(recipeId, recipeReviewId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }
