@@ -9,4 +9,5 @@ public interface RecipeReviewService {
     void createRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user);
     RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id);
     RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNumber);
+    RecipeReviewSliceResponseDto readAllRecipeReviewsByUser(Long userId, int pageNumber);
 }

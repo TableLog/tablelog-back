@@ -57,10 +57,19 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNumber) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
-
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByRecipeId(recipe.getId(), pageRequest);
+        List<RecipeReviewReadResponseDto> recipeReviews =
+                recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
+        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
+    }
 
+    @Override
+    public RecipeReviewSliceResponseDto readAllRecipeReviewsByUser(Long userId, int pageNumber) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(user.getNickname(), pageRequest);
         List<RecipeReviewReadResponseDto> recipeReviews =
                 recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
         return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
