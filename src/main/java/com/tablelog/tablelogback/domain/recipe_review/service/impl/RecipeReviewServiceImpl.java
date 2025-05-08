@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.recipe_review.service.impl;
 
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
@@ -24,7 +23,6 @@ import com.tablelog.tablelogback.global.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -73,6 +71,14 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         List<RecipeReviewReadResponseDto> recipeReviews =
                 recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
         return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
+    }
+
+    @Override
+    public void updateRecipeReview(RecipeReviewUpdateServiceRequestDto requestDto, Long recipeId, Long id, User user) {
+        RecipeReview recipeReview = validateRecipeReview(recipeId, id, user);
+        recipeReview.updateRecipeReview(requestDto.content(), requestDto.star(),
+                recipeId, user.getNickname(), requestDto.prrId());
+        recipeReviewRepository.save(recipeReview);
     }
 
     private RecipeReview validateRecipeReview(Long recipeId, Long id, User user){

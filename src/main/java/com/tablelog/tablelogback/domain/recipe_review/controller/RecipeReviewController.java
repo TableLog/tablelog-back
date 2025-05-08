@@ -1,8 +1,10 @@
 package com.tablelog.tablelogback.domain.recipe_review.controller;
 
 import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.mapper.dto.RecipeReviewDtoMapper;
 import com.tablelog.tablelogback.domain.recipe_review.service.impl.RecipeReviewServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -65,5 +67,19 @@ public class RecipeReviewController {
     ){
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeReviewService.readAllRecipeReviewsByUser(userId, pageNumber));
+    }
+
+    @Operation(summary = "레시피 댓글 수정")
+    @PutMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
+    public ResponseEntity<?> updateRecipeReview(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeReviewId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody RecipeReviewUpdateControllerRequestDto controllerRequestDto
+    ) throws IOException {
+        RecipeReviewUpdateServiceRequestDto serviceRequestDto =
+                recipeReviewDtoMapper.toRecipeReviewUpdateServiceRequestDto(controllerRequestDto);
+        recipeReviewService.updateRecipeReview(serviceRequestDto, recipeId, recipeReviewId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
