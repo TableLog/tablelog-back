@@ -28,6 +28,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 @RequiredArgsConstructor
@@ -50,6 +51,19 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     public RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id) {
         RecipeReview recipeReview = findRecipeReview(recipeId, id);
         return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview);
+    }
+
+    @Override
+    public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNumber) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<RecipeReview> slice = recipeReviewRepository.findAllByRecipeId(recipe.getId(), pageRequest);
+
+        List<RecipeReviewReadResponseDto> recipeReviews =
+                recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
+        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
     }
 
     private RecipeReview validateRecipeReview(Long recipeId, Long id, User user){

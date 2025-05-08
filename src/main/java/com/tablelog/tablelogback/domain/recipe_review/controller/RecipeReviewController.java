@@ -46,4 +46,14 @@ public class RecipeReviewController {
         RecipeReviewReadResponseDto responseDto = recipeReviewService.readRecipeReview(recipeId, recipeReviewId);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @Operation(summary = "레시피 댓글 전체 조회 By 레시피")
+    @GetMapping("/recipes/{recipeId}/recipe-reviews")
+    public ResponseEntity<?> readAllRecipeReviewsByRecipeId(
+            @PathVariable Long recipeId,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeReviewService.readAllRecipeReviewsByRecipe(recipeId, pageNumber));
+    }
 }
