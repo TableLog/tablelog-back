@@ -11,6 +11,8 @@ public record RecipeReadAllServiceResponseDto(
         String title,
         String intro,
         List<RecipeCategory> recipeCategoryList,
+        int totalStar,
+        int starCount,
         Float star,
         RecipePrice price,
         CookingTime cookingTime,

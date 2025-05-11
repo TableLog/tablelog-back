@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,17 +38,32 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
 
-    @Override
+    @Transactional
     public void createRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user){
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
-        RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user);
-        recipeReviewRepository.save(recipeReview);
+        // 대댓글은 작성자만 한 개만 가능
+        if(serviceRequestDto.prrId() != 0){
+            if(recipeReviewRepository.existsByPrrId(serviceRequestDto.prrId()) || !isRecipeAuthorOrAdmin(recipe, user)){
+                throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
+            }
+            RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user);
+            recipeReviewRepository.save(recipeReview);
+        }
+        else {
+            RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user);
+            recipeReviewRepository.save(recipeReview);
+            recipe.updateReviewCount(recipe.getReviewCount() + 1);
+            recipe.addStar(serviceRequestDto.star());
+        }
     }
 
     @Override
     public RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id) {
-        RecipeReview recipeReview = findRecipeReview(recipeId, id);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        RecipeReview recipeReview = recipeReviewRepository.findById(id)
+                .orElseThrow(() -> new NotFoundRecipeReviewException(RecipeReviewErrorCode.NOT_FOUND_RECIPE_REVIEW));
         return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview);
     }
 
@@ -75,24 +91,45 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
 
     @Override
     public void updateRecipeReview(RecipeReviewUpdateServiceRequestDto requestDto, Long recipeId, Long id, User user) {
-        RecipeReview recipeReview = validateRecipeReview(recipeId, id, user);
-        recipeReview.updateRecipeReview(requestDto.content(), requestDto.star(),
-                recipeId, user.getNickname(), requestDto.prrId());
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        RecipeReview recipeReview = validateRecipeReview(id, user);
+        byte oldStar = recipeReview.getStar();
+        byte newStar = requestDto.star();
+        recipeReview.updateRecipeReview(requestDto.content(), newStar, recipeId, user.getNickname(), requestDto.prrId());
         recipeReviewRepository.save(recipeReview);
+        recipe.updateStar(oldStar, newStar);
     }
 
-    private RecipeReview validateRecipeReview(Long recipeId, Long id, User user){
-        RecipeReview recipeReview = findRecipeReview(recipeId, id);
+    @Transactional
+    public void deleteRecipeReview(Long recipeId, Long id, User user) {
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        RecipeReview recipeReview = validateRecipeReview(id, user);
+        // cascade?
+        // prrId가 0이면 아래 전부 삭제
+        // 아니지 prrId 아래는 전부 삭제하도록 해야 함
+        // 댓글 개수는?
+        // 별점은?
+        recipeReviewRepository.delete(recipeReview);
+        recipe.updateReviewCount(recipe.getReviewCount() - 1);
+        recipe.deleteStar(recipeReview.getStar());
+        recipeRepository.save(recipe);
+    }
+
+    private RecipeReview validateRecipeReview(Long id, User user){
+        RecipeReview recipeReview = recipeReviewRepository.findById(id)
+                .orElseThrow(() -> new NotFoundRecipeReviewException(RecipeReviewErrorCode.NOT_FOUND_RECIPE_REVIEW));
         if (!Objects.equals(recipeReview.getUser(), user.getNickname()) && user.getUserRole() != UserRole.ADMIN) {
             throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
         }
         return recipeReview;
     }
 
-    private RecipeReview findRecipeReview(Long recipeId, Long id){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
-        return recipeReviewRepository.findById(id)
-                .orElseThrow(() -> new NotFoundRecipeReviewException(RecipeReviewErrorCode.NOT_FOUND_RECIPE_REVIEW));
+    private Boolean isRecipeAuthorOrAdmin(Recipe recipe, User user){
+        if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {
+            return false;
+        }
+        return true;
     }
 }
