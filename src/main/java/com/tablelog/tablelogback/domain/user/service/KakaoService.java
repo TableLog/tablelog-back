@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.entity.OAuthAccount;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
+import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.impl.UserServiceImpl;
 import com.tablelog.tablelogback.global.enums.UserProvider;
@@ -20,14 +23,12 @@ import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import com.tablelog.tablelogback.global.jwt.exception.NotFoundSocialRefreshTokenException;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshToken;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
-import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -36,6 +37,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,13 +57,13 @@ public class KakaoService {
     private final UserRepository userRepository;
     private final UserEntityMapper userEntityMapper;
     private final JwtUtil jwtUtil;
-    private final PasswordEncoder passwordEncoder;
     private final HttpServletResponse httpServletResponse;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
-    private final S3Provider s3Provider;
     private final UserServiceImpl userService;
+    private final OAuthAccountRepository oAuthAccountRepository;
+    private final OAuthAccountService oAuthAccountService;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -111,19 +113,31 @@ public class KakaoService {
             throw new NotFoundKakaoUserException(UserErrorCode.NOT_FOUND_KAKAO_USER);
         }
 
-        if(userRepository.existsByEmail(socialUserInfoDto.email())){
-            User kakaoUser = userRepository.findByEmail(socialUserInfoDto.email())
+        // 회원 존재
+        if(userRepository.existsByUserNameAndBirthday(socialUserInfoDto.userName(), socialUserInfoDto.birthday())){
+            User kakaoUser = userRepository
+                    .findByUserNameAndBirthday(socialUserInfoDto.userName(), socialUserInfoDto.birthday())
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-            jwtUtil.addTokenToCookie(kakaoUser, httpServletResponse, "accessToken");
-            String refresh = jwtUtil.addTokenToCookie(kakaoUser, httpServletResponse, "refreshToken");
-            RefreshToken refreshToken = new RefreshToken(kakaoUser.getId(), refresh, timeToLive);
-            refreshTokenRepository.save(refreshToken);
-
-            KakaoRefreshToken kakaoRefresh =
-                    new KakaoRefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive);
-            kakaoRefreshTokenRepository.save(kakaoRefresh);
-            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
-            return userEntityMapper.toUserLoginResponseDto(kakaoUser);
+            // 기존 회원이면 로그인
+            if(oAuthAccountRepository.existsByEmail(socialUserInfoDto.email())) {
+                jwtUtil.addTokenToCookie(kakaoUser, httpServletResponse, "accessToken");
+                String refresh = jwtUtil.addTokenToCookie(kakaoUser, httpServletResponse, "refreshToken");
+                RefreshToken refreshToken = new RefreshToken(kakaoUser.getId(), refresh, timeToLive);
+                refreshTokenRepository.save(refreshToken);
+                KakaoRefreshToken kakaoRefresh =
+                        new KakaoRefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive);
+                kakaoRefreshTokenRepository.save(kakaoRefresh);
+                httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
+            } else { // 추후 연동 시
+                OAuthAccount oAuthAccount = OAuthAccount.builder()
+                        .provider(socialUserInfoDto.provider())
+                        .email(socialUserInfoDto.email())
+                        .userId(kakaoUser.getId())
+                        .build();
+                oAuthAccountRepository.save(oAuthAccount);
+            }
+            List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(kakaoUser.getId());
+            return userEntityMapper.toUserLoginResponseDto(kakaoUser, dtos);
         } else {
             return socialUserInfoDto;
         }
@@ -147,7 +161,16 @@ public class KakaoService {
         KakaoRefreshToken kakaoRefreshToken = new KakaoRefreshToken(user.getId(), kakaoRefresh, refreshTimeToLive);
         kakaoRefreshTokenRepository.save(kakaoRefreshToken);
         httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefresh));
-        return userEntityMapper.toUserLoginResponseDto(user);
+
+        // OAuthAccount에 추가
+        OAuthAccount oAuthAccount = OAuthAccount.builder()
+                .provider(user.getProvider())
+                .email(user.getEmail())
+                .userId(user.getId())
+                .build();
+        oAuthAccountRepository.save(oAuthAccount);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     public void unlinkKakao(String kakaoAccessToken, HttpServletResponse httpServletResponse) throws JacksonException {
@@ -170,6 +193,7 @@ public class KakaoService {
             );
 
             if (response.getStatusCode().is2xxSuccessful()) {
+                oAuthAccountRepository.deleteAllByUserId(user.getId());
                 kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
                 userRepository.save(user);
                 jwtUtil.deleteCookie("Kakao-Access-Token", httpServletResponse);
