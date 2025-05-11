@@ -89,7 +89,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
     }
 
-    @Override
+    @Transactional
     public void updateRecipeReview(RecipeReviewUpdateServiceRequestDto requestDto, Long recipeId, Long id, User user) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
@@ -113,15 +113,15 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeReview recipeReview = validateRecipeReview(id, user);
-        // cascade?
-        // prrId가 0이면 아래 전부 삭제
-        // 아니지 prrId 아래는 전부 삭제하도록 해야 함
-        // 댓글 개수는?
-        // 별점은?
+
+        if(recipeReview.getPrrId() == 0){
+            if(recipeReviewRepository.existsByPrrId(id)){
+                recipeReviewRepository.deleteByPrrId(id);
+            }
+        }
         recipeReviewRepository.delete(recipeReview);
         recipe.updateReviewCount(recipe.getReviewCount() - 1);
         recipe.deleteStar(recipeReview.getStar());
-//        re
         recipeRepository.save(recipe);
     }
 

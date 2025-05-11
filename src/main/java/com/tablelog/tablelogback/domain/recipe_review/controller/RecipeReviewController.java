@@ -82,4 +82,15 @@ public class RecipeReviewController {
         recipeReviewService.updateRecipeReview(serviceRequestDto, recipeId, recipeReviewId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "레시피 댓글 삭제")
+    @DeleteMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
+    public ResponseEntity<?> deleteRecipeReview(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeReviewId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeReviewService.deleteRecipeReview(recipeId, recipeReviewId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

@@ -11,4 +11,5 @@ public interface RecipeReviewRepository extends JpaRepository<RecipeReview, Long
     Slice<RecipeReview> findAllByRecipeId(Long recipeId, PageRequest pageRequest);
     Slice<RecipeReview> findAllByUser(String user, PageRequest pageRequest);
     Boolean existsByPrrId(Long prrId);
+    void deleteByPrrId(Long prrId);
 }
