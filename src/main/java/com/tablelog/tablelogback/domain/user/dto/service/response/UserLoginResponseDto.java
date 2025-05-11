@@ -13,6 +13,10 @@ public record UserLoginResponseDto(
         String profileImgUrl,
         UserProvider provider,
         Integer pointBalance,
-        Boolean marketingOptIn
+        Boolean marketingOptIn,
+        Long recipeCount,
+        Long boardCount,
+        Long followerCount,
+        Long followingCount
 ) {
 }
