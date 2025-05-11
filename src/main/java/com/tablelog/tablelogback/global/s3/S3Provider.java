@@ -24,7 +24,7 @@ public class S3Provider {
     public static final String SEPARATOR = "/";
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
-    public final String url = "https://onceclick.s3.ap-northeast-2.amazonaws.com/";
+    public final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     public String saveFile(MultipartFile multipartFile, String imageName) throws IOException {
         if (multipartFile.isEmpty()) return null;
