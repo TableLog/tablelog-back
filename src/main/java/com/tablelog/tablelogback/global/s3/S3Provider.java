@@ -88,7 +88,7 @@ public class S3Provider {
             throws IOException {
         if (imageName == null && multipartFile.isEmpty()) return null;
         String encodedFolderName = URLEncoder.encode(folderName, StandardCharsets.UTF_8);
-        if (multipartFile.isEmpty()) {
+        if (multipartFile == null || multipartFile.isEmpty()) {
             // 삭제
             String key = extractKeyFromUrl(imageName);
             delete(key);
