@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board.controller;
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
@@ -68,10 +69,10 @@ public class BoardController {
     }
 
     @GetMapping("/boards")
-    public ResponseEntity<List<BoardReadResponseDto>> getAll(
+    public ResponseEntity<BoardListResponseDto> getAll(
             @RequestParam("page") Integer pageNumber
     ) {
-        List<BoardReadResponseDto> responseDto = boardService.getAll(pageNumber);
+        BoardListResponseDto responseDto = boardService.getAll(pageNumber);
         return ResponseEntity.ok(responseDto);
     }
 

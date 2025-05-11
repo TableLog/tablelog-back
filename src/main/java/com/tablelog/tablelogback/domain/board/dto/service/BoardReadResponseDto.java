@@ -7,7 +7,7 @@ public record BoardReadResponseDto(
         String content,
         BoardCategory category,
         String image_url,
-        String user
-) {
+        String user)
+{
 
 }

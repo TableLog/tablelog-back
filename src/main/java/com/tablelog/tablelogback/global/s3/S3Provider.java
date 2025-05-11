@@ -24,7 +24,7 @@ public class S3Provider {
     public static final String SEPARATOR = "/";
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
-    public final String url = "https://onceclick.s3.ap-northeast-2.amazonaws.com/";
+    public final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     public String saveFile(MultipartFile multipartFile, String imageName) throws IOException {
         if (multipartFile.isEmpty()) return null;
@@ -88,7 +88,7 @@ public class S3Provider {
             throws IOException {
         if (imageName == null && multipartFile.isEmpty()) return null;
         String encodedFolderName = URLEncoder.encode(folderName, StandardCharsets.UTF_8);
-        if (multipartFile.isEmpty()) {
+        if (multipartFile == null || multipartFile.isEmpty()) {
             // 삭제
             String key = extractKeyFromUrl(imageName);
             delete(key);
