@@ -28,7 +28,7 @@ public enum UserErrorCode implements ErrorCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "EU404001"),
     NOT_FOUND_KAKAO_USER(HttpStatus.NOT_FOUND, "EU404002"),
     NOT_FOUND_GOOGLE_USER(HttpStatus.NOT_FOUND, "EU404003"),
-    NOT_FOUND_SOCIAL_ACCOUNT(HttpStatus.NOT_FOUND, "Eu404004");
+    NOT_FOUND_SOCIAL_ACCOUNT(HttpStatus.NOT_FOUND, "EU404004");
 
     private final HttpStatus status;
     private final String message;
