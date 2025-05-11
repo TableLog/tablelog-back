@@ -170,7 +170,7 @@ public class UserServiceImpl implements UserService {
 
         // 프로필 이미지
         String imageName;
-        if(multipartFile == null || multipartFile.isEmpty()){
+        if((multipartFile == null || multipartFile.isEmpty()) && user.getProfileImgUrl() != null){
             s3Provider.delete(user.getProfileImgUrl());
             user.updateProfileImgUrl(null);
         }
