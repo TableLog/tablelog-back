@@ -3,11 +3,13 @@ package com.tablelog.tablelogback.domain.user.service.impl;
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -42,8 +45,8 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
-    private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
     private final S3Provider s3Provider;
+    private final OAuthAccountService oAuthAccountService;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -109,7 +112,8 @@ public class UserServiceImpl implements UserService {
         String refresh = jwtUtil.addTokenToCookie(user, httpServletResponse, "refreshToken");
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
-        return userEntityMapper.toUserLoginResponseDto(user);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Override
@@ -120,7 +124,8 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.getUserInfoFromToken(token).getSubject();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        return userEntityMapper.toUserLoginResponseDto(user);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Transactional
@@ -234,7 +239,8 @@ public class UserServiceImpl implements UserService {
         String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
-        return userEntityMapper.toUserLoginResponseDto(user);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Override

@@ -55,8 +55,8 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean marketingOptIn;
 
-//    @Column
-//    private List<OAuthAccount> socialEmail;
+    @Transient
+    private List<OAuthAccount> oAuthAccounts;
 
     @Column(nullable = false)
     private Long recipeCount;
@@ -146,5 +146,9 @@ public class User extends BaseEntity {
 
     public void updateFollowingCount(Long followingCount){
         this.followingCount = followingCount;
+    }
+
+    public void setOauthAccounts(List<OAuthAccount> accounts) {
+        this.oAuthAccounts = accounts;
     }
 }
