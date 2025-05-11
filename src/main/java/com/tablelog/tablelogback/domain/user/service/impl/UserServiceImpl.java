@@ -126,27 +126,37 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void updateUser(User user,
                            UpdateUserServiceRequestDto serviceRequestDto,
-                           MultipartFile multipartFile) throws IOException {
+                           MultipartFile multipartFile,
+                           HttpServletResponse response
+    ) throws IOException {
         // 소셜 미연동 시
         if(user.getProvider() == UserProvider.local){
             // 이메일
-            if(!Objects.equals(serviceRequestDto.newPassword(), "")){
-                if(userRepository.existsByEmail(serviceRequestDto.newEmail())){
+            if(!serviceRequestDto.email().equals(user.getEmail())){
+                if(userRepository.existsByEmail(serviceRequestDto.email())){
                     throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
                 }
-                user.updateEmail(serviceRequestDto.newEmail());
+                user.updateEmail(serviceRequestDto.email());
+                // 이메일 변경하면 리프레시
+                jwtUtil.deleteCookie("accessToken", response);
+                jwtUtil.addTokenToCookie(user, response, "accessToken");
+                jwtUtil.deleteCookie("refreshToken", response);
+                refreshTokenRepository.deleteById(String.valueOf(user.getId()));
+                String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
+                refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
             }
+
             // 비밀번호
-            if(!Objects.equals(serviceRequestDto.newPassword(), "")){
-                if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
+            if(!Objects.equals(serviceRequestDto.password(), "")){
+                if (passwordEncoder.matches(serviceRequestDto.password(), user.getPassword())) {
                     throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
                 }
-                user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
+                user.updatePassword(passwordEncoder.encode(serviceRequestDto.password()));
             }
         }
 
         // 닉네임
-        if(!Objects.equals(serviceRequestDto.nickname(), "")){
+        if(!serviceRequestDto.nickname().equals(user.getNickname())){
             if(userRepository.existsByNickname(serviceRequestDto.nickname())){
                 throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
             }

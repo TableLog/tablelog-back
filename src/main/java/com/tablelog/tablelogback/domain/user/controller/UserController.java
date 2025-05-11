@@ -85,11 +85,12 @@ public class UserController {
     public ResponseEntity<?> updateUser(
             @RequestPart UpdateUserControllerRequestDto controllerRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestPart(required = false) MultipartFile multipartFile) throws IOException
+            @RequestPart(required = false) MultipartFile multipartFile,
+            HttpServletResponse httpServletResponse) throws IOException
     {
         UpdateUserServiceRequestDto serviceRequestDto = userDtoMapper
                 .toUpdateUserServiceRequestDto(controllerRequestDto);
-        userService.updateUser(userDetailsImpl.user(), serviceRequestDto, multipartFile);
+        userService.updateUser(userDetailsImpl.user(), serviceRequestDto, multipartFile, httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
