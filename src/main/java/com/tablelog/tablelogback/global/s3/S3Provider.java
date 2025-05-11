@@ -86,7 +86,7 @@ public class S3Provider {
     }
     public String updateImage(String imageName, String folderName, MultipartFile multipartFile)
             throws IOException {
-        if (imageName == null || multipartFile.isEmpty()) return null;
+        if (imageName == null && (multipartFile != null || multipartFile.isEmpty())) return null;
         String encodedFolderName = URLEncoder.encode(folderName, StandardCharsets.UTF_8);
         if (multipartFile == null || multipartFile.isEmpty()) {
             // 삭제
