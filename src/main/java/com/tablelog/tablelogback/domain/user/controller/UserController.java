@@ -7,13 +7,16 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpController
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.entity.OAuthAccount;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
+import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
+import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -40,6 +44,8 @@ public class UserController {
     private final KakaoService kakaoService;
     private final GoogleService googleService;
     private final UserRepository userRepository;
+    private final OAuthAccountService oAuthAccountService;
+    private final OAuthAccountRepository oAuthAccountRepository;
 
     @Operation(summary = "회원가입")
     @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -108,14 +114,19 @@ public class UserController {
     @DeleteMapping("/users")
     public ResponseEntity<?> deleteUser(
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestHeader(value = "Social-Access-Token", required = false) String socialAccessToken,
+            @CookieValue(value = "Kakao-Access-Token", required = false) String kakaoAccessToken,
+            @CookieValue(value = "Google-Access-Token", required = false) String googleAccessToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
-        if(userDetailsImpl.user().getProvider() == UserProvider.kakao){
-            kakaoService.unlinkKakao(socialAccessToken, httpServletResponse);
-        } else if(userDetailsImpl.user().getProvider() == UserProvider.google){
-            googleService.unlinkGoogle(socialAccessToken, httpServletResponse);
+        List<OAuthAccount> accounts = oAuthAccountService.getAllOAuthAccounts(userDetailsImpl.user().getId());
+        for(OAuthAccount oAuthAccount : accounts){
+            if(oAuthAccount.getProvider() == UserProvider.kakao){
+                kakaoService.unlinkKakao(kakaoAccessToken, httpServletResponse);
+            } else if(oAuthAccount.getProvider() == UserProvider.google){
+                googleService.unlinkGoogle(googleAccessToken, httpServletResponse);
+            }
         }
+        oAuthAccountRepository.deleteAllByUserId(userDetailsImpl.user().getId());
         userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }

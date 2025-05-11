@@ -277,7 +277,6 @@ public class GoogleService {
             );
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                oAuthAccountRepository.deleteAllByUserId(user.getId());
                 googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
                 userRepository.save(user);
                 jwtUtil.deleteCookie("Google-Access-Token", httpServletResponse);

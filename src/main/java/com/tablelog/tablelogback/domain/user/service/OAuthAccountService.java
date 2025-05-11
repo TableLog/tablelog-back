@@ -23,4 +23,10 @@ public class OAuthAccountService {
                 .toList();
         return dtos;
     }
+
+    public List<OAuthAccount> getAllOAuthAccounts(Long userId){
+        List<OAuthAccount> oAuthAccounts = oAuthAccountRepository.findAllByUserId(userId)
+                .orElseThrow(() -> new NotFoundOAuthAccountException(UserErrorCode.NOT_FOUND_SOCIAL_ACCOUNT));
+        return oAuthAccounts;
+    }
 }

@@ -193,7 +193,6 @@ public class KakaoService {
             );
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                oAuthAccountRepository.deleteAllByUserId(user.getId());
                 kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
                 userRepository.save(user);
                 jwtUtil.deleteCookie("Kakao-Access-Token", httpServletResponse);
