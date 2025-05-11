@@ -94,11 +94,18 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeReview recipeReview = validateRecipeReview(id, user);
-        byte oldStar = recipeReview.getStar();
-        byte newStar = requestDto.star();
-        recipeReview.updateRecipeReview(requestDto.content(), newStar, recipeId, user.getNickname(), requestDto.prrId());
+
+        if(recipeReview.getPrrId() == 0){
+            byte oldStar = recipeReview.getStar();
+            byte newStar = requestDto.star();
+            recipeReview.updateRecipeReview(requestDto.content(), newStar, recipeId,
+                    user.getNickname(), requestDto.prrId());
+            recipe.updateStar(oldStar, newStar);
+        } else {
+            recipeReview.updateRecipeReview(requestDto.content(), null, recipeId,
+                    user.getNickname(), requestDto.prrId());
+        }
         recipeReviewRepository.save(recipeReview);
-        recipe.updateStar(oldStar, newStar);
     }
 
     @Transactional
@@ -114,6 +121,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         recipeReviewRepository.delete(recipeReview);
         recipe.updateReviewCount(recipe.getReviewCount() - 1);
         recipe.deleteStar(recipeReview.getStar());
+//        re
         recipeRepository.save(recipe);
     }
 
