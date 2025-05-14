@@ -19,6 +19,6 @@ public record RecipeReadAllServiceResponseDto(
         String memo,
         Boolean isPaid,
         Integer recipePoint,
-        Integer commentCount
+        Integer reviewCount
 ) {
 }

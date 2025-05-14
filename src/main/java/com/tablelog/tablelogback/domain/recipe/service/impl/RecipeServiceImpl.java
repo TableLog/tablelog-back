@@ -208,8 +208,6 @@ public class RecipeServiceImpl implements RecipeService {
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
-    // 인기순
-
     @Transactional
     public void updateRecipe(
             Long id, RecipeUpdateServiceRequestDto requestDto,
