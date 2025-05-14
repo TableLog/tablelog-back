@@ -3,11 +3,13 @@ package com.tablelog.tablelogback.domain.user.service.impl;
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -42,8 +45,8 @@ public class UserServiceImpl implements UserService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
-    private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
     private final S3Provider s3Provider;
+    private final OAuthAccountService oAuthAccountService;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -109,7 +112,8 @@ public class UserServiceImpl implements UserService {
         String refresh = jwtUtil.addTokenToCookie(user, httpServletResponse, "refreshToken");
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
-        return userEntityMapper.toUserLoginResponseDto(user);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Override
@@ -120,33 +124,44 @@ public class UserServiceImpl implements UserService {
         String email = jwtUtil.getUserInfoFromToken(token).getSubject();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        return userEntityMapper.toUserLoginResponseDto(user);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Transactional
     public void updateUser(User user,
                            UpdateUserServiceRequestDto serviceRequestDto,
-                           MultipartFile multipartFile) throws IOException {
+                           MultipartFile multipartFile,
+                           HttpServletResponse response
+    ) throws IOException {
         // 소셜 미연동 시
         if(user.getProvider() == UserProvider.local){
             // 이메일
-            if(!Objects.equals(serviceRequestDto.newPassword(), "")){
-                if(userRepository.existsByEmail(serviceRequestDto.newEmail())){
+            if(!serviceRequestDto.email().equals(user.getEmail())){
+                if(userRepository.existsByEmail(serviceRequestDto.email())){
                     throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
                 }
-                user.updateEmail(serviceRequestDto.newEmail());
+                user.updateEmail(serviceRequestDto.email());
+                // 이메일 변경하면 리프레시
+                jwtUtil.deleteCookie("accessToken", response);
+                jwtUtil.addTokenToCookie(user, response, "accessToken");
+                jwtUtil.deleteCookie("refreshToken", response);
+                refreshTokenRepository.deleteById(String.valueOf(user.getId()));
+                String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
+                refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
             }
+
             // 비밀번호
-            if(!Objects.equals(serviceRequestDto.newPassword(), "")){
-                if (passwordEncoder.matches(serviceRequestDto.newPassword(), user.getPassword())) {
+            if(!Objects.equals(serviceRequestDto.password(), "")){
+                if (passwordEncoder.matches(serviceRequestDto.password(), user.getPassword())) {
                     throw new NotMatchPasswordException(UserErrorCode.MATCH_CURRENT_PASSWORD);
                 }
-                user.updatePassword(passwordEncoder.encode(serviceRequestDto.newPassword()));
+                user.updatePassword(passwordEncoder.encode(serviceRequestDto.password()));
             }
         }
 
         // 닉네임
-        if(!Objects.equals(serviceRequestDto.nickname(), "")){
+        if(!serviceRequestDto.nickname().equals(user.getNickname())){
             if(userRepository.existsByNickname(serviceRequestDto.nickname())){
                 throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
             }
@@ -154,8 +169,15 @@ public class UserServiceImpl implements UserService {
         }
 
         // 프로필 이미지
-        String imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
-        user.updateProfileImgUrl(imageName);
+        String imageName;
+        if((multipartFile == null || multipartFile.isEmpty()) && user.getProfileImgUrl() != null){
+            s3Provider.delete(user.getProfileImgUrl());
+            user.updateProfileImgUrl(null);
+        }
+        else {
+            imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
+            user.updateProfileImgUrl(imageName);
+        }
 
         userRepository.save(user);
     }
@@ -224,7 +246,8 @@ public class UserServiceImpl implements UserService {
         String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
-        return userEntityMapper.toUserLoginResponseDto(user);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Override

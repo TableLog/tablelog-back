@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tablelog.tablelogback.domain.user.dto.oauth2.SocialUserInfoDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.entity.OAuthAccount;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
+import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.impl.UserServiceImpl;
 import com.tablelog.tablelogback.global.enums.UserProvider;
@@ -38,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -65,6 +69,8 @@ public class GoogleService {
     private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
     private final S3Provider s3Provider;
     private final UserServiceImpl userService;
+    private final OAuthAccountRepository oAuthAccountRepository;
+    private final OAuthAccountService oAuthAccountService;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -118,8 +124,10 @@ public class GoogleService {
             throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
         }
 
-        if(userRepository.existsByEmail(socialUserInfoDto.email())){
-            User googleUser = userRepository.findByEmail(socialUserInfoDto.email())
+        if(oAuthAccountRepository.existsByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email())){
+            OAuthAccount oAuthAccount = oAuthAccountRepository
+                    .findByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email());
+            User googleUser = userRepository.findById(oAuthAccount.getUserId())
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             jwtUtil.addTokenToCookie(googleUser, httpServletResponse, "accessToken");
             String refresh = jwtUtil.addTokenToCookie(googleUser, httpServletResponse, "refreshToken");
@@ -137,7 +145,8 @@ public class GoogleService {
             }
             httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
             googleRefreshTokenRepository.save(googleRefresh);
-            return userEntityMapper.toUserLoginResponseDto(googleUser);
+            List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(googleUser.getId());
+            return userEntityMapper.toUserLoginResponseDto(googleUser, dtos);
         } else {
             return socialUserInfoDto;
         }
@@ -190,7 +199,16 @@ public class GoogleService {
         GoogleRefreshToken googleRefreshToken = new GoogleRefreshToken(user.getId(), googleRefresh, timeToLive);
         googleRefreshTokenRepository.save(googleRefreshToken);
         httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefresh));
-        return userEntityMapper.toUserLoginResponseDto(user);
+
+        // OAuthAccount에 추가
+        OAuthAccount oAuthAccount = OAuthAccount.builder()
+                .provider(user.getProvider())
+                .email(user.getEmail())
+                .userId(user.getId())
+                .build();
+        oAuthAccountRepository.save(oAuthAccount);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     public void refresh(User user) throws JacksonException {
@@ -270,5 +288,40 @@ public class GoogleService {
         } catch (HttpClientErrorException e){
             throw new InvalidGrantException(UserErrorCode.INVALID_GRANT);
         }
+    }
+
+    public Object linkGoogle(String code, User user) throws JacksonException{
+        JsonNode jsonNode = getGoogleToken(code);
+        String googleAccessToken = jsonNode.get("access_token").asText();
+        String googleRefreshToken = null;
+        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()){
+            googleRefreshToken = jsonNode.get("refresh_token").asText();
+        }
+
+        SocialUserInfoDto socialUserInfoDto;
+        try {
+            socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+            httpServletResponse.addCookie(jwtUtil.createCookie("Google-Access-Token", googleAccessToken));
+            if(googleRefreshToken != null && !googleRefreshToken.isEmpty()){
+                httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
+                GoogleRefreshToken googleRefresh = new GoogleRefreshToken(user.getId(), googleRefreshToken, timeToLive);
+                googleRefreshTokenRepository.save(googleRefresh);
+            }
+        } catch (Exception e){
+            throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
+        }
+
+        if(oAuthAccountRepository.existsByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email())){
+            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        }
+
+        OAuthAccount oAuthAccount = OAuthAccount.builder()
+                .provider(socialUserInfoDto.provider())
+                .email(socialUserInfoDto.email())
+                .userId(user.getId())
+                .build();
+        oAuthAccountRepository.save(oAuthAccount);
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 }
