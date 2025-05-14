@@ -43,6 +43,12 @@ public class Recipe extends BaseEntity {
     private List<RecipeCategory> recipeCategoryList;
 
     @Column(nullable = false)
+    private int totalStar;
+
+    @Column(nullable = false)
+    private int starCount;
+
+    @Column(nullable = false)
     private Float star = 0F;
 
     @Column
@@ -64,14 +70,13 @@ public class Recipe extends BaseEntity {
     private Integer recipePoint = 0;
 
     @Column(nullable = false)
-    private Integer commentCount = 0;
+    private Integer reviewCount = 0;
 
     @Builder
     public Recipe(final Long userId, final String title, final String intro, final String folderName,
                   final String imageUrl, final List<RecipeCategory> recipeCategoryList,
                   final RecipePrice price, final String memo, final CookingTime cookingTime,
-                  final Integer totalCal, final Boolean isPaid, final Integer recipePoint,
-                  final Integer commentCount
+                  final Integer totalCal, final Boolean isPaid, final Integer recipePoint
     ){
         this.userId = userId;
         this.title = title;
@@ -79,6 +84,8 @@ public class Recipe extends BaseEntity {
         this.folderName = folderName;
         this.imageUrl = imageUrl;
         this.recipeCategoryList = recipeCategoryList;
+        this.totalStar = 0;
+        this.starCount = 0;
         this.star = 0F;
         this.price = price;
         this.memo = memo;
@@ -86,7 +93,7 @@ public class Recipe extends BaseEntity {
         this.totalCal = totalCal;
         this.isPaid = isPaid;
         this.recipePoint = recipePoint;
-        this.commentCount = 0;
+        this.reviewCount = 0;
     }
 
     public void updateRecipe(final String title, final String intro, final String folderName,
@@ -117,11 +124,28 @@ public class Recipe extends BaseEntity {
         this.recipePoint = recipePoint;
     }
 
-    public void updateStar(Float star){
-        this.star = star;
+    public void addStar(int star) {
+        this.totalStar += star;
+        this.starCount++;
+        this.star = (float) this.totalStar / this.starCount;
     }
 
-    public void updateCommentCount(Integer commentCount){
-        this.commentCount = commentCount;
+    public void updateStar(byte oldStar, byte newStar) {
+        this.totalStar = this.totalStar - oldStar + newStar;
+        this.star = (float) this.totalStar / this.starCount;
+    }
+
+    public void deleteStar(byte star) {
+        this.totalStar -= star;
+        this.starCount--;
+        if (this.starCount > 0) {
+            this.star = (float) this.totalStar / this.starCount;
+        } else {
+            this.star = 0F;
+        }
+    }
+
+    public void updateReviewCount(Integer reviewCount){
+        this.reviewCount = reviewCount;
     }
 }

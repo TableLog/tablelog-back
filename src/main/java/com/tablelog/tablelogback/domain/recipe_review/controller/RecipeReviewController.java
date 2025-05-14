@@ -1,97 +1,96 @@
 package com.tablelog.tablelogback.domain.recipe_review.controller;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewUpdateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.mapper.dto.RecipeReviewDtoMapper;
+import com.tablelog.tablelogback.domain.recipe_review.service.impl.RecipeReviewServiceImpl;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "레시피 리뷰 API", description = "")
 public class RecipeReviewController {
-    @PostMapping("/recipe-reviews/{recipeId}")
-    public void createRecipeReviews(
+    private final RecipeReviewDtoMapper recipeReviewDtoMapper;
+    private final RecipeReviewServiceImpl recipeReviewService;
+
+    @Operation(summary = "레시피 댓글 생성", description = "상위 댓글이면 prrId는 0, 하위 댓글은 댓글 id")
+    @PostMapping("/recipes/{recipeId}/recipe-reviews")
+    public ResponseEntity<?> createRecipeReview(
             @PathVariable Long recipeId,
-            String content,
-            @Schema(description = "Start value (Byte)", example = "1", type = "integer", format = "int32")
-            Byte star,
-            String user
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
+            RecipeReviewCreateControllerRequestDto requestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
-
+        RecipeReviewCreateServiceRequestDto serviceRequestDto =
+                recipeReviewDtoMapper.toRecipeReviewServiceRequestDto(requestDto);
+        recipeReviewService.createRecipeReview(serviceRequestDto, recipeId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping("/recipe-reviews/{recipeReviewId}")
-    public Map<String, Object> readRecipeReview(
+    @Operation(summary = "레시피 댓글 단건 조회")
+    @GetMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
+    public ResponseEntity<RecipeReviewReadResponseDto> readRecipeReview(
+            @PathVariable Long recipeId,
             @PathVariable Long recipeReviewId
     ){
-        Map<String, Object> recipe_review1 = new HashMap<>();
-        recipe_review1.put("content", "가가가");
-        recipe_review1.put("star", 2);
-        recipe_review1.put("user", "user1");
-        return recipe_review1;
+        RecipeReviewReadResponseDto responseDto = recipeReviewService.readRecipeReview(recipeId, recipeReviewId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "레시피 댓글 전체 조회 By 레시피")
     @GetMapping("/recipes/{recipeId}/recipe-reviews")
-    public List<Map<String, Object>> readAllRecipeReviewsByRecipeId(
-            @PathVariable Long recipeId
+    public ResponseEntity<?> readAllRecipeReviewsByRecipeId(
+            @PathVariable Long recipeId,
+            @RequestParam int pageNumber
     ){
-        List<Map<String, Object>> recipe_reviews = new ArrayList<>();
-        Map<String, Object> recipe_review1 = new HashMap<>();
-        recipe_review1.put("content", "가가가");
-        recipe_review1.put("star", 2);
-        recipe_review1.put("user", "user1");
-        Map<String, Object> recipe_review2 = new HashMap<>();
-        recipe_review2.put("content", "나나나");
-        recipe_review2.put("star", 2);
-        recipe_review2.put("user", "user1");
-        recipe_reviews.add(recipe_review1);
-        recipe_reviews.add(recipe_review2);
-        return recipe_reviews;
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeReviewService.readAllRecipeReviewsByRecipe(recipeId, pageNumber));
     }
 
+    @Operation(summary = "레시피 댓글 전체 조회 By 유저")
     @GetMapping("/users/{userId}/recipe-reviews")
-    public List<Map<String, Object>> readAllRecipeReviewsByUser(
-            @PathVariable Long userId
+    public ResponseEntity<?> readAllRecipeReviewsByUser(
+            @PathVariable Long userId,
+            @RequestParam int pageNumber
     ){
-        List<Map<String, Object>> recipe_reviews = new ArrayList<>();
-        Map<String, Object> recipe_review1 = new HashMap<>();
-        recipe_review1.put("content", "가가가");
-        recipe_review1.put("star", 2);
-        recipe_review1.put("user", "user1");
-        Map<String, Object> recipe_review2 = new HashMap<>();
-        recipe_review2.put("content", "나가가");
-        recipe_review2.put("star", 2);
-        recipe_review2.put("user", "user1");
-        recipe_reviews.add(recipe_review1);
-        recipe_reviews.add(recipe_review2);
-        return recipe_reviews;
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeReviewService.readAllRecipeReviewsByUser(userId, pageNumber));
     }
 
-    @PutMapping("/recipe-reviews/{recipeReviewId}")
-    public void updateRecipeReview(
+    @Operation(summary = "레시피 댓글 수정")
+    @PutMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
+    public ResponseEntity<?> updateRecipeReview(
+            @PathVariable Long recipeId,
             @PathVariable Long recipeReviewId,
-            String content,
-            @Schema(description = "Start value (Byte)", example = "1", type = "integer", format = "int32")
-            Byte star,
-            String user
-//            @RequestBody RecipeReviewUpdateControllerRequestDto controllerRequestDto
-//            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody RecipeReviewUpdateControllerRequestDto controllerRequestDto
     ) throws IOException {
-
+        RecipeReviewUpdateServiceRequestDto serviceRequestDto =
+                recipeReviewDtoMapper.toRecipeReviewUpdateServiceRequestDto(controllerRequestDto);
+        recipeReviewService.updateRecipeReview(serviceRequestDto, recipeId, recipeReviewId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @DeleteMapping("/recipe-reviews/{recipeReviewId}")
-    public void deleteRecipeReview(
-            @PathVariable Long recipeReviewId
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
+    @Operation(summary = "레시피 댓글 삭제")
+    @DeleteMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
+    public ResponseEntity<?> deleteRecipeReview(
+            @PathVariable Long recipeId,
+            @PathVariable Long recipeReviewId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
+        recipeReviewService.deleteRecipeReview(recipeId, recipeReviewId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

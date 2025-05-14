@@ -32,4 +32,8 @@ public class BaseEntity {
 
     @LastModifiedBy
     private String modifiedBy;
+
+    public LocalDateTime getModifiedAt(){
+        return modifiedAt;
+    }
 }
