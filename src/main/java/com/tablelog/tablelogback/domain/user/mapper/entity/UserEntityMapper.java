@@ -2,12 +2,15 @@ package com.tablelog.tablelogback.domain.user.mapper.entity;
 
 import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
+
+import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = PasswordTranslator.class)
 public interface UserEntityMapper {
@@ -27,7 +30,7 @@ public interface UserEntityMapper {
     User toSocialUser(UserSignUpServiceRequestDto serviceRequestDto, String password,
                       UserRole userRole, String profileImgUrl, String folderName);
 
-    UserLoginResponseDto toUserLoginResponseDto(User user);
+    UserLoginResponseDto toUserLoginResponseDto(User user, List<OAuthAccountResponseDto> oAuthAccounts);
 
     FindEmailResponseDto toFindEmailResponseDto(User user);
 }

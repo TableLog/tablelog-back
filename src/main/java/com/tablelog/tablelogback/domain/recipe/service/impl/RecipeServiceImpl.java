@@ -81,6 +81,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
         recipe.updateTotalCal(0);
         recipeRepository.save(recipe);
+        user.updateRecipeCount(user.getRecipeCount() + 1);
 
         // 레시피 식재료 생성
         Integer totalCal = 0;
@@ -240,6 +241,7 @@ public class RecipeServiceImpl implements RecipeService {
         recipeProcessRepository.deleteAllByRecipeId(id);
         recipeRepository.delete(recipe);
         s3Provider.delete(recipe.getFolderName());
+        user.updateRecipeCount(user.getRecipeCount() - 1);
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

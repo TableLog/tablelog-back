@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "TB_USER")
@@ -53,6 +55,21 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean marketingOptIn;
 
+    @Transient
+    private List<OAuthAccount> oAuthAccounts;
+
+    @Column(nullable = false)
+    private Long recipeCount;
+
+    @Column(nullable = false)
+    private Long boardCount;
+
+    @Column(nullable = false)
+    private Long followerCount;;
+
+    @Column(nullable = false)
+    private Long followingCount;;
+
     @Builder
     public User(
             final String email,
@@ -64,7 +81,6 @@ public class User extends BaseEntity {
             final String profileImgUrl,
             final String folderName,
             final UserProvider provider,
-            final Integer pointBalance,
             final Boolean marketingOptIn
     ){
         this.email = email;
@@ -78,6 +94,10 @@ public class User extends BaseEntity {
         this.provider = provider;
         this.pointBalance = 0;
         this.marketingOptIn = marketingOptIn;
+        this.recipeCount = 0L;
+        this.boardCount = 0L;
+        this.followerCount = 0L;
+        this.followingCount = 0L;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -110,5 +130,25 @@ public class User extends BaseEntity {
 
     public void updateMarketingOptIn(Boolean marketingOptIn){
         this.marketingOptIn = marketingOptIn;
+    }
+
+    public void updateRecipeCount(Long recipeCount){
+        this.recipeCount = recipeCount;
+    }
+
+    public void updateBoardCount(Long boardCount){
+        this.boardCount = boardCount;
+    }
+
+    public void updateFollowerCount(Long followerCount){
+        this.followingCount = followerCount;
+    }
+
+    public void updateFollowingCount(Long followingCount){
+        this.followingCount = followingCount;
+    }
+
+    public void setOauthAccounts(List<OAuthAccount> accounts) {
+        this.oAuthAccounts = accounts;
     }
 }
