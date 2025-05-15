@@ -179,6 +179,11 @@ public class UserServiceImpl implements UserService {
             user.updateProfileImgUrl(imageName);
         }
 
+        // 마케팅 동의
+        if(!Objects.equals(serviceRequestDto.marketingOptIn(), user.getMarketingOptIn())){
+            user.updateMarketingOptIn(serviceRequestDto.marketingOptIn());
+        }
+
         userRepository.save(user);
     }
 
