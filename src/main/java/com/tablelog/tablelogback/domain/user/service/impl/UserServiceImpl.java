@@ -8,6 +8,7 @@ import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginRespo
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
+import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
@@ -47,6 +48,7 @@ public class UserServiceImpl implements UserService {
     private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
     private final S3Provider s3Provider;
     private final OAuthAccountService oAuthAccountService;
+    private final OAuthAccountRepository oAuthAccountRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -61,7 +63,11 @@ public class UserServiceImpl implements UserService {
             throw new AlreadyExistsUserException(UserErrorCode.ALREADY_EXIST_USER);
         }
         // 이메일 중복 체크
-        if (userRepository.existsByEmail(serviceRequestDto.email())) {
+        if(userRepository.existsByEmail(serviceRequestDto.email())){
+            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        }
+        // 소셜 중복 체크 (provider, email)
+        if(oAuthAccountRepository.existsByProviderAndEmail(serviceRequestDto.provider(), serviceRequestDto.email())){
             throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
         // 닉네임 중복 체크
