@@ -53,6 +53,9 @@ public class GoogleService {
     @Value("${spring.google.redirect-uri}")
     private String redirectUri;
 
+    @Value("${spring.google.redirect-uri-link}")
+    private String redirectUriToLink;
+
     @Value("${spring.google.client_secret}")
     private String clientSecret;
 
@@ -76,7 +79,7 @@ public class GoogleService {
     public String bucket;
     private final String SEPARATOR = "/";
 
-    private JsonNode getGoogleToken(String code) throws JsonProcessingException {
+    private JsonNode getGoogleToken(String code, Boolean isLink) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -85,7 +88,11 @@ public class GoogleService {
         body.add("code", decodedCode);
         body.add("client_id", clientId);
         body.add("client_secret", clientSecret);
-        body.add("redirect_uri", redirectUri);
+        if(isLink){
+            body.add("redirect_uri", redirectUriToLink);
+        } else {
+            body.add("redirect_uri", redirectUri);
+        }
         body.add("grant_type", "authorization_code");
 
         try {
@@ -106,7 +113,7 @@ public class GoogleService {
     }
 
     public Object handleGoogleLogin(String code) throws JsonProcessingException {
-        JsonNode jsonNode = getGoogleToken(code);
+        JsonNode jsonNode = getGoogleToken(code, false);
         String googleAccessToken = jsonNode.get("access_token").asText();
         String googleRefreshToken = null;
         if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()){
@@ -290,11 +297,11 @@ public class GoogleService {
         }
     }
 
-    public Object linkGoogle(String code, User user) throws JacksonException{
-        JsonNode jsonNode = getGoogleToken(code);
+    public Object linkGoogle(String code, User user) throws JacksonException {
+        JsonNode jsonNode = getGoogleToken(code, true);
         String googleAccessToken = jsonNode.get("access_token").asText();
         String googleRefreshToken = null;
-        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()){
+        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
             googleRefreshToken = jsonNode.get("refresh_token").asText();
         }
 
@@ -302,25 +309,29 @@ public class GoogleService {
         try {
             socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
             httpServletResponse.addCookie(jwtUtil.createCookie("Google-Access-Token", googleAccessToken));
-            if(googleRefreshToken != null && !googleRefreshToken.isEmpty()){
+            if (googleRefreshToken != null && !googleRefreshToken.isEmpty()) {
                 httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
                 GoogleRefreshToken googleRefresh = new GoogleRefreshToken(user.getId(), googleRefreshToken, timeToLive);
                 googleRefreshTokenRepository.save(googleRefresh);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new NotFoundGoogleUserException(UserErrorCode.NOT_FOUND_GOOGLE_USER);
         }
 
-        if(oAuthAccountRepository.existsByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email())){
+        if (oAuthAccountRepository.existsByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email())) {
             throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
         }
 
-        OAuthAccount oAuthAccount = OAuthAccount.builder()
-                .provider(socialUserInfoDto.provider())
-                .email(socialUserInfoDto.email())
-                .userId(user.getId())
-                .build();
-        oAuthAccountRepository.save(oAuthAccount);
+        if (user.getUserName().equals(socialUserInfoDto.userName())){
+            OAuthAccount oAuthAccount = OAuthAccount.builder()
+                    .provider(socialUserInfoDto.provider())
+                    .email(socialUserInfoDto.email())
+                    .userId(user.getId())
+                    .build();
+             oAuthAccountRepository.save(oAuthAccount);
+        } else {
+            throw new NotMatchNameException(UserErrorCode.NOT_MATCH_NAME);
+        }
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }

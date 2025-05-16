@@ -18,7 +18,6 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
-import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletResponse;

@@ -49,7 +49,7 @@ public class SocialController {
     ) throws JacksonException {
         Object objectDto = null;
         if(provider == UserProvider.kakao) {
-            objectDto = kakaoService.handleKakaoLogin(code);
+            objectDto = kakaoService.linkKakao(code, userDetails.user());
         } else if(provider == UserProvider.google) {
             objectDto = googleService.linkGoogle(code, userDetails.user());
         } else {

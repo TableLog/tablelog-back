@@ -49,6 +49,9 @@ public class KakaoService {
     @Value("${spring.kakao.redirect-uri}")
     private String redirectUri;
 
+    @Value("${spring.kakao.redirect-uri-link}")
+    private String redirectUriToLink;
+
     @Value("${spring.jwt.refresh.expiration-period}")
     private Long timeToLive;
 
@@ -69,14 +72,18 @@ public class KakaoService {
     public String bucket;
     private final String SEPARATOR = "/";
 
-    private JsonNode getKakaoToken(String code) throws JsonProcessingException {
+    private JsonNode getKakaoToken(String code, Boolean isLink) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", clientId);
-        body.add("redirect_uri", redirectUri);
+        if(isLink){
+            body.add("redirect_uri", redirectUriToLink);
+        } else {
+            body.add("redirect_uri", redirectUri);
+        }
         body.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
@@ -99,7 +106,7 @@ public class KakaoService {
     }
 
     public Object handleKakaoLogin(String code) throws JsonProcessingException {
-        JsonNode jsonNode = getKakaoToken(code);
+        JsonNode jsonNode = getKakaoToken(code, false);
         String kakaoAccessToken = jsonNode.get("access_token").asText();
         String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
         refreshTimeToLive = jsonNode.get("refresh_token_expires_in").asInt();
@@ -119,7 +126,7 @@ public class KakaoService {
                     .findByUserNameAndBirthday(socialUserInfoDto.userName(), socialUserInfoDto.birthday())
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             // 기존 회원이면 로그인
-            if(oAuthAccountRepository.existsByEmail(socialUserInfoDto.email())) {
+            if(oAuthAccountRepository.existsByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email())){
                 jwtUtil.addTokenToCookie(kakaoUser, httpServletResponse, "accessToken");
                 String refresh = jwtUtil.addTokenToCookie(kakaoUser, httpServletResponse, "refreshToken");
                 RefreshToken refreshToken = new RefreshToken(kakaoUser.getId(), refresh, timeToLive);
@@ -128,14 +135,15 @@ public class KakaoService {
                         new KakaoRefreshToken(kakaoUser.getId(), kakaoRefreshToken, refreshTimeToLive);
                 kakaoRefreshTokenRepository.save(kakaoRefresh);
                 httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
-            } else { // 추후 연동 시
-                OAuthAccount oAuthAccount = OAuthAccount.builder()
-                        .provider(socialUserInfoDto.provider())
-                        .email(socialUserInfoDto.email())
-                        .userId(kakaoUser.getId())
-                        .build();
-                oAuthAccountRepository.save(oAuthAccount);
             }
+//            else { // 추후 연동 시
+//                OAuthAccount oAuthAccount = OAuthAccount.builder()
+//                        .provider(socialUserInfoDto.provider())
+//                        .email(socialUserInfoDto.email())
+//                        .userId(kakaoUser.getId())
+//                        .build();
+//                oAuthAccountRepository.save(oAuthAccount);
+//            }
             List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(kakaoUser.getId());
             return userEntityMapper.toUserLoginResponseDto(kakaoUser, dtos);
         } else {
@@ -281,5 +289,39 @@ public class KakaoService {
         } catch (HttpClientErrorException e){
             throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
         }
+    }
+
+    public Object linkKakao(String code, User user) throws JacksonException{
+        JsonNode jsonNode = getKakaoToken(code, true);
+        String kakaoAccessToken = jsonNode.get("access_token").asText();
+        String kakaoRefreshToken = jsonNode.get("refresh_token").asText();
+        refreshTimeToLive = jsonNode.get("refresh_token_expires_in").asInt();
+
+        SocialUserInfoDto socialUserInfoDto;
+        try {
+            socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
+            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Access-Token", kakaoAccessToken));
+            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", kakaoRefreshToken));
+        } catch (Exception e) {
+            throw new NotFoundKakaoUserException(UserErrorCode.NOT_FOUND_KAKAO_USER);
+        }
+
+        if(oAuthAccountRepository.existsByProviderAndEmail(socialUserInfoDto.provider(), socialUserInfoDto.email())){
+            throw new AlreadyExistsEmailException(UserErrorCode.ALREADY_EXIST_EMAIL);
+        }
+
+        if(user.getUserName().equals(socialUserInfoDto.userName())
+                && user.getBirthday().equals(socialUserInfoDto.birthday())){
+            OAuthAccount oAuthAccount = OAuthAccount.builder()
+                    .provider(socialUserInfoDto.provider())
+                    .email(socialUserInfoDto.email())
+                    .userId(user.getId())
+                    .build();
+            oAuthAccountRepository.save(oAuthAccount);
+        } else {
+            throw new NotMatchNameAndBirthdayException(UserErrorCode.NOT_MATCH_NAME_AND_BIRTHDAY);
+        }
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 }
