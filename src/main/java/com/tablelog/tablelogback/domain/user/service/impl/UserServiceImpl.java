@@ -274,7 +274,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Override
+    @Transactional
     public void updatePassword(UpdatePasswordServiceRequestDto serviceRequestDto){
         User user = userRepository.findByEmail(serviceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
