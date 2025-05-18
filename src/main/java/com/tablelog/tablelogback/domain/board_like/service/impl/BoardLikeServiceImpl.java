@@ -46,6 +46,12 @@ public class BoardLikeServiceImpl implements BoardLikeService {
         return boardLikeRepository.existsByBoardAndUser(boardId, userId);
     }
 
+    @Override
+    public Long getBoardLikeCountByBoard(Long boardId) {
+        Board board = findBoard(boardId);
+        return boardLikeRepository.countByBoard(boardId);
+    }
+
     private Board findBoard(Long boardId){
         return boardRepository.findById(boardId)
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));

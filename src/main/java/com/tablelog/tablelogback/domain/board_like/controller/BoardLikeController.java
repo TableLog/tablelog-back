@@ -37,7 +37,7 @@ public class BoardLikeController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Operation(summary = "좋아요 단건 조회")
+    @Operation(summary = "좋아요 단건 조회", description = "내가 눌렀는지?")
     @GetMapping("/boards/{boardId}/likes/me")
     public ResponseEntity<Boolean> hasBoardLiked(
             @PathVariable Long boardId,
@@ -45,5 +45,14 @@ public class BoardLikeController {
     ){
         return ResponseEntity.status(HttpStatus.OK).
                 body(boardLikeService.hasBoardLiked(boardId, userDetails.user().getId()));
+    }
+
+    @Operation(summary = "좋아요 수 전체 조회 By 게시판")
+    @GetMapping("/boards/{boardId}/likes/count")
+    public ResponseEntity<Long> getBoardLikeCount(
+            @PathVariable Long boardId
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(boardLikeService.getBoardLikeCountByBoard(boardId));
     }
 }
