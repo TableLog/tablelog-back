@@ -9,7 +9,10 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum BoardLikeErrorCode implements ErrorCode {
     // 400
-    ALREADY_EXIST_BOARD_LIKE(HttpStatus.BAD_REQUEST, "EL400001");
+    ALREADY_EXIST_BOARD_LIKE(HttpStatus.BAD_REQUEST, "EL400001"),
+
+    // 404
+    NOT_FOUND_BOARD_LIKE(HttpStatus.NOT_FOUND, "EL404001");
 
     private final HttpStatus status;
     private final String message;

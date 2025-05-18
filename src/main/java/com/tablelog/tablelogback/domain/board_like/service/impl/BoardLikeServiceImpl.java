@@ -7,11 +7,11 @@ import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_like.entity.BoardLike;
 import com.tablelog.tablelogback.domain.board_like.exception.AlreadyExistsBoardLikeException;
 import com.tablelog.tablelogback.domain.board_like.exception.BoardLikeErrorCode;
+import com.tablelog.tablelogback.domain.board_like.exception.NotFoundBoardLikeException;
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
 import com.tablelog.tablelogback.domain.board_like.service.BoardLikeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -19,10 +19,9 @@ public class BoardLikeServiceImpl implements BoardLikeService {
     private final BoardLikeRepository boardLikeRepository;
     private final BoardRepository boardRepository;
 
-    @Transactional
-    public void createLike(Long boardId, Long userId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+    @Override
+    public void createBoardLike(Long boardId, Long userId) {
+        Board board = findBoard(boardId);
         if(boardLikeRepository.existsByBoardAndUser(board.getId(), userId)){
             throw new AlreadyExistsBoardLikeException(BoardLikeErrorCode.ALREADY_EXIST_BOARD_LIKE);
         }
@@ -33,4 +32,16 @@ public class BoardLikeServiceImpl implements BoardLikeService {
         boardLikeRepository.save(like);
     }
 
+    @Override
+    public void deleteBoardLike(Long boardId, Long userId) {
+        Board board = findBoard(boardId);
+        BoardLike boardLike = boardLikeRepository.findByBoardAndUser(boardId, userId)
+                .orElseThrow(()->new NotFoundBoardLikeException(BoardLikeErrorCode.NOT_FOUND_BOARD_LIKE));
+        boardLikeRepository.delete(boardLike);
+    }
+
+    private Board findBoard(Long boardId){
+        return boardRepository.findById(boardId)
+                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+    }
 }

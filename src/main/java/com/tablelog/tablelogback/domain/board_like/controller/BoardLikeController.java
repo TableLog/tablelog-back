@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -26,7 +23,17 @@ public class BoardLikeController {
             @PathVariable Long boardId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        boardLikeService.createLike(boardId, userDetails.user().getId());
+        boardLikeService.createBoardLike(boardId, userDetails.user().getId());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "좋아요 삭제")
+    @DeleteMapping("/boards/{boardId}/likes")
+    public ResponseEntity<?> deleteBoardLike(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        boardLikeService.deleteBoardLike(boardId, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
