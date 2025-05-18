@@ -69,6 +69,16 @@ public class RecipeReviewController {
                 .body(recipeReviewService.readAllRecipeReviewsByUser(userId, pageNumber));
     }
 
+    @Operation(summary = "내 레시피 댓글 전체 조회")
+    @GetMapping("/users/me/recipe-reviews")
+    public ResponseEntity<?> getMyAllRecipeReviews (
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeReviewService.getAllMyRecipeReviews(userDetails.user(), pageNumber));
+    }
+
     @Operation(summary = "레시피 댓글 수정")
     @PutMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
     public ResponseEntity<?> updateRecipeReview(

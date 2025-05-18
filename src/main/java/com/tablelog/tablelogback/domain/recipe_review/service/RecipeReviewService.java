@@ -11,6 +11,7 @@ public interface RecipeReviewService {
     RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id);
     RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNumber);
     RecipeReviewSliceResponseDto readAllRecipeReviewsByUser(Long userId, int pageNumber);
+    RecipeReviewSliceResponseDto getAllMyRecipeReviews(User user, int pageNumber);
     void updateRecipeReview(RecipeReviewUpdateServiceRequestDto requestDto, Long recipeId, Long id, User user);
     void deleteRecipeReview(Long recipeId, Long id, User user);
 }
