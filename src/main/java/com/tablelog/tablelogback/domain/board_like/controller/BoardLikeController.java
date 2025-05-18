@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.board_like.controller;
 
+import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
 import com.tablelog.tablelogback.domain.board_like.service.impl.BoardLikeServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,5 +55,15 @@ public class BoardLikeController {
     ){
         return ResponseEntity.status(HttpStatus.OK).
                 body(boardLikeService.getBoardLikeCountByBoard(boardId));
+    }
+
+    @Operation(summary = "내 좋아요 게시판 전체 조회")
+    @GetMapping("/users/me/board-likes")
+    public ResponseEntity<BoardListResponseDto> getMyLikedBoards(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(boardLikeService.getMyLikedBoards(userDetails.user().getId(), pageNumber));
     }
 }
