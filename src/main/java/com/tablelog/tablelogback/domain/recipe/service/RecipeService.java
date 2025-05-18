@@ -19,6 +19,7 @@ public interface RecipeService {
     RecipeSliceResponseDto readAllRecipes(int pageNum);
     RecipeSliceResponseDto readPopularRecipes(int pageNum);
     RecipeSliceResponseDto readAllRecipeByUser(Long userId, int pageNum);
+    RecipeSliceResponseDto getAllMyRecipes(User user, int pageNum);
     RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNum);
     RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum);
     void updateRecipe(Long id, RecipeUpdateServiceRequestDto requestDto, User user,
