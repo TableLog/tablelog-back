@@ -35,13 +35,24 @@ public class BoardLikeServiceImpl implements BoardLikeService {
     @Override
     public void deleteBoardLike(Long boardId, Long userId) {
         Board board = findBoard(boardId);
-        BoardLike boardLike = boardLikeRepository.findByBoardAndUser(boardId, userId)
-                .orElseThrow(()->new NotFoundBoardLikeException(BoardLikeErrorCode.NOT_FOUND_BOARD_LIKE));
+        BoardLike boardLike = findBoardLike(boardId, userId);
         boardLikeRepository.delete(boardLike);
+    }
+
+    @Override
+    public Boolean hasBoardLiked(Long boardId, Long userId) {
+        Board board = findBoard(boardId);
+        findBoardLike(boardId, userId);
+        return boardLikeRepository.existsByBoardAndUser(boardId, userId);
     }
 
     private Board findBoard(Long boardId){
         return boardRepository.findById(boardId)
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+    }
+
+    private BoardLike findBoardLike(Long boardId, Long userId){
+        return boardLikeRepository.findByBoardAndUser(boardId, userId)
+                .orElseThrow(() -> new NotFoundBoardLikeException(BoardLikeErrorCode.NOT_FOUND_BOARD_LIKE));
     }
 }

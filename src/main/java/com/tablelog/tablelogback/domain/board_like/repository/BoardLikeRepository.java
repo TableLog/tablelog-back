@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
-    Optional<BoardLike> findByBoardAndUser(Long user, Long board);
-    Boolean existsByBoardAndUser(Long user, Long board);
+    Optional<BoardLike> findByBoardAndUser(Long board, Long user);
+    Boolean existsByBoardAndUser(Long board, Long user);
 //    Long countByBoardId(Long boardId);
 }

@@ -36,4 +36,14 @@ public class BoardLikeController {
         boardLikeService.deleteBoardLike(boardId, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "좋아요 단건 조회")
+    @GetMapping("/boards/{boardId}/likes/me")
+    public ResponseEntity<Boolean> hasBoardLiked(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(boardLikeService.hasBoardLiked(boardId, userDetails.user().getId()));
+    }
 }
