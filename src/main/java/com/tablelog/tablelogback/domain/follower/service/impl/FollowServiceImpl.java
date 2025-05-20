@@ -59,6 +59,22 @@ public class FollowServiceImpl implements FollowService {
         return followRepository.existsByFollowerIdAndFollowingId(user.getId(), followingId);
     }
 
+    @Transactional
+    public Long getFollowerCountByUser(Long userId) {
+        User user = findUser(userId);
+        Long c = followRepository.countFollowerIdByFollowingId(userId);
+        user.updateFollowerCount(c);
+        return c;
+    }
+
+    @Transactional
+    public Long getFollowingCountByUser(Long userId) {
+        User user = findUser(userId);
+        Long c = followRepository.countFollowingIdByFollowerId(userId);
+        user.updateFollowingCount(c);
+        return c;
+    }
+
     private User findUser(Long userId){
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
