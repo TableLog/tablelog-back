@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -30,4 +27,13 @@ public class FollowController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "언팔로우")
+    @DeleteMapping("/users/{userId}/follow")
+    public ResponseEntity<?> deleteFollow(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        followService.deleteFollow(userId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }

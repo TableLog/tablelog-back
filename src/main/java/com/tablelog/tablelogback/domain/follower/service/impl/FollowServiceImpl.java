@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.follower.service.impl;
 import com.tablelog.tablelogback.domain.follower.entity.Follow;
 import com.tablelog.tablelogback.domain.follower.exception.AlreadyExistsFollowingException;
 import com.tablelog.tablelogback.domain.follower.exception.FollowErrorCode;
+import com.tablelog.tablelogback.domain.follower.exception.NotFoundFollowingException;
 import com.tablelog.tablelogback.domain.follower.exception.SelfFollowNotAllowedException;
 import com.tablelog.tablelogback.domain.follower.repository.FollowRepository;
 import com.tablelog.tablelogback.domain.follower.service.FollowService;
@@ -39,6 +40,19 @@ public class FollowServiceImpl implements FollowService {
         userRepository.save(user);
         userRepository.save(following);
     }
+
+    @Override
+    public void deleteFollow(Long followingId, User user) {
+        User following = findUser(followingId);
+        Follow follow = followRepository.findByFollowerIdAndFollowingId(user.getId(), following.getId())
+                .orElseThrow(() -> new NotFoundFollowingException(FollowErrorCode.NOT_FOUND_FOLLOWING));
+        followRepository.delete(follow);
+        user.updateFollowingCount(user.getFollowingCount() - 1);
+        following.updateFollowerCount(following.getFollowerCount() - 1);
+        userRepository.save(user);
+        userRepository.save(following);
+    }
+
 
     private User findUser(Long userId){
         return userRepository.findById(userId)
