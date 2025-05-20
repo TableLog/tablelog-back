@@ -141,7 +141,7 @@ public class User extends BaseEntity {
     }
 
     public void updateFollowerCount(Long followerCount){
-        this.followingCount = followerCount;
+        this.followerCount = followerCount;
     }
 
     public void updateFollowingCount(Long followingCount){
