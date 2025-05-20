@@ -44,8 +44,7 @@ public class FollowServiceImpl implements FollowService {
     @Override
     public void deleteFollow(Long followingId, User user) {
         User following = findUser(followingId);
-        Follow follow = followRepository.findByFollowerIdAndFollowingId(user.getId(), following.getId())
-                .orElseThrow(() -> new NotFoundFollowingException(FollowErrorCode.NOT_FOUND_FOLLOWING));
+        Follow follow = findFollow(followingId, user.getId());
         followRepository.delete(follow);
         user.updateFollowingCount(user.getFollowingCount() - 1);
         following.updateFollowerCount(following.getFollowerCount() - 1);
@@ -53,9 +52,20 @@ public class FollowServiceImpl implements FollowService {
         userRepository.save(following);
     }
 
+    @Override
+    public Boolean isFollowing(Long followingId, User user) {
+        User following = findUser(followingId);
+        findFollow(followingId, user.getId());
+        return followRepository.existsByFollowerIdAndFollowingId(user.getId(), followingId);
+    }
 
     private User findUser(Long userId){
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+    }
+
+    private Follow findFollow(Long followingId, Long userId){
+        return followRepository.findByFollowerIdAndFollowingId(followingId, userId)
+                .orElseThrow(() -> new NotFoundFollowingException(FollowErrorCode.NOT_FOUND_FOLLOWING));
     }
 }

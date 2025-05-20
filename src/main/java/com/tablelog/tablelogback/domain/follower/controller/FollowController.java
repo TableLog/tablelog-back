@@ -36,4 +36,14 @@ public class FollowController {
         followService.deleteFollow(userId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "팔로우 단건 조회", description = "내가 이 사람을 팔로우하는지")
+    @GetMapping("/users/{userId}/follow/me")
+    public ResponseEntity<Boolean> isFollowing(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(followService.isFollowing(userId, userDetails.user()));
+    }
 }
