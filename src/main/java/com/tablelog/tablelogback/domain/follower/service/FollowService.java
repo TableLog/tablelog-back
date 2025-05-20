@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.follower.service;
 
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.follower.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 
 public interface FollowService {
@@ -9,5 +9,6 @@ public interface FollowService {
     Boolean isFollowing(Long follwingId, User user);
     Long getFollowerCountByUser(Long userId);
     Long getFollowingCountByUser(Long userId);
-//    UserLoginResponseDto getFollowers(Long userId, int pageNum);
+    FollowUserListDto getFollowers(Long userId, int pageNum);
+//    FollowUserListDto getFollowings(Long userId, int pageNum);
 }
