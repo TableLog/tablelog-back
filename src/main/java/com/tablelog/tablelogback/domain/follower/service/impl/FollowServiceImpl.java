@@ -98,14 +98,35 @@ public class FollowServiceImpl implements FollowService {
                 .map(User::getId)
                 .toList();
 
-        Set<Long> idsIFollow = new HashSet<>(
+        Set<Long> idsIsFollow = new HashSet<>(
                 followRepository.findAllFollowingIdsByFollowerId(userId, targetIds)
         );
         List<FollowUserDto> dtos = users.stream()
                 .map(user -> new FollowUserDto(
                         user.getId(),
                         user.getNickname(),
-                        idsIFollow.contains(user.getId())
+                        idsIsFollow.contains(user.getId())
+                ))
+                .toList();
+        return new FollowUserListDto(dtos, slice.hasNext());
+    }
+
+    @Override
+    public FollowUserListDto getFollowings(Long userId, int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<User> slice = followRepository.findAllFollowingsByFollowerId(userId, pageRequest);
+        List<User> users = slice.getContent();
+        List<Long> targetIds = users.stream()
+                .map(User::getId)
+                .toList();
+        Set<Long> idsIsFollow = new HashSet<>(
+                followRepository.findAllFollowingIdsByFollowerId(userId, targetIds)
+        );
+        List<FollowUserDto> dtos = users.stream()
+                .map(user -> new FollowUserDto(
+                        user.getId(),
+                        user.getNickname(),
+                        idsIsFollow.contains(user.getId())
                 ))
                 .toList();
         return new FollowUserListDto(dtos, slice.hasNext());

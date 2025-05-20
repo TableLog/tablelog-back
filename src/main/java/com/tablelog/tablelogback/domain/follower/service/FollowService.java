@@ -10,5 +10,5 @@ public interface FollowService {
     Long getFollowerCountByUser(Long userId);
     Long getFollowingCountByUser(Long userId);
     FollowUserListDto getFollowers(Long userId, int pageNum);
-//    FollowUserListDto getFollowings(Long userId, int pageNum);
+    FollowUserListDto getFollowings(Long userId, int pageNum);
 }

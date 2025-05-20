@@ -76,13 +76,13 @@ public class FollowController {
                 body(followService.getFollowers(userId, pageNumber));
     }
 
-//    @Operation(summary = "팔로잉 전체 조회")
-//    @GetMapping("/users/{userId}/following")
-//    public ResponseEntity<FollowUserListDto> getFollowings(
-//            @PathVariable Long userId,
-//            @RequestParam int pageNumber
-//    ){
-//        return ResponseEntity.status(HttpStatus.OK).
-//                body(followService.getFollowings(userId, pageNumber));
-//    }
+    @Operation(summary = "팔로잉 전체 조회")
+    @GetMapping("/users/{userId}/following")
+    public ResponseEntity<FollowUserListDto> getFollowings(
+            @PathVariable Long userId,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(followService.getFollowings(userId, pageNumber));
+    }
 }
