@@ -1,6 +1,6 @@
-package com.tablelog.tablelogback.domain.follower.service;
+package com.tablelog.tablelogback.domain.follow.service;
 
-import com.tablelog.tablelogback.domain.follower.dto.FollowUserListDto;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 
 public interface FollowService {

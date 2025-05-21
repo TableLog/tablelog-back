@@ -1,6 +1,6 @@
-package com.tablelog.tablelogback.domain.follower.repository;
+package com.tablelog.tablelogback.domain.follow.repository;
 
-import com.tablelog.tablelogback.domain.follower.entity.Follow;
+import com.tablelog.tablelogback.domain.follow.entity.Follow;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.PageRequest;

@@ -1,4 +1,4 @@
-package com.tablelog.tablelogback.domain.follower.exception;
+package com.tablelog.tablelogback.domain.follow.exception;
 
 import com.tablelog.tablelogback.global.exception.ErrorCode;
 import lombok.Getter;

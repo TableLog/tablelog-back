@@ -1,15 +1,14 @@
-package com.tablelog.tablelogback.domain.follower.service.impl;
+package com.tablelog.tablelogback.domain.follow.service.impl;
 
-import com.tablelog.tablelogback.domain.follower.dto.FollowUserDto;
-import com.tablelog.tablelogback.domain.follower.dto.FollowUserListDto;
-import com.tablelog.tablelogback.domain.follower.entity.Follow;
-import com.tablelog.tablelogback.domain.follower.exception.AlreadyExistsFollowingException;
-import com.tablelog.tablelogback.domain.follower.exception.FollowErrorCode;
-import com.tablelog.tablelogback.domain.follower.exception.NotFoundFollowingException;
-import com.tablelog.tablelogback.domain.follower.exception.SelfFollowNotAllowedException;
-import com.tablelog.tablelogback.domain.follower.repository.FollowRepository;
-import com.tablelog.tablelogback.domain.follower.service.FollowService;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserDto;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
+import com.tablelog.tablelogback.domain.follow.entity.Follow;
+import com.tablelog.tablelogback.domain.follow.exception.AlreadyExistsFollowingException;
+import com.tablelog.tablelogback.domain.follow.exception.FollowErrorCode;
+import com.tablelog.tablelogback.domain.follow.exception.NotFoundFollowingException;
+import com.tablelog.tablelogback.domain.follow.exception.SelfFollowNotAllowedException;
+import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
+import com.tablelog.tablelogback.domain.follow.service.FollowService;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -105,6 +104,7 @@ public class FollowServiceImpl implements FollowService {
                 .map(user -> new FollowUserDto(
                         user.getId(),
                         user.getNickname(),
+                        user.getProfileImgUrl(),
                         idsIsFollow.contains(user.getId())
                 ))
                 .toList();
@@ -126,6 +126,7 @@ public class FollowServiceImpl implements FollowService {
                 .map(user -> new FollowUserDto(
                         user.getId(),
                         user.getNickname(),
+                        user.getProfileImgUrl(),
                         idsIsFollow.contains(user.getId())
                 ))
                 .toList();

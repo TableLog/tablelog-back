@@ -1,4 +1,4 @@
-package com.tablelog.tablelogback.domain.follower.entity;
+package com.tablelog.tablelogback.domain.follow.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import jakarta.persistence.*;

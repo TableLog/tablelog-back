@@ -1,7 +1,7 @@
-package com.tablelog.tablelogback.domain.follower.controller;
+package com.tablelog.tablelogback.domain.follow.controller;
 
-import com.tablelog.tablelogback.domain.follower.dto.FollowUserListDto;
-import com.tablelog.tablelogback.domain.follower.service.impl.FollowServiceImpl;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
+import com.tablelog.tablelogback.domain.follow.service.impl.FollowServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

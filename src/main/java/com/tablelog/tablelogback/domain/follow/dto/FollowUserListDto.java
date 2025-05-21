@@ -1,4 +1,4 @@
-package com.tablelog.tablelogback.domain.follower.dto;
+package com.tablelog.tablelogback.domain.follow.dto;
 
 import java.util.List;
 
