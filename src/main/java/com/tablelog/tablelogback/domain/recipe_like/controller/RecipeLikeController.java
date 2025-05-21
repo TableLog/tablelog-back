@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -27,6 +24,16 @@ public class RecipeLikeController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         recipeLikeService.createRecipeLike(recipeId, userDetails.user().getId());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "좋아요 삭제")
+    @DeleteMapping("/recipes/{recipeId}/likes")
+    public ResponseEntity<?> deleteRecipeLike(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeLikeService.deleteRecipeLike(recipeId, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

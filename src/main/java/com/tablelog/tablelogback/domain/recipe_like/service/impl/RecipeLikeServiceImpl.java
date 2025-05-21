@@ -6,6 +6,7 @@ import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.entity.RecipeLike;
 import com.tablelog.tablelogback.domain.recipe_like.exception.AlreadyExistsRecipeLikeException;
+import com.tablelog.tablelogback.domain.recipe_like.exception.NotFoundRecipeLikeException;
 import com.tablelog.tablelogback.domain.recipe_like.exception.RecipeLikeErrorCode;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.service.RecipeLikeService;
@@ -30,6 +31,14 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
                 .recipe(recipeId)
                 .build();
         recipeLikeRepository.save(like);
+    }
+
+    @Override
+    public void deleteRecipeLike(Long recipeId, Long userId) {
+        Recipe recipe = findRecipe(recipeId);
+        RecipeLike recipeLike = recipeLikeRepository.findByRecipeAndUser(recipeId, userId)
+                .orElseThrow(()->new NotFoundRecipeLikeException(RecipeLikeErrorCode.NOT_FOUND_RECIPE_LIKE));
+        recipeLikeRepository.delete(recipeLike);
     }
 
     private Recipe findRecipe(Long id){
