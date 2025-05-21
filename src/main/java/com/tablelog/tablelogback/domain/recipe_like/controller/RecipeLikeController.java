@@ -46,4 +46,13 @@ public class RecipeLikeController {
         return ResponseEntity.status(HttpStatus.OK).
                 body(recipeLikeService.hasRecipeLiked(recipeId, userDetails.user().getId()));
     }
+
+    @Operation(summary = "좋아요 수 전체 조회 By 레시피")
+    @GetMapping("/recipes/{recipeId}/likes/count")
+    public ResponseEntity<Long> getRecipeLikeCount(
+            @PathVariable Long recipeId
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeLikeService.getRecipeLikeCountByRecipe(recipeId));
+    }
 }

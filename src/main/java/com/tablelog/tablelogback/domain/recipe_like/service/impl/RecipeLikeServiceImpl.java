@@ -47,6 +47,12 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
         return recipeLikeRepository.existsByRecipeAndUser(recipeId, userId);
     }
 
+    @Override
+    public Long getRecipeLikeCountByRecipe(Long recipeId) {
+        Recipe recipe = findRecipe(recipeId);
+        return recipeLikeRepository.countByRecipe(recipeId);
+    }
+
     private Recipe findRecipe(Long id){
         return recipeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));

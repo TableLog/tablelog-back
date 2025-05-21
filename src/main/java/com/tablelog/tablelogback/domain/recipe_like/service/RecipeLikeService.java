@@ -4,4 +4,5 @@ public interface RecipeLikeService {
     void createRecipeLike(Long recipeId, Long userId);
     void deleteRecipeLike(Long recipeId, Long userId);
     Boolean hasRecipeLiked(Long recipeId, Long userId);
+    Long getRecipeLikeCountByRecipe(Long recipeId);
 }

@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
     Optional<RecipeLike> findByRecipeAndUser(Long user, Long recipe);
     Boolean existsByRecipeAndUser(Long user, Long recipe);
+    Long countByRecipe(Long recipe);
 }
