@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_like.controller;
 
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_like.service.impl.RecipeLikeServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,5 +55,15 @@ public class RecipeLikeController {
     ){
         return ResponseEntity.status(HttpStatus.OK).
                 body(recipeLikeService.getRecipeLikeCountByRecipe(recipeId));
+    }
+
+    @Operation(summary = "내 레시피 좋아요 전체 조회")
+    @GetMapping("/users/me/recipe-likes")
+    public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipes(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeLikeService.getMyLikedRecipes(userDetails.user().getId(), pageNumber));
     }
 }

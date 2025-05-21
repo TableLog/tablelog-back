@@ -1,8 +1,11 @@
 package com.tablelog.tablelogback.domain.recipe_like.service.impl;
 
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
+import com.tablelog.tablelogback.domain.recipe.mapper.entity.RecipeEntityMapper;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.entity.RecipeLike;
 import com.tablelog.tablelogback.domain.recipe_like.exception.AlreadyExistsRecipeLikeException;
@@ -11,14 +14,20 @@ import com.tablelog.tablelogback.domain.recipe_like.exception.RecipeLikeErrorCod
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.service.RecipeLikeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
 public class RecipeLikeServiceImpl implements RecipeLikeService {
     private final RecipeLikeRepository recipeLikeRepository;
     private final RecipeRepository recipeRepository;
+    private final RecipeEntityMapper recipeEntityMapper;
 
     @Transactional
     public void createRecipeLike(Long recipeId, Long userId) {
@@ -51,6 +60,15 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
     public Long getRecipeLikeCountByRecipe(Long recipeId) {
         Recipe recipe = findRecipe(recipeId);
         return recipeLikeRepository.countByRecipe(recipeId);
+    }
+
+    @Override
+    public RecipeSliceResponseDto getMyLikedRecipes(Long userId, int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> recipes = recipeLikeRepository.findAllByUser(userId, pageRequest);
+        List<RecipeReadAllServiceResponseDto> responseDtos =
+                recipeEntityMapper.toRecipeReadAllResponseDto(recipes.getContent());
+        return new RecipeSliceResponseDto(responseDtos, recipes.hasNext());
     }
 
     private Recipe findRecipe(Long id){
