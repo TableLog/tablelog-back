@@ -41,6 +41,12 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
         recipeLikeRepository.delete(recipeLike);
     }
 
+    @Override
+    public Boolean hasRecipeLiked(Long recipeId, Long userId){
+        Recipe recipe = findRecipe(recipeId);
+        return recipeLikeRepository.existsByRecipeAndUser(recipeId, userId);
+    }
+
     private Recipe findRecipe(Long id){
         return recipeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));

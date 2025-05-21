@@ -36,4 +36,14 @@ public class RecipeLikeController {
         recipeLikeService.deleteRecipeLike(recipeId, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "좋아요 단건 조회", description = "내가 좋아요 눌렀는지 T/F")
+    @GetMapping("/recipes/{recipeId}/likes/me")
+    public ResponseEntity<Boolean> hasRecipeLiked(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeLikeService.hasRecipeLiked(recipeId, userDetails.user().getId()));
+    }
 }
