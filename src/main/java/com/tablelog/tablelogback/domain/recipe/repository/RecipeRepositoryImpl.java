@@ -43,6 +43,7 @@ public class RecipeRepositoryImpl implements CustomRecipeRepository {
         JPAQuery<Recipe> query = queryFactory
                 .selectFrom(recipe)
                 .where(builder)
+                .orderBy(recipe.id.desc())
                 .offset(pageRequest.getOffset())
                 .limit(pageRequest.getPageSize() + 1);
 
