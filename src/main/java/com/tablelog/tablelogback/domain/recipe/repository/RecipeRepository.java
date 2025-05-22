@@ -18,18 +18,18 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             SELECT rf.recipe_id
             FROM tb_recipe_food rf
             JOIN tb_food f ON rf.food_id = f.id
-            WHERE f.food_name LIKE %:keyword%
+            WHERE LOWER(f.food_name) LIKE LOWER(CONCAT('%', :keyword, '%'))
         )
         """,
             countQuery = """
-        SELECT COUNT(*) FROM tb_recipe r
-        WHERE r.id IN (
-            SELECT rf.recipe_id
-            FROM tb_recipe_food rf
-            JOIN tb_food f ON rf.food_id = f.id
-            WHERE f.food_name LIKE %:keyword%
-        )
-        """,
+                    SELECT COUNT(*) FROM tb_recipe r
+                    WHERE r.id IN (
+                        SELECT rf.recipe_id
+                        FROM tb_recipe_food rf
+                        JOIN tb_food f ON rf.food_id = f.id
+                        WHERE LOWER(f.food_name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    )
+                    """,
             nativeQuery = true)
     Slice<Recipe> searchRecipesByFoodName(@Param("keyword") String keyword, PageRequest pageRequest);
 
