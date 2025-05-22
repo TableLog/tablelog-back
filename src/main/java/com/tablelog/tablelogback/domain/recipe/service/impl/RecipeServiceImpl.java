@@ -171,6 +171,15 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id){
+        Recipe recipe = findRecipe(id);
+        List<RecipeFood> recipeFoods = recipeFoodRepository
+                .findAllByRecipeId(id, PageRequest.of(0, 5))
+                .getContent();
+        return recipeEntityMapper.toRecipeFoodPreviewReadResponseDto(recipe, recipeFoods);
+    }
+
+    @Override
     public RecipeSliceResponseDto readAllRecipes(int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAll(pageRequest);

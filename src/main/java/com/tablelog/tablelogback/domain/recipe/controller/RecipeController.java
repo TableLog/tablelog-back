@@ -4,6 +4,7 @@ import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeCreateContro
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFilterConditionDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFoodPreviewDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.mapper.dto.RecipeDtoMapper;
 import com.tablelog.tablelogback.domain.recipe.service.impl.RecipeServiceImpl;
@@ -62,6 +63,15 @@ public class RecipeController {
     ){
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readRecipe(recipeId));
+    }
+
+    @Operation(summary = "레시피 단건 조회 레시피 식재료 보기")
+    @GetMapping("/recipes/{recipeId}/foods")
+    public ResponseEntity<RecipeFoodPreviewDto> readRecipeWithRecipeFood(
+            @PathVariable Long recipeId
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readRecipeWithRecipeFood(recipeId));
     }
 
     @Operation(summary = "레시피 전체 조회 최신순 10개씩")
