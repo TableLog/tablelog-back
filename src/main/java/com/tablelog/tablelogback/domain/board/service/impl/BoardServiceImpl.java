@@ -11,8 +11,14 @@ import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.mapper.entity.BoardEntityMapper;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
+import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
+import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -31,8 +37,11 @@ public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
     private final BoardEntityMapper boardEntityMapper;
+    private final BoardLikeRepository boardLikeRepository;
+    private final BoardCommentRepository boardCommentRepository;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    private final UserRepository userRepository;
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
     private final String SEPARATOR = "/";
@@ -119,6 +128,10 @@ public class BoardServiceImpl implements BoardService {
     public  BoardReadResponseDto getOnce(Long id){
         Board board = boardRepository.findById(id)
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        return boardEntityMapper.toTestReadResponseDto(board);
+        User user = userRepository.findByNickname(board.getUser()
+        ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        Long like_count = boardLikeRepository.countByBoard(id);
+        Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count);
     }
 }
