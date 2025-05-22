@@ -191,6 +191,15 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public RecipeSliceResponseDto getAllMyRecipes(User user, int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.findAllByUserId(user.getId(), pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes =
+                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
     public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByFoodName(keyword, pageRequest);

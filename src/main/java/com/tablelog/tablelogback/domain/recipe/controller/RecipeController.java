@@ -90,6 +90,16 @@ public class RecipeController {
                 .body(recipeService.readAllRecipeByUser(userId, pageNumber));
     }
 
+    @Operation(summary = "내 레시피 전체 조회")
+    @GetMapping("/users/me/recipes")
+    public ResponseEntity<?> getMyAllRecipes (
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.getAllMyRecipes(userDetails.user(), pageNumber));
+    }
+
     @Operation(summary = "레시피 전체 조회 By 식재료")
     @GetMapping("/recipes/filter/food")
     public ResponseEntity<?> readAllRecipesByFoodName(
