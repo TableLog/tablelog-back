@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_like.repository;
 
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe_like.entity.RecipeLike;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
@@ -17,4 +19,7 @@ public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
     Slice<Recipe> findAllByUser(@Param("userId") Long userId, PageRequest pageRequest);
     Boolean existsByRecipeAndUser(Long user, Long recipe);
     Long countByRecipe(Long recipe);
+    @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto(l.recipe, COUNT(l)) " +
+            "FROM RecipeLike l WHERE l.recipe IN :recipeIds GROUP BY l.recipe")
+    List<RecipeLikeCountDto> countLikesByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
 }

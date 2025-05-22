@@ -17,6 +17,7 @@ import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreate
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
+import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
@@ -36,10 +37,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -53,6 +52,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeProcessEntityMapper recipeProcessEntityMapper;
     private final S3Provider s3Provider;
     private final RecipeRepositoryImpl recipeRepositoryImpl;
+    private final RecipeLikeRepository recipeLikeRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -159,15 +159,17 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeReadAllServiceResponseDto readRecipe(Long id){
         Recipe recipe = findRecipe(id);
-        return recipeEntityMapper.toRecipeReadResponseDto(recipe);
+        Long likeCount = recipeLikeRepository.countByRecipe(id);
+        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount);
     }
 
     @Override
     public RecipeSliceResponseDto readAllRecipes(int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes =
-                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+//        List<RecipeReadAllServiceResponseDto> recipes =
+//                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -176,8 +178,7 @@ public class RecipeServiceImpl implements RecipeService {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes =
-                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -185,8 +186,7 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes =
-                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -194,8 +194,7 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeSliceResponseDto getAllMyRecipes(User user, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAllByUserId(user.getId(), pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes =
-                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -203,8 +202,7 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByFoodName(keyword, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes =
-                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -212,8 +210,7 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes =
-                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -262,5 +259,22 @@ public class RecipeServiceImpl implements RecipeService {
     private Recipe findRecipe(Long id){
         return recipeRepository.findById(id)
                 .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+    }
+
+    private List<RecipeReadAllServiceResponseDto> mappingRecipes(Slice<Recipe> slice){
+        List<Long> recipeIds = slice.getContent().stream()
+                .map(Recipe::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
+
+        List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
+                .map(recipe -> {
+                    Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount);
+                })
+                .collect(Collectors.toList());
+        return recipes;
     }
 }

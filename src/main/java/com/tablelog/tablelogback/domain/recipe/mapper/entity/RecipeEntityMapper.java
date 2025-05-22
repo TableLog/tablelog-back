@@ -14,6 +14,7 @@ import java.util.List;
 public interface RecipeEntityMapper {
     @Mapping(source = "user.id", target = "userId")
     Recipe toRecipe(RecipeCreateServiceRequestDto requestDto, String folderName, String imgUrl, User user);
-    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(Recipe recipe);
+    @Mapping(source = "likeCount", target = "likeCount")
+    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(Recipe recipe, Long likeCount);
     List<RecipeReadAllServiceResponseDto> toRecipeReadAllResponseDto(List<Recipe> recipes);
 }

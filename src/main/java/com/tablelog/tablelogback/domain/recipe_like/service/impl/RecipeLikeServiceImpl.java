@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_like.service.impl;
 
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -65,10 +68,23 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
     @Override
     public RecipeSliceResponseDto getMyLikedRecipes(Long userId, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> recipes = recipeLikeRepository.findAllByUser(userId, pageRequest);
-        List<RecipeReadAllServiceResponseDto> responseDtos =
-                recipeEntityMapper.toRecipeReadAllResponseDto(recipes.getContent());
-        return new RecipeSliceResponseDto(responseDtos, recipes.hasNext());
+        Slice<Recipe> slice = recipeLikeRepository.findAllByUser(userId, pageRequest);
+//        List<RecipeReadAllServiceResponseDto> responseDtos =
+//                recipeEntityMapper.toRecipeReadAllResponseDto(recipes.getContent());
+        List<Long> recipeIds = slice.getContent().stream()
+                .map(Recipe::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
+                .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
+
+        List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
+                .map(recipe -> {
+                    Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount);
+                })
+                .collect(Collectors.toList());
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     private Recipe findRecipe(Long id){
