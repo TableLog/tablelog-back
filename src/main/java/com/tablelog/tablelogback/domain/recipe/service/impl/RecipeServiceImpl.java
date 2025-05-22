@@ -24,6 +24,7 @@ import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final S3Provider s3Provider;
     private final RecipeRepositoryImpl recipeRepositoryImpl;
     private final RecipeLikeRepository recipeLikeRepository;
+    private final UserRepository userRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -133,6 +135,11 @@ public class RecipeServiceImpl implements RecipeService {
         recipeProcessRepository.saveAll(recipeProcesses);
 
         saveImage(recipe.getFolderName(), recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
+
+        if(user.getRecipeCount() >= 50 && user.getUserRole() == UserRole.NORMAL){
+            user.changeRole(UserRole.EXPERT);
+            userRepository.save(user);
+        }
     }
 
     private void saveImage(
