@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_save.controller;
 
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_save.service.impl.RecipeSaveServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,5 +46,15 @@ public class RecipeSaveController {
     ){
         return ResponseEntity.status(HttpStatus.OK).
                 body(recipeSaveService.hasRecipeSaved(recipeId, userDetails.user().getId()));
+    }
+
+    @Operation(summary = "내 레시피 저장 전체 조회")
+    @GetMapping("/users/me/recipe-saves")
+    public ResponseEntity<RecipeSliceResponseDto> getMySavedRecipes(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeSaveService.getMySavedRecipes(userDetails, pageNumber));
     }
 }
