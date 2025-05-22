@@ -36,4 +36,14 @@ public class RecipeSaveController {
         recipeSaveService.deleteRecipeSave(recipeId, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "레시피 저장 단건 조회", description = "내가 저장 눌렀는지 T/F")
+    @GetMapping("/recipes/{recipeId}/saves/me")
+    public ResponseEntity<Boolean> hasRecipeSaved(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeSaveService.hasRecipeSaved(recipeId, userDetails.user().getId()));
+    }
 }

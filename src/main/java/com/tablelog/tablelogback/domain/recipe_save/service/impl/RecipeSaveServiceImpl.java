@@ -4,9 +4,6 @@ import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe_like.entity.RecipeLike;
-import com.tablelog.tablelogback.domain.recipe_like.exception.NotFoundRecipeLikeException;
-import com.tablelog.tablelogback.domain.recipe_like.exception.RecipeLikeErrorCode;
 import com.tablelog.tablelogback.domain.recipe_save.entity.RecipeSave;
 import com.tablelog.tablelogback.domain.recipe_save.exception.AlreadyExistsRecipeSaveException;
 import com.tablelog.tablelogback.domain.recipe_save.exception.NotFoundRecipeSaveException;
@@ -42,6 +39,12 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
         RecipeSave recipeSave = recipeSaveRepository.findByRecipeAndUser(recipeId, userId)
                 .orElseThrow(()->new NotFoundRecipeSaveException(RecipeSaveErrorCode.NOT_FOUND_RECIPE_SAVE));
         recipeSaveRepository.delete(recipeSave);
+    }
+
+    @Override
+    public Boolean hasRecipeSaved(Long recipeId, Long userId){
+        Recipe recipe = findRecipe(recipeId);
+        return recipeSaveRepository.existsByRecipeAndUser(recipeId, userId);
     }
 
     private Recipe findRecipe(Long id){
