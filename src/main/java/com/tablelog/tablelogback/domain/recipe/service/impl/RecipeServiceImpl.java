@@ -171,11 +171,6 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
-//        Boolean isSaved = false;
-//        if (userDetails != null) {
-//            Long userId = userDetails.user().getId();
-//            isSaved = recipeSaveRepository.existsByRecipeAndUser(id, userId);
-//        }
         return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved);
     }
 

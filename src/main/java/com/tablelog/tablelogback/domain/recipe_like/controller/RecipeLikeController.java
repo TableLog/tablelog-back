@@ -64,6 +64,6 @@ public class RecipeLikeController {
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeLikeService.getMyLikedRecipes(userDetails.user().getId(), pageNumber));
+                body(recipeLikeService.getMyLikedRecipes(userDetails, pageNumber));
     }
 }
