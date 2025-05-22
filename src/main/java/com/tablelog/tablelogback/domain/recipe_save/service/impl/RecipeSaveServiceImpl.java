@@ -4,8 +4,12 @@ import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
+import com.tablelog.tablelogback.domain.recipe_like.entity.RecipeLike;
+import com.tablelog.tablelogback.domain.recipe_like.exception.NotFoundRecipeLikeException;
+import com.tablelog.tablelogback.domain.recipe_like.exception.RecipeLikeErrorCode;
 import com.tablelog.tablelogback.domain.recipe_save.entity.RecipeSave;
 import com.tablelog.tablelogback.domain.recipe_save.exception.AlreadyExistsRecipeSaveException;
+import com.tablelog.tablelogback.domain.recipe_save.exception.NotFoundRecipeSaveException;
 import com.tablelog.tablelogback.domain.recipe_save.exception.RecipeSaveErrorCode;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
 import com.tablelog.tablelogback.domain.recipe_save.service.RecipeSaveService;
@@ -30,6 +34,14 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
                 .recipe(recipeId)
                 .build();
         recipeSaveRepository.save(save);
+    }
+
+    @Override
+    public void deleteRecipeSave(Long recipeId, Long userId) {
+        Recipe recipe = findRecipe(recipeId);
+        RecipeSave recipeSave = recipeSaveRepository.findByRecipeAndUser(recipeId, userId)
+                .orElseThrow(()->new NotFoundRecipeSaveException(RecipeSaveErrorCode.NOT_FOUND_RECIPE_SAVE));
+        recipeSaveRepository.delete(recipeSave);
     }
 
     private Recipe findRecipe(Long id){

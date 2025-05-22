@@ -8,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
@@ -27,6 +24,16 @@ public class RecipeSaveController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         recipeSaveService.createRecipeSave(recipeId, userDetails.user().getId());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "레시피 저장 삭제")
+    @DeleteMapping("/recipes/{recipeId}/saves")
+    public ResponseEntity<?> deleteRecipeSave(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeSaveService.deleteRecipeSave(recipeId, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
