@@ -17,4 +17,5 @@ public interface BoardLikeRepository extends JpaRepository<BoardLike, Long> {
     Slice<Board> findAllByUser(@Param("userId") Long userId, PageRequest pageRequest);
     Boolean existsByBoardAndUser(Long board, Long user);
     Long countByBoard(Long board);
+
 }

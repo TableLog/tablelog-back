@@ -24,6 +24,10 @@ public interface BoardEntityMapper {
     Board toBoard(BoardCreateServiceRequestDto BoardRequestDto, List<String> fileUrl
 , User user
     );
-    BoardReadResponseDto toTestReadResponseDto(Board board);
+    @Mapping(source = "board.id", target = "id")
+    @Mapping(source = "user.profileImgUrl", target = "profileImgUrl")
+    @Mapping(source = "comment_count" ,target= "comment_count")
+    @Mapping(source = "like_count", target = "like_count")
+    BoardReadResponseDto toReadResponseDto(Board board, User user,Integer comment_count,Long like_count);
     List<BoardReadResponseDto> toBoardReadResponseDtos(List<Board> board);
 }
