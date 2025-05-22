@@ -11,7 +11,6 @@ public record RecipeReadAllServiceResponseDto(
         String title,
         String intro,
         List<RecipeCategory> recipeCategoryList,
-        int totalStar,
         int starCount,
         Float star,
         RecipePrice price,
@@ -20,6 +19,7 @@ public record RecipeReadAllServiceResponseDto(
         Boolean isPaid,
         Integer recipePoint,
         Integer reviewCount,
+        String imageUrl,
         Long likeCount
 ) {
 }
