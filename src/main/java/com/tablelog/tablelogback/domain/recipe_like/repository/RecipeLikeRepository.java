@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
-    Optional<RecipeLike> findByRecipeAndUser(Long user, Long recipe);
+    Optional<RecipeLike> findByRecipeAndUser(Long recipe, Long user);
     @Query("SELECT r FROM Recipe r JOIN RecipeLike l ON r.id = l.recipe " +
             "WHERE l.user = :userId")
     Slice<Recipe> findAllByUser(@Param("userId") Long userId, PageRequest pageRequest);
-    Boolean existsByRecipeAndUser(Long user, Long recipe);
+    Boolean existsByRecipeAndUser(Long recipe, Long user);
     Long countByRecipe(Long recipe);
     @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto(l.recipe, COUNT(l)) " +
             "FROM RecipeLike l WHERE l.recipe IN :recipeIds GROUP BY l.recipe")

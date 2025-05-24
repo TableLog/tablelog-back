@@ -9,7 +9,6 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
-import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
@@ -18,7 +17,10 @@ public interface RecipeEntityMapper {
     @Mapping(source = "user.id", target = "userId")
     Recipe toRecipe(RecipeCreateServiceRequestDto requestDto, String folderName, String imgUrl, User user);
     @Mapping(source = "likeCount", target = "likeCount")
-    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(Recipe recipe, Long likeCount);
+    @Mapping(source = "isSaved", target = "isSaved")
+    @Mapping(source = "nickname", target = "user")
+    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(
+            Recipe recipe, Long likeCount, Boolean isSaved, String nickname);
     List<RecipeReadAllServiceResponseDto> toRecipeReadAllResponseDto(List<Recipe> recipes);
     RecipeFoodPreviewDto toRecipeFoodPreviewReadResponseDto(Recipe recipe, List<RecipeFood> recipeFoods);
 }

@@ -1,4 +1,4 @@
-package com.tablelog.tablelogback.domain.recipe_like.service.impl;
+package com.tablelog.tablelogback.domain.recipe_save.service.impl;
 
 import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
@@ -6,13 +6,13 @@ import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.mapper.entity.RecipeEntityMapper;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe_like.entity.RecipeLike;
-import com.tablelog.tablelogback.domain.recipe_like.exception.AlreadyExistsRecipeLikeException;
-import com.tablelog.tablelogback.domain.recipe_like.exception.NotFoundRecipeLikeException;
-import com.tablelog.tablelogback.domain.recipe_like.exception.RecipeLikeErrorCode;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
-import com.tablelog.tablelogback.domain.recipe_like.service.RecipeLikeService;
+import com.tablelog.tablelogback.domain.recipe_save.entity.RecipeSave;
+import com.tablelog.tablelogback.domain.recipe_save.exception.AlreadyExistsRecipeSaveException;
+import com.tablelog.tablelogback.domain.recipe_save.exception.NotFoundRecipeSaveException;
+import com.tablelog.tablelogback.domain.recipe_save.exception.RecipeSaveErrorCode;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
+import com.tablelog.tablelogback.domain.recipe_save.service.RecipeSaveService;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -29,50 +29,45 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class RecipeLikeServiceImpl implements RecipeLikeService {
-    private final RecipeLikeRepository recipeLikeRepository;
+public class RecipeSaveServiceImpl implements RecipeSaveService {
+    private final RecipeSaveRepository recipeSaveRepository;
     private final RecipeRepository recipeRepository;
     private final RecipeEntityMapper recipeEntityMapper;
-    private final RecipeSaveRepository recipeSaveRepository;
+    private final RecipeLikeRepository recipeLikeRepository;
     private final UserRepository userRepository;
 
     @Transactional
-    public void createRecipeLike(Long recipeId, Long userId) {
+    public void createRecipeSave(Long recipeId, Long userId) {
         Recipe recipe = findRecipe(recipeId);
-        if(recipeLikeRepository.existsByRecipeAndUser(recipe.getId(), userId)){
-            throw new AlreadyExistsRecipeLikeException(RecipeLikeErrorCode.ALREADY_EXIST_RECIPE_LIKE);
+        if(recipeSaveRepository.existsByRecipeAndUser(recipe.getId(), userId)){
+            throw new AlreadyExistsRecipeSaveException(RecipeSaveErrorCode.ALREADY_EXIST_RECIPE_SAVE);
         }
-        RecipeLike like = RecipeLike.builder()
+        RecipeSave save = RecipeSave.builder()
                 .user(userId)
                 .recipe(recipeId)
                 .build();
-        recipeLikeRepository.save(like);
+        recipeSaveRepository.save(save);
     }
 
     @Override
-    public void deleteRecipeLike(Long recipeId, Long userId) {
+    public void deleteRecipeSave(Long recipeId, Long userId) {
         Recipe recipe = findRecipe(recipeId);
-        RecipeLike recipeLike = recipeLikeRepository.findByRecipeAndUser(recipeId, userId)
-                .orElseThrow(()->new NotFoundRecipeLikeException(RecipeLikeErrorCode.NOT_FOUND_RECIPE_LIKE));
-        recipeLikeRepository.delete(recipeLike);
+        RecipeSave recipeSave = recipeSaveRepository.findByRecipeAndUser(recipeId, userId)
+                .orElseThrow(()->new NotFoundRecipeSaveException(RecipeSaveErrorCode.NOT_FOUND_RECIPE_SAVE));
+        recipeSaveRepository.delete(recipeSave);
     }
 
     @Override
-    public Boolean hasRecipeLiked(Long recipeId, Long userId){
+    public Boolean hasRecipeSaved(Long recipeId, Long userId){
         Recipe recipe = findRecipe(recipeId);
-        return recipeLikeRepository.existsByRecipeAndUser(recipeId, userId);
+        return recipeSaveRepository.existsByRecipeAndUser(recipeId, userId);
     }
 
     @Override
-    public Long getRecipeLikeCountByRecipe(Long recipeId) {
-        Recipe recipe = findRecipe(recipeId);
-        return recipeLikeRepository.countByRecipe(recipeId);
-    }
-
-    @Override
-    public RecipeSliceResponseDto getMyLikedRecipes(UserDetailsImpl userDetails, int pageNumber){
+    public RecipeSliceResponseDto getMySavedRecipes(UserDetailsImpl userDetails, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeLikeRepository.findAllByUser(userDetails.user().getId(), pageRequest);
+        Slice<Recipe> slice = recipeSaveRepository.findAllByUser(userDetails.user().getId(), pageRequest);
+
         List<Long> recipeIds = slice.getContent().stream()
                 .map(Recipe::getId)
                 .collect(Collectors.toList());

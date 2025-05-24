@@ -16,10 +16,13 @@ public record RecipeReadAllServiceResponseDto(
         RecipePrice price,
         CookingTime cookingTime,
         String memo,
+        Integer totalCal,
         Boolean isPaid,
         Integer recipePoint,
         Integer reviewCount,
         String imageUrl,
-        Long likeCount
+        Long likeCount,
+        Boolean isSaved,
+        String user
 ) {
 }

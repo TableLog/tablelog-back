@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Slice<Recipe> findAllByUserId(Long id, PageRequest pageRequest);
 
+    Slice<Recipe> findAllByIsPaidTrue(PageRequest pageRequest);
+    Slice<Recipe> findAllByIsPaidTrueAndUserId(Long id, PageRequest pageRequest);
+
     @Query(value = """
         SELECT * FROM tb_recipe r
         WHERE r.id IN (

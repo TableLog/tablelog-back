@@ -23,10 +23,14 @@ import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcess
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
+import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +58,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final S3Provider s3Provider;
     private final RecipeRepositoryImpl recipeRepositoryImpl;
     private final RecipeLikeRepository recipeLikeRepository;
+    private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -164,10 +169,13 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeReadAllServiceResponseDto readRecipe(Long id){
+    public RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
-        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount);
+        Boolean isSaved = isSaved(userDetails, id);
+        User user = userRepository.findById(recipe.getUserId())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, user.getNickname());
     }
 
     @Override
@@ -180,53 +188,63 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipes(int pageNumber) {
+    public RecipeSliceResponseDto readAllRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid){
         PageRequest pageRequest = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findAll(pageRequest);
+        } else {
+            slice = recipeRepository.findAllByIsPaidTrue(pageRequest);
+        }
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
 //        List<RecipeReadAllServiceResponseDto> recipes =
 //                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto readPopularRecipes(int pageNumber) {
+    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user) {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber) {
+    public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber, UserDetailsImpl user) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto getAllMyRecipes(User user, int pageNumber) {
+    public RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeRepository.findAllByUserId(user.getId(), pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findAllByUserId(userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeRepository.findAllByIsPaidTrueAndUserId(userDetails.user().getId(), pageRequest);
+        }
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber) {
+    public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByFoodName(keyword, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber) {
+    public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);
-        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
@@ -277,20 +295,52 @@ public class RecipeServiceImpl implements RecipeService {
                 .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
     }
 
-    private List<RecipeReadAllServiceResponseDto> mappingRecipes(Slice<Recipe> slice){
+    private List<RecipeReadAllServiceResponseDto> mappingRecipes(Slice<Recipe> slice, UserDetailsImpl userDetails){
         List<Long> recipeIds = slice.getContent().stream()
                 .map(Recipe::getId)
                 .collect(Collectors.toList());
 
+        // 작성자 id
+        List<Long> userIds = slice.getContent().stream()
+                .map(Recipe::getUserId)
+                .distinct()
+                .toList();
+
+        // 작성자 이름 조회
+        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
+
+        // 좋아요 개수
         Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
+
+        // 저장 여부
+        final Map<Long, Boolean> isSavedMap = (userDetails != null)
+                ? recipeSaveRepository.findSavesByRecipeAndUser(recipeIds, userDetails.user().getId())
+                .stream()
+                .collect(Collectors.toMap(
+                        RecipeIsSavedDto::recipeId,
+                        RecipeIsSavedDto::isSaved
+                ))
+                : Collections.emptyMap();
 
         List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
                 .map(recipe -> {
                     Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
-                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount);
+                    Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
+                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname);
                 })
                 .collect(Collectors.toList());
         return recipes;
+    }
+
+    private Boolean isSaved(UserDetailsImpl userDetails, Long id){
+        Boolean isSaved = false;
+        if (userDetails != null) {
+            Long userId = userDetails.user().getId();
+            isSaved = recipeSaveRepository.existsByRecipeAndUser(id, userId);
+        }
+        return isSaved;
     }
 }

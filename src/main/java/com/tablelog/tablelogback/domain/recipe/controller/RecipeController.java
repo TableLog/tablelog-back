@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,8 +63,9 @@ public class RecipeController {
     public ResponseEntity<?> readRecipe(
             @PathVariable Long recipeId
     ){
+        UserDetailsImpl userDetails = findUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.readRecipe(recipeId));
+                .body(recipeService.readRecipe(recipeId, userDetails));
     }
 
     @Operation(summary = "레시피 단건 조회 레시피 식재료 보기")
@@ -74,12 +77,14 @@ public class RecipeController {
                 .body(recipeService.readRecipeWithRecipeFood(recipeId));
     }
 
-    @Operation(summary = "레시피 전체 조회 최신순 10개씩")
+    @Operation(summary = "레시피 전체 조회 최신순 10개씩", description = "false면 전체 조회")
     @GetMapping("/recipes/latest")
-    public ResponseEntity<?> readAllRecipes(
+    public ResponseEntity<?> readAllRecipesLatest(
+            @RequestParam(required = false) Boolean isPaid,
             @RequestParam int pageNumber
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber));
+        UserDetailsImpl userDetails = findUserDetails();
+        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber, userDetails, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 인기순", description = "최신 일주일")
@@ -87,7 +92,8 @@ public class RecipeController {
     public ResponseEntity<?> readPopularRecipes(
             @RequestParam int pageNumber
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber));
+        UserDetailsImpl userDetails = findUserDetails();
+        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 전체 조회 By 사용자")
@@ -96,18 +102,20 @@ public class RecipeController {
             @PathVariable Long userId,
             @RequestParam int pageNumber
     ) {
+        UserDetailsImpl userDetails = findUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.readAllRecipeByUser(userId, pageNumber));
+                .body(recipeService.readAllRecipeByUser(userId, pageNumber, userDetails));
     }
 
     @Operation(summary = "내 레시피 전체 조회")
     @GetMapping("/users/me/recipes")
     public ResponseEntity<?> getMyAllRecipes (
+            @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.getAllMyRecipes(userDetails.user(), pageNumber));
+                .body(recipeService.getAllMyRecipes(userDetails, pageNumber, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 식재료")
@@ -116,8 +124,9 @@ public class RecipeController {
             @RequestParam String keyword,
             @RequestParam int pageNumber
     ) {
+        UserDetailsImpl userDetails = findUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.readAllRecipeByFoodName(keyword, pageNumber));
+                .body(recipeService.readAllRecipeByFoodName(keyword, pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 필터링")
@@ -126,8 +135,9 @@ public class RecipeController {
             @ModelAttribute RecipeFilterConditionDto condition,
             @RequestParam int pageNumber
     ) {
+        UserDetailsImpl userDetails = findUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.filterRecipes(condition, pageNumber));
+                .body(recipeService.filterRecipes(condition, pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 수정")
@@ -152,5 +162,15 @@ public class RecipeController {
     ){
         recipeService.deleteRecipe(recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    private UserDetailsImpl findUserDetails(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = null;
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        }
+        return userDetails;
     }
 }
