@@ -18,10 +18,10 @@ public interface RecipeService {
     ) throws IOException;
     RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl user);
     RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id);
-    RecipeSliceResponseDto readAllRecipes(int pageNum, UserDetailsImpl user);
+    RecipeSliceResponseDto readAllRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid);
     RecipeSliceResponseDto readPopularRecipes(int pageNum, UserDetailsImpl user);
     RecipeSliceResponseDto readAllRecipeByUser(Long userId, int pageNum, UserDetailsImpl user);
-    RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl user, int pageNum);
+    RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl user, int pageNum, Boolean isPaid);
     RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNum, UserDetailsImpl user);
     RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum, UserDetailsImpl user);
     void updateRecipe(Long id, RecipeUpdateServiceRequestDto requestDto, User user,

@@ -77,13 +77,14 @@ public class RecipeController {
                 .body(recipeService.readRecipeWithRecipeFood(recipeId));
     }
 
-    @Operation(summary = "레시피 전체 조회 최신순 10개씩")
+    @Operation(summary = "레시피 전체 조회 최신순 10개씩", description = "false면 전체 조회")
     @GetMapping("/recipes/latest")
-    public ResponseEntity<?> readAllRecipes(
+    public ResponseEntity<?> readAllRecipesLatest(
+            @RequestParam(required = false) Boolean isPaid,
             @RequestParam int pageNumber
     ) {
         UserDetailsImpl userDetails = findUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber, userDetails));
+        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber, userDetails, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 인기순", description = "최신 일주일")
@@ -109,11 +110,12 @@ public class RecipeController {
     @Operation(summary = "내 레시피 전체 조회")
     @GetMapping("/users/me/recipes")
     public ResponseEntity<?> getMyAllRecipes (
+            @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.getAllMyRecipes(userDetails, pageNumber));
+                .body(recipeService.getAllMyRecipes(userDetails, pageNumber, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 식재료")

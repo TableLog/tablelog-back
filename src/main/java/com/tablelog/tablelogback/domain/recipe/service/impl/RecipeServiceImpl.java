@@ -184,9 +184,14 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipes(int pageNumber, UserDetailsImpl user){
+    public RecipeSliceResponseDto readAllRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid){
         PageRequest pageRequest = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findAll(pageRequest);
+        } else {
+            slice = recipeRepository.findAllByIsPaidTrue(pageRequest);
+        }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
 //        List<RecipeReadAllServiceResponseDto> recipes =
 //                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
@@ -211,9 +216,14 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl userDetails, int pageNumber) {
+    public RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeRepository.findAllByUserId(userDetails.user().getId(), pageRequest);
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findAllByUserId(userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeRepository.findAllByIsPaidTrueAndUserId(userDetails.user().getId(), pageRequest);
+        }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
