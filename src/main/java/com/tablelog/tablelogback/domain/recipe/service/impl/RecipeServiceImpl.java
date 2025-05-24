@@ -25,6 +25,8 @@ import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProce
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
@@ -171,7 +173,9 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
-        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved);
+        User user = userRepository.findById(recipe.getUserId())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, user.getNickname());
     }
 
     @Override
@@ -296,9 +300,21 @@ public class RecipeServiceImpl implements RecipeService {
                 .map(Recipe::getId)
                 .collect(Collectors.toList());
 
+        // 작성자 id
+        List<Long> userIds = slice.getContent().stream()
+                .map(Recipe::getUserId)
+                .distinct()
+                .toList();
+
+        // 작성자 이름 조회
+        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
+
+        // 좋아요 개수
         Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
 
+        // 저장 여부
         final Map<Long, Boolean> isSavedMap = (userDetails != null)
                 ? recipeSaveRepository.findSavesByRecipeAndUser(recipeIds, userDetails.user().getId())
                 .stream()
@@ -312,7 +328,8 @@ public class RecipeServiceImpl implements RecipeService {
                 .map(recipe -> {
                     Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
                     Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
-                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved);
+                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname);
                 })
                 .collect(Collectors.toList());
         return recipes;

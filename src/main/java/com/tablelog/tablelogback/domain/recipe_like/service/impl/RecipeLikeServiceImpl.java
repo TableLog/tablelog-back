@@ -1,9 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_like.service.impl;
 
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeIsSavedDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeSliceResponseDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
@@ -16,6 +13,7 @@ import com.tablelog.tablelogback.domain.recipe_like.exception.RecipeLikeErrorCod
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.service.RecipeLikeService;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +34,7 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
     private final RecipeRepository recipeRepository;
     private final RecipeEntityMapper recipeEntityMapper;
     private final RecipeSaveRepository recipeSaveRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public void createRecipeLike(Long recipeId, Long userId) {
@@ -78,6 +77,14 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
                 .map(Recipe::getId)
                 .collect(Collectors.toList());
 
+        List<Long> userIds = slice.getContent().stream()
+                .map(Recipe::getUserId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
+
         Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
 
@@ -94,7 +101,8 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
                 .map(recipe -> {
                     Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
                     Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
-                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved);
+                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname);
                 })
                 .collect(Collectors.toList());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

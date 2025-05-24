@@ -16,12 +16,11 @@ import java.util.List;
 public interface RecipeEntityMapper {
     @Mapping(source = "user.id", target = "userId")
     Recipe toRecipe(RecipeCreateServiceRequestDto requestDto, String folderName, String imgUrl, User user);
-//    @Mapping(source = "likeCount", target = "likeCount")
-////    @Mapping(source = "isSaved", target = "isSaved")
-//    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(Recipe recipe, Long likeCount);
     @Mapping(source = "likeCount", target = "likeCount")
     @Mapping(source = "isSaved", target = "isSaved")
-    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(Recipe recipe, Long likeCount, Boolean isSaved);
+    @Mapping(source = "nickname", target = "user")
+    RecipeReadAllServiceResponseDto toRecipeReadResponseDto(
+            Recipe recipe, Long likeCount, Boolean isSaved, String nickname);
     List<RecipeReadAllServiceResponseDto> toRecipeReadAllResponseDto(List<Recipe> recipes);
     RecipeFoodPreviewDto toRecipeFoodPreviewReadResponseDto(Recipe recipe, List<RecipeFood> recipeFoods);
 }
