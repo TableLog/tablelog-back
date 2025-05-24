@@ -28,6 +28,7 @@ public interface BoardEntityMapper {
     @Mapping(source = "user.profileImgUrl", target = "profileImgUrl")
     @Mapping(source = "comment_count" ,target= "comment_count")
     @Mapping(source = "like_count", target = "like_count")
+    @Mapping(source = "board.createdAt", target = "createdAt")
     BoardReadResponseDto toReadResponseDto(Board board, User user,Integer comment_count,Long like_count);
     List<BoardReadResponseDto> toBoardReadResponseDtos(List<Board> board);
 }

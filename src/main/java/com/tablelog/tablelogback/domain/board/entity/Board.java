@@ -21,7 +21,7 @@ public class Board extends BaseEntity {
     private Long id;
     @Column
     private String title;
-    @Column
+    @Column(length = 500)
     private String content;
     @Column
     @ElementCollection(fetch = FetchType.LAZY)
