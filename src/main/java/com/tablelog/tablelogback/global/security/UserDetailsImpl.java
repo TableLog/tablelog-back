@@ -5,8 +5,10 @@ import java.util.Collection;
 
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public record UserDetailsImpl(User user) implements UserDetails {
@@ -50,5 +52,15 @@ public record UserDetailsImpl(User user) implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public UserDetailsImpl findUserDetails(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = null;
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+            userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        }
+        return userDetails;
     }
 }
