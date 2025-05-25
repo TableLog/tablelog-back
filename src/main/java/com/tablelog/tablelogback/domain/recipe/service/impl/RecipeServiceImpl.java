@@ -120,7 +120,9 @@ public class RecipeServiceImpl implements RecipeService {
             List<String> imageUrls = new ArrayList<>();
 
             List<MultipartFile> files = rpDto.files();
-            if (files != null) {
+            // 사이즈 3개로 제한
+            int s = 0;
+            if (files != null && s <= 2) {
                 for (MultipartFile image : files) {
                     if (image != null && !image.isEmpty()) {
                         String fileName = s3Provider.originalFileName(image);
@@ -130,6 +132,8 @@ public class RecipeServiceImpl implements RecipeService {
                         imageUrls.add(fileUrl);
                         rpImageNames.add(fileName);
                         recipeProcessImages.add(image);
+
+                        s++;
                     }
                 }
             }
