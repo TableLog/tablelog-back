@@ -18,6 +18,7 @@ import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+import java.util.ArrayList;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -108,22 +109,53 @@ public class BoardServiceImpl implements BoardService {
 //    // List<Test> -> List<TestCreateServiceRequestDto>
     @Override
     public BoardListResponseDto getAll(int pageNumber) {
-        Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
-        List<BoardReadResponseDto> responseDtos = boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+
+        Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
+        List<Board> boardList = boards.getContent();
+
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            User user = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+        }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
+
     @Override
     public BoardListResponseDto getAllByDesc(int pageNumber) {
-        Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
-        List<BoardReadResponseDto> responseDtos = boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+
+        Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
+        List<Board> boardList = boards.getContent();
+
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            User user = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+        }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
     @Override
     public BoardListResponseDto getAllByAsc(int pageNumber) {
         Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
-        List<BoardReadResponseDto> responseDtos = boardEntityMapper.toBoardReadResponseDtos(boards.getContent());
+        List<Board> boardList = boards.getContent();
+
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            User user = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+        }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
+
     @Override
     public  BoardReadResponseDto getOnce(Long id){
         Board board = boardRepository.findById(id)
