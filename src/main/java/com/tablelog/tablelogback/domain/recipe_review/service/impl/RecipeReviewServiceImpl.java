@@ -55,6 +55,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
             recipeReviewRepository.save(recipeReview);
             recipe.updateReviewCount(recipe.getReviewCount() + 1);
             recipe.addStar(serviceRequestDto.star());
+            user.addPointBalance(100);
         }
     }
 
