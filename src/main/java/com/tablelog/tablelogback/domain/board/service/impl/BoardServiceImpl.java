@@ -62,6 +62,8 @@ public class BoardServiceImpl implements BoardService {
         }
         Board board = boardEntityMapper.toBoard(boardRequestDto, imageUrls, user);
         boardRepository.save(board);
+        user.addPointBalance(300);
+        userRepository.save(user);
     }
     @Override
     public void update(final BoardUpdateServiceRequestDto boardRequestDto
