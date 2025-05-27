@@ -147,8 +147,9 @@ public class RecipeServiceImpl implements RecipeService {
 
         if(user.getRecipeCount() >= 50 && user.getUserRole() == UserRole.NORMAL){
             user.changeRole(UserRole.EXPERT);
-            userRepository.save(user);
         }
+        user.addPointBalance(3000);
+        userRepository.save(user);
     }
 
     private void saveImage(
