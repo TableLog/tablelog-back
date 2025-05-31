@@ -20,7 +20,7 @@ public interface RecipeEntityMapper {
     @Mapping(source = "isSaved", target = "isSaved")
     @Mapping(source = "nickname", target = "user")
     RecipeReadAllServiceResponseDto toRecipeReadResponseDto(
-            Recipe recipe, Long likeCount, Boolean isSaved, String nickname);
+            Recipe recipe, Long likeCount, Boolean isSaved, String nickname, Boolean isWriter);
     List<RecipeReadAllServiceResponseDto> toRecipeReadAllResponseDto(List<Recipe> recipes);
     RecipeFoodPreviewDto toRecipeFoodPreviewReadResponseDto(Recipe recipe, List<RecipeFood> recipeFoods);
 }

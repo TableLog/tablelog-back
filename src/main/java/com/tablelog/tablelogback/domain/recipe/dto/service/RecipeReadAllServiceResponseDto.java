@@ -23,6 +23,7 @@ public record RecipeReadAllServiceResponseDto(
         String imageUrl,
         Long likeCount,
         Boolean isSaved,
-        String user
+        String user,
+        Boolean isWriter
 ) {
 }
