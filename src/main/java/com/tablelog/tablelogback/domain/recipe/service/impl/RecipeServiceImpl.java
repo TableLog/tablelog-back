@@ -18,6 +18,7 @@ import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
+import com.tablelog.tablelogback.domain.recipe_payment.repository.RecipePaymentRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
@@ -60,6 +61,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeLikeRepository recipeLikeRepository;
     private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
+    private final RecipePaymentRepository recipePaymentRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -176,6 +178,12 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
+        // 유료 레시피면 결제한 사람만 확인 가능
+        if(recipe.getIsPaid()){
+            if(!recipePaymentRepository.existsByUserIdAndRecipeId(userDetails.user().getId(), recipe.getId())){
+                throw new ForbiddenAccessRecipeException(RecipeErrorCode.FORBIDDEN_ACCESS_RECIPE);
+            }
+        }
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
         User user = userRepository.findById(recipe.getUserId())
