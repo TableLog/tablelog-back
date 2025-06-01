@@ -178,12 +178,6 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
-        // 유료 레시피면 결제한 사람만 확인 가능
-        if(recipe.getIsPaid()){
-            if(!recipePaymentRepository.existsByUserIdAndRecipeId(userDetails.user().getId(), recipe.getId())){
-                throw new ForbiddenAccessRecipeException(RecipeErrorCode.FORBIDDEN_ACCESS_RECIPE);
-            }
-        }
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
         User user = userRepository.findById(recipe.getUserId())
