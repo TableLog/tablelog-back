@@ -10,8 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1")
@@ -24,18 +22,18 @@ public class RecipePaymentController {
     public ResponseEntity<?> purchaseRecipeWithPoints(
             @PathVariable Long recipeId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-    ) throws IOException {
+    ) {
         recipePaymentService.createRecipePayment(recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-//    @Operation(summary = "레시피 구매 내역 조회")
-//    @GetMapping("/recipes/{recipeId}/payments")
-//    public ResponseEntity<?> getaymentsRecipeWithPoints(
-//            @PathVariable Long recipeId,
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
-//    ) throws IOException {
-//        recipePaymentService.createRecipePayment(recipeId, userDetails.user());
-//        return ResponseEntity.status(HttpStatus.CREATED).build();
-//    }
+    @Operation(summary = "내 레시피 구매 내역 전체 조회")
+    @GetMapping("/users/me/recipes-payments")
+    public ResponseEntity<?> getPaymentsRecipeWithPoints(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipePaymentService.getAllMyRecipePayments(userDetails.user(), pageNumber));
+    }
 }

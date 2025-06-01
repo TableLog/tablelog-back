@@ -5,6 +5,8 @@ import com.tablelog.tablelogback.domain.recipe.exception.InsufficientPointBalanc
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
+import com.tablelog.tablelogback.domain.recipe_payment.dto.RecipePaymentReadResponseDto;
+import com.tablelog.tablelogback.domain.recipe_payment.dto.RecipePaymentSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_payment.entity.RecipePayment;
 import com.tablelog.tablelogback.domain.recipe_payment.exception.AlreadyExistsRecipePaymentException;
 import com.tablelog.tablelogback.domain.recipe_payment.exception.CannotPaymentRecipeException;
@@ -18,8 +20,14 @@ import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PaymentMethod;
 import com.tablelog.tablelogback.global.enums.PaymentStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -63,5 +71,21 @@ public class RecipePaymentServiceImpl implements RecipePaymentService {
                         .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         writer.updatePointBalance(writer.getPointBalance() + recipe.getRecipePoint());
         recipePayment.updatePaymentStatus(PaymentStatus.결제완료);
+    }
+
+    @Override
+    public RecipePaymentSliceResponseDto getAllMyRecipePayments(User user, int pageNumber) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<RecipePayment> slice = recipePaymentRepository.findAllByUserId(user.getId(), pageRequest);
+        List<RecipePaymentReadResponseDto> recipePayments = slice.getContent().stream()
+                .map(recipePayment -> new RecipePaymentReadResponseDto(
+                        recipePayment.getId(),
+                        recipePayment.getRecipeId(),
+                        recipePayment.getPaymentMethod(),
+                        recipePayment.getPaymentStatus(),
+                        recipePayment.getModifiedAt()
+                ))
+                .collect(Collectors.toList());
+        return new RecipePaymentSliceResponseDto(recipePayments, slice.hasNext());
     }
 }
