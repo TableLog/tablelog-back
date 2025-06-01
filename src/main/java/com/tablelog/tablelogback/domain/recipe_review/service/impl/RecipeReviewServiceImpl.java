@@ -20,6 +20,7 @@ import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -60,42 +62,48 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     @Override
-    public RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id) {
+    public RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id, UserDetailsImpl userDetails) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeReview recipeReview = recipeReviewRepository.findById(id)
                 .orElseThrow(() -> new NotFoundRecipeReviewException(RecipeReviewErrorCode.NOT_FOUND_RECIPE_REVIEW));
-        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview);
+        boolean isReviewer = false;
+        if(userDetails != null){
+            isReviewer = userDetails.user().getNickname().equals(recipeReview.getUser());
+        }
+        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer);
     }
 
     @Override
-    public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNumber) {
+    public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(
+            Long recipeId, int pageNumber, UserDetailsImpl userDetails) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByRecipeId(recipe.getId(), pageRequest);
-        List<RecipeReviewReadResponseDto> recipeReviews =
-                recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
+        List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, false);
         return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
     }
 
     @Override
-    public RecipeReviewSliceResponseDto readAllRecipeReviewsByUser(Long userId, int pageNumber) {
+    public RecipeReviewSliceResponseDto readAllRecipeReviewsByUser(Long userId, int pageNumber, UserDetailsImpl userDetails) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(user.getNickname(), pageRequest);
-        List<RecipeReviewReadResponseDto> recipeReviews =
-                recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
+        boolean isMyReview = false;
+        if(userDetails != null && userDetails.user().getId().equals(userId)){
+            isMyReview = true;
+        }
+        List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, isMyReview);
         return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
     }
 
     @Override
-    public RecipeReviewSliceResponseDto getAllMyRecipeReviews(User user, int pageNumber) {
+    public RecipeReviewSliceResponseDto getAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(user.getNickname(), pageRequest);
-        List<RecipeReviewReadResponseDto> recipeReviews =
-                recipeReviewEntityMapper.toRecipeReviewReadAllResponseDtoLists(slice.getContent());
+        Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(userDetails.user().getNickname(), pageRequest);
+        List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, true);
         return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
     }
 
@@ -149,5 +157,17 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
             return false;
         }
         return true;
+    }
+
+    private List<RecipeReviewReadResponseDto> mappingRecipeReviews(
+            Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview){
+        List<RecipeReviewReadResponseDto> recipeReviews = slice.getContent().stream()
+            .map(recipeReview -> {
+                boolean isReviewer = isMyReview
+                        || (userDetails != null && userDetails.user().getNickname().equals(recipeReview.getUser()));
+                return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer);
+            })
+            .collect(Collectors.toList());
+        return recipeReviews;
     }
 }
