@@ -289,6 +289,10 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public void deleteRecipe(Long id, User user) {
         Recipe recipe = validateRecipe(id, user);
+        // 유료 레시피면 삭제 불가
+        if(recipe.getIsPaid()){
+            throw new ForbiddenAccessRecipeException(RecipeErrorCode.FORBIDDEN_ACCESS_RECIPE);
+        }
         recipeFoodRepository.deleteAllByRecipeId(id);
         recipeProcessRepository.deleteAllByRecipeId(id);
         recipeRepository.delete(recipe);
