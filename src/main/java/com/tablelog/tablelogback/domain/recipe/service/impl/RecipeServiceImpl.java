@@ -176,14 +176,17 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
+    public RecipeReadResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
         User user = userRepository.findById(recipe.getUserId())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Boolean isWriter = user.getId().equals(recipe.getUserId());
-        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, user.getNickname(), isWriter);
+        Boolean hasPurchased = userDetails != null
+                && recipePaymentRepository.existsByUserIdAndRecipeId(user.getId(), recipe.getId());
+        return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
+                isSaved, user.getNickname(), isWriter, hasPurchased);
     }
 
     @Override
