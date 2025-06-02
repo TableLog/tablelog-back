@@ -95,6 +95,13 @@ public class BoardServiceImpl implements BoardService {
             imageUrls = boardRequestDto.image_urls();
             List<String> newImageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
             imageUrls.addAll(newImageUrls);
+            for (String old_imageUrl : old_imageUrls) {
+                if (!imageUrls.contains(old_imageUrl)) {
+                    String image_name = old_imageUrl.replace(url, "");
+                    image_name = image_name.substring(image_name.lastIndexOf("/"));
+                    s3Provider.delete(user.getFolderName() + image_name);
+                }
+            }
             board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
             boardRepository.save(board);
         }
