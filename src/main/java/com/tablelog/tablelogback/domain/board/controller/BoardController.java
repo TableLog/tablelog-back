@@ -76,11 +76,35 @@ public class BoardController {
         return ResponseEntity.ok(responseDto);
     }
 
+    @GetMapping("/boards/desc")
+    public ResponseEntity<BoardListResponseDto> getAllByDesc(
+        @RequestParam("page") Integer pageNumber
+    ) {
+        BoardListResponseDto responseDto = boardService.getAllByDesc(pageNumber);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @GetMapping("/boards/asc")
+    public ResponseEntity<BoardListResponseDto> getAllByAsc(
+        @RequestParam("page") Integer pageNumber
+    ) {
+        BoardListResponseDto responseDto = boardService.getAllByAsc(pageNumber);
+        return ResponseEntity.ok(responseDto);
+    }
+
     @GetMapping("/boards/{board_id}")
     public ResponseEntity<BoardReadResponseDto> readAllBoards(
             @PathVariable Long board_id
     ){
         BoardReadResponseDto readResponseDto = boardService.getOnce(board_id);
         return ResponseEntity.ok(readResponseDto);
+    }
+
+
+    @GetMapping("/boards/me")
+    public String ReadUser(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return userDetails.user().getNickname();
     }
 }
