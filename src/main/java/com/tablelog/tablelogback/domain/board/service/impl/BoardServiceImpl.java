@@ -90,7 +90,7 @@ public class BoardServiceImpl implements BoardService {
                 }
             }
         } else {
-            imageUrls = new ArrayList<>(boardRequestDto.image_urls());
+            imageUrls = boardRequestDto.image_urls();
             List<String> newImageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
             imageUrls.addAll(newImageUrls);
         }
