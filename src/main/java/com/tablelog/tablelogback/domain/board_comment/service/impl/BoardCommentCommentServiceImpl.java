@@ -6,6 +6,7 @@ import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentListResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
@@ -15,7 +16,11 @@ import com.tablelog.tablelogback.domain.board_comment.mapper.entity.BoardComment
 import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.board_comment.service.BoardCommentService;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +37,7 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     private final BoardRepository boardRepository;
     private final BoardCommentRepository boardCommentRepository;
     private final BoardCommentEntityMapper boardCommentEntityMapper;
+    private final UserRepository userRepository;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -77,19 +83,28 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     public BoardCommentReadResponseDto getOnce(Long boardComment_id) {
         BoardComment boardComment = boardCommentRepository.findById(boardComment_id)
                 .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
-        return boardCommentEntityMapper.toBoardCommentReadResponseDto(boardComment);
+        String name = boardComment.getUser();
+        User user = userRepository.findByNickname(name)
+            .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        return boardCommentEntityMapper.toBoardCommentReadResponseDto(boardComment,user);
     }
 
     @Override
-    public Slice<BoardCommentReadResponseDto> getAll(Long boardId, int pageNumber) {
+    public BoardCommentListResponseDto getAll(Long boardId, int pageNumber) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 3개씩 가져오기
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 5개씩 가져오기
         Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardId(board.getId().toString(), pageRequest);
-
-        List<BoardCommentReadResponseDto> content = boardCommentEntityMapper.toBoardCommentReadResponseDtos(commentSlice.getContent());
-        return new SliceImpl<>(content, pageRequest, commentSlice.hasNext());
+        List<BoardComment> comments = commentSlice.getContent();
+        List<BoardCommentReadResponseDto> content = new ArrayList<>();
+        for (BoardComment comment : comments) {
+            String name = comment.getUser();
+            User user = userRepository.findByNickname(name)
+                    .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user);
+            content.add(boardCommentReadResponseDto);
+        }
+        return new BoardCommentListResponseDto(content, commentSlice.hasNext());
     }
 
 }

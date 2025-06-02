@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board_comment.controller;
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentListResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.mapper.dto.BoardCommentDtoMapper;
@@ -65,7 +66,7 @@ public class BoardCommentController {
 
     }
     @GetMapping("/boards/{board_id}/board_comments")
-    public Slice<BoardCommentReadResponseDto> readAllBoardComments(
+    public BoardCommentListResponseDto readAllBoardComments(
             @PathVariable Long board_id,
             @RequestParam int pageNumber
     ) {
