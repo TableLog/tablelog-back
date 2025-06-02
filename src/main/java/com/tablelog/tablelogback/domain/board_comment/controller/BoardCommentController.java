@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board_comment.controller;
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentListResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.mapper.dto.BoardCommentDtoMapper;
@@ -64,10 +65,17 @@ public class BoardCommentController {
     )throws IOException{
 
     }
-    @GetMapping("/boards/{board_id}/board_comments")
-    public Slice<BoardCommentReadResponseDto> readAllBoardComments(
+    @GetMapping("/boards/{board_id}/board_comments/desc")
+    public BoardCommentListResponseDto readAllByDescBoardComments(
             @PathVariable Long board_id,
-            @RequestParam int pageNumber
+        @RequestParam("page") Integer pageNumber    )
+    {
+        return boardCommentService.getAllByDesc(board_id,pageNumber);
+    }
+    @GetMapping("/boards/{board_id}/board_comments")
+    public BoardCommentListResponseDto readAllBoardComments(
+        @RequestParam("page") Integer pageNumber,
+        @PathVariable Long board_id
     ) {
         return boardCommentService.getAll(board_id,pageNumber);
     }

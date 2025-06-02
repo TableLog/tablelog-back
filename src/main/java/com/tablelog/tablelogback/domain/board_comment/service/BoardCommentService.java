@@ -4,6 +4,7 @@ package com.tablelog.tablelogback.domain.board_comment.service;
 
 
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentListResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
@@ -32,5 +33,6 @@ public interface BoardCommentService {
          User user
      ) throws IOException;
     BoardCommentReadResponseDto getOnce(Long id);
-    Slice<BoardCommentReadResponseDto> getAll(Long boardId, int pageNumber);
+    BoardCommentListResponseDto getAll(Long boardId, int pageNumber);
+    BoardCommentListResponseDto getAllByDesc(Long boardId, int pageNumber);
 }
