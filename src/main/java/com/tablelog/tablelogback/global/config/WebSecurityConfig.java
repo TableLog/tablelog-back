@@ -62,7 +62,7 @@ public class WebSecurityConfig {
             config.setAllowedHeaders(Collections.singletonList("*"));
             config.setAllowedMethods(Collections.singletonList("*"));
 //            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080"));
+            config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080","http://localhost:5500"));
             config.setMaxAge(3600L);
             config.setAllowCredentials(true);
             config.setExposedHeaders(List.of("accessToken", "Set-Cookie", "Cookie", "refreshToken",

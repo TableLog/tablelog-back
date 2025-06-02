@@ -127,7 +127,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public BoardListResponseDto getAllByDesc(int pageNumber) {
 
-        Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
+        Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
 
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();

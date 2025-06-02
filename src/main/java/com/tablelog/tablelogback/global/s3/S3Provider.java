@@ -133,6 +133,7 @@ public class S3Provider {
             if (!file.isEmpty()) {
                 String newFileName = originalFileName(file);
                 String key = folderName + SEPARATOR + newFileName;
+                System.out.println(key);
                 saveFile(file, key);
                 imageUrls.add(url + encodedFolderName + SEPARATOR + newFileName);
             }
