@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum RecipeErrorCode implements ErrorCode{
+    // 402
+    INSUFFICIENT_POINT_BALANCE(HttpStatus.PAYMENT_REQUIRED, "ER402001"),
     // 403
     FORBIDDEN_ACCESS_RECIPE(HttpStatus.FORBIDDEN, "ER403001"),
 

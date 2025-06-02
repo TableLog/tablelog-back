@@ -16,7 +16,7 @@ public interface RecipeService {
                       RecipeProcessCreateRequestDto rpRequestDtos,
                       User user
     ) throws IOException;
-    RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl user);
+    RecipeReadResponseDto readRecipe(Long id, UserDetailsImpl user);
     RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id);
     RecipeSliceResponseDto readAllRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid);
     RecipeSliceResponseDto readPopularRecipes(int pageNum, UserDetailsImpl user);
