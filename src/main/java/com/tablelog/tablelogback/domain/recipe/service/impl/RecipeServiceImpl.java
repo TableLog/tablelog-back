@@ -224,7 +224,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber, UserDetailsImpl user) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        PageRequest pageRequest = PageRequest.of(pageNumber, 9, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
