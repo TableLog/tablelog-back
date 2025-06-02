@@ -100,7 +100,6 @@ public class BoardController {
         return ResponseEntity.ok(readResponseDto);
     }
 
-
     @GetMapping("/boards/me")
     public String ReadUser(
         @AuthenticationPrincipal UserDetailsImpl userDetails
