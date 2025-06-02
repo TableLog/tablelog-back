@@ -100,6 +100,33 @@ public class BoardController {
         return ResponseEntity.ok(readResponseDto);
     }
 
+    @GetMapping("/boards/user")
+    public ResponseEntity<BoardListResponseDto> getAllAndUser(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestParam("page") Integer pageNumber
+    ) {
+        BoardListResponseDto responseDto = boardService.getAllByUser(pageNumber,userDetails.user());
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @GetMapping("/boards/desc/user")
+    public ResponseEntity<BoardListResponseDto> getAllByDescAndUser(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestParam("page") Integer pageNumber
+    ) {
+        BoardListResponseDto responseDto = boardService.getAllByDescAndUser(pageNumber,userDetails.user());
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @GetMapping("/boards/{board_id}/user")
+    public ResponseEntity<BoardReadResponseDto> readAllBoardAndUser(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @PathVariable Long board_id
+    ){
+        BoardReadResponseDto readResponseDto = boardService.getOnceLogin(board_id,userDetails.user());
+        return ResponseEntity.ok(readResponseDto);
+    }
+
     @GetMapping("/boards/me")
     public String ReadUser(
         @AuthenticationPrincipal UserDetailsImpl userDetails
