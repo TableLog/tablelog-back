@@ -89,14 +89,17 @@ public class BoardServiceImpl implements BoardService {
                     s3Provider.delete(user.getFolderName() + image_name);
                 }
             }
+            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+            boardRepository.save(board);
         } else {
             imageUrls = boardRequestDto.image_urls();
             List<String> newImageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
             imageUrls.addAll(newImageUrls);
+            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+            boardRepository.save(board);
         }
-
-        board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
-        boardRepository.save(board);
+//        board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+//        boardRepository.save(board);
     }
     @DeleteMapping
     public void delete(Long board_id,User user){
