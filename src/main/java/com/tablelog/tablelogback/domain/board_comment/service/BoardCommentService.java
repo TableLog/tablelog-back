@@ -34,4 +34,5 @@ public interface BoardCommentService {
      ) throws IOException;
     BoardCommentReadResponseDto getOnce(Long id);
     BoardCommentListResponseDto getAll(Long boardId, int pageNumber);
+    BoardCommentListResponseDto getAllByDesc(Long boardId, int pageNumber);
 }

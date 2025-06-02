@@ -65,10 +65,17 @@ public class BoardCommentController {
     )throws IOException{
 
     }
+    @GetMapping("/boards/{board_id}/board_comments/desc")
+    public BoardCommentListResponseDto readAllByDescBoardComments(
+            @PathVariable Long board_id,
+        @RequestParam("page") Integer pageNumber    )
+    {
+        return boardCommentService.getAllByDesc(board_id,pageNumber);
+    }
     @GetMapping("/boards/{board_id}/board_comments")
     public BoardCommentListResponseDto readAllBoardComments(
-            @PathVariable Long board_id,
-            @RequestParam int pageNumber
+        @RequestParam("page") Integer pageNumber,
+        @PathVariable Long board_id
     ) {
         return boardCommentService.getAll(board_id,pageNumber);
     }

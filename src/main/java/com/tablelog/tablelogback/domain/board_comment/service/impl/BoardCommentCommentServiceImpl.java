@@ -106,5 +106,21 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
         }
         return new BoardCommentListResponseDto(content, commentSlice.hasNext());
     }
+    public BoardCommentListResponseDto getAllByDesc(Long boardId, int pageNumber) {
+        Board board = boardRepository.findById(boardId)
+            .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 5개씩 가져오기
+        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardIdOrderByCreatedAtDesc(board.getId().toString(), pageRequest);
+        List<BoardComment> comments = commentSlice.getContent();
+        List<BoardCommentReadResponseDto> content = new ArrayList<>();
+        for (BoardComment comment : comments) {
+            String name = comment.getUser();
+            User user = userRepository.findByNickname(name)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user);
+            content.add(boardCommentReadResponseDto);
+        }
+        return new BoardCommentListResponseDto(content, commentSlice.hasNext());
+    }
 
 }
