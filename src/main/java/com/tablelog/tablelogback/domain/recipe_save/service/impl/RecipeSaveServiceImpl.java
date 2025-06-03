@@ -83,23 +83,22 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
         Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
                 .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
 
-        final Map<Long, Boolean> isSavedMap = (userDetails != null)
-                ? recipeSaveRepository.findSavesByRecipeAndUser(recipeIds, userDetails.user().getId())
+        final Map<Long, Boolean> isSavedMap =
+                recipeSaveRepository.findSavesByRecipeAndUser(recipeIds, userDetails.user().getId())
                 .stream()
                 .collect(Collectors.toMap(
                         RecipeIsSavedDto::recipeId,
                         RecipeIsSavedDto::isSaved
-                ))
-                : Collections.emptyMap();
+                ));
 
-        Long userId = (userDetails != null) ? userDetails.user().getId() : null;
+        Long userId = userDetails.user().getId();
 
         List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
                 .map(recipe -> {
                     Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
                     Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
                     String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
-                    Boolean isWriter = userId != null && userId.equals(recipe.getUserId());
+                    Boolean isWriter = userId.equals(recipe.getUserId());
                     return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname, isWriter);
                 })
                 .collect(Collectors.toList());
