@@ -1,10 +1,12 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
@@ -20,6 +22,7 @@ import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,7 @@ public class UserServiceImpl implements UserService {
     private final S3Provider s3Provider;
     private final OAuthAccountService oAuthAccountService;
     private final OAuthAccountRepository oAuthAccountRepository;
+    private final FollowRepository followRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -132,6 +136,15 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
+    }
+
+    @Override
+    public UserProfileDto getUserProfile(Long userId, UserDetailsImpl userDetails){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        Boolean isFollowed = userDetails != null
+                && followRepository.existsByFollowerIdAndFollowingId(userDetails.user().getId(), userId);
+        return userEntityMapper.toUserProfileDto(user, isFollowed);
     }
 
     @Transactional

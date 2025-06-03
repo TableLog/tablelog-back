@@ -53,14 +53,4 @@ public record UserDetailsImpl(User user) implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
-    public UserDetailsImpl findUserDetails(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = null;
-        if (authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getPrincipal())) {
-            userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        }
-        return userDetails;
-    }
 }

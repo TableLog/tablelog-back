@@ -7,6 +7,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpController
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
 import com.tablelog.tablelogback.domain.user.entity.OAuthAccount;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
@@ -27,7 +28,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -83,6 +86,21 @@ public class UserController {
             @CookieValue("accessToken") String token
     ){
         UserLoginResponseDto responseDto = userService.getUser(token);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "사용자 프로필 정보")
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<UserProfileDto> getUserProfile(
+            @PathVariable Long userId
+    ){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = null;
+        if(authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())){
+            userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        }
+        UserProfileDto responseDto = userService.getUserProfile(userId, userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
