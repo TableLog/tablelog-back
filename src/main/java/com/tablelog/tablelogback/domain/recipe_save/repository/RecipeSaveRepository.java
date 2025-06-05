@@ -4,7 +4,7 @@ import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeIsSavedDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe_save.entity.RecipeSave;
 import io.lettuce.core.dynamic.annotation.Param;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +17,7 @@ public interface RecipeSaveRepository extends JpaRepository<RecipeSave, Long> {
     Optional<RecipeSave> findByRecipeAndUser(Long recipe, Long user);
     @Query("SELECT r FROM Recipe r JOIN RecipeSave s ON r.id = s.recipe " +
             "WHERE s.user = :userId")
-    Slice<Recipe> findAllByUser(@Param("userId") Long userId, PageRequest pageRequest);
+    Slice<Recipe> findAllByUser(@Param("userId") Long userId, Pageable pageable);
     @Query("""
     SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeIsSavedDto(
         s.recipe,
