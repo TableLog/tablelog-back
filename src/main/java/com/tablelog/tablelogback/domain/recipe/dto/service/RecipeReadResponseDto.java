@@ -1,22 +1,30 @@
-package com.tablelog.tablelogback.domain.recipe.dto.controller;
+package com.tablelog.tablelogback.domain.recipe.dto.service;
 
 import com.tablelog.tablelogback.global.enums.CookingTime;
 import com.tablelog.tablelogback.global.enums.RecipeCategory;
 import com.tablelog.tablelogback.global.enums.RecipePrice;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-public record RecipeUpdateControllerRequestDto(
+public record RecipeReadResponseDto(
+        Long id,
         String title,
         String intro,
-        @ArraySchema(schema = @Schema(implementation = RecipeCategory.class))
         List<RecipeCategory> recipeCategoryList,
+        int starCount,
+        Float star,
         RecipePrice price,
         CookingTime cookingTime,
         String memo,
+        Integer totalCal,
         Boolean isPaid,
-        Integer recipePoint
+        Integer recipePoint,
+        Integer reviewCount,
+        String imageUrl,
+        Long likeCount,
+        Boolean isSaved,
+        String user,
+        Boolean isWriter,
+        Boolean hasPurchased
 ) {
 }

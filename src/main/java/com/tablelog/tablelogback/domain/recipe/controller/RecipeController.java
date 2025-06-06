@@ -63,7 +63,7 @@ public class RecipeController {
     public ResponseEntity<?> readRecipe(
             @PathVariable Long recipeId
     ){
-        UserDetailsImpl userDetails = findUserDetails();
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readRecipe(recipeId, userDetails));
     }
@@ -83,7 +83,7 @@ public class RecipeController {
             @RequestParam(required = false) Boolean isPaid,
             @RequestParam int pageNumber
     ) {
-        UserDetailsImpl userDetails = findUserDetails();
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber, userDetails, isPaid));
     }
 
@@ -92,7 +92,7 @@ public class RecipeController {
     public ResponseEntity<?> readPopularRecipes(
             @RequestParam int pageNumber
     ) {
-        UserDetailsImpl userDetails = findUserDetails();
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber, userDetails));
     }
 
@@ -102,7 +102,7 @@ public class RecipeController {
             @PathVariable Long userId,
             @RequestParam int pageNumber
     ) {
-        UserDetailsImpl userDetails = findUserDetails();
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readAllRecipeByUser(userId, pageNumber, userDetails));
     }
@@ -124,7 +124,7 @@ public class RecipeController {
             @RequestParam String keyword,
             @RequestParam int pageNumber
     ) {
-        UserDetailsImpl userDetails = findUserDetails();
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readAllRecipeByFoodName(keyword, pageNumber, userDetails));
     }
@@ -135,7 +135,7 @@ public class RecipeController {
             @ModelAttribute RecipeFilterConditionDto condition,
             @RequestParam int pageNumber
     ) {
-        UserDetailsImpl userDetails = findUserDetails();
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.filterRecipes(condition, pageNumber, userDetails));
     }
@@ -164,11 +164,11 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    private UserDetailsImpl findUserDetails(){
+    private UserDetailsImpl getUserDetails(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = null;
-        if (authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getPrincipal())) {
+        if(authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())){
             userDetails = (UserDetailsImpl) authentication.getPrincipal();
         }
         return userDetails;

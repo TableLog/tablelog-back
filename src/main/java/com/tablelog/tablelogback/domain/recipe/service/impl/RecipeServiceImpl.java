@@ -18,6 +18,7 @@ import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
+import com.tablelog.tablelogback.domain.recipe_payment.repository.RecipePaymentRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessDto;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
@@ -60,6 +61,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeLikeRepository recipeLikeRepository;
     private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
+    private final RecipePaymentRepository recipePaymentRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -120,7 +122,9 @@ public class RecipeServiceImpl implements RecipeService {
             List<String> imageUrls = new ArrayList<>();
 
             List<MultipartFile> files = rpDto.files();
-            if (files != null) {
+            // 사이즈 3개로 제한
+            int s = 0;
+            if (files != null && s <= 2) {
                 for (MultipartFile image : files) {
                     if (image != null && !image.isEmpty()) {
                         String fileName = s3Provider.originalFileName(image);
@@ -130,6 +134,8 @@ public class RecipeServiceImpl implements RecipeService {
                         imageUrls.add(fileUrl);
                         rpImageNames.add(fileName);
                         recipeProcessImages.add(image);
+
+                        s++;
                     }
                 }
             }
@@ -143,8 +149,9 @@ public class RecipeServiceImpl implements RecipeService {
 
         if(user.getRecipeCount() >= 50 && user.getUserRole() == UserRole.NORMAL){
             user.changeRole(UserRole.EXPERT);
-            userRepository.save(user);
         }
+        user.addPointBalance(3000);
+        userRepository.save(user);
     }
 
     private void saveImage(
@@ -169,13 +176,17 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeReadAllServiceResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
+    public RecipeReadResponseDto readRecipe(Long id, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
         User user = userRepository.findById(recipe.getUserId())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, user.getNickname());
+        Boolean isWriter = user.getId().equals(recipe.getUserId());
+        Boolean hasPurchased = userDetails != null
+                && recipePaymentRepository.existsByUserIdAndRecipeId(user.getId(), recipe.getId());
+        return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
+                isSaved, user.getNickname(), isWriter, hasPurchased);
     }
 
     @Override
@@ -275,6 +286,10 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public void deleteRecipe(Long id, User user) {
         Recipe recipe = validateRecipe(id, user);
+        // 유료 레시피면 삭제 불가
+        if(recipe.getIsPaid()){
+            throw new ForbiddenAccessRecipeException(RecipeErrorCode.FORBIDDEN_ACCESS_RECIPE);
+        }
         recipeFoodRepository.deleteAllByRecipeId(id);
         recipeProcessRepository.deleteAllByRecipeId(id);
         recipeRepository.delete(recipe);
@@ -324,12 +339,15 @@ public class RecipeServiceImpl implements RecipeService {
                 ))
                 : Collections.emptyMap();
 
+        Long userId = (userDetails != null) ? userDetails.user().getId() : null;
+
         List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
                 .map(recipe -> {
                     Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
                     Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
                     String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
-                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname);
+                    Boolean isWriter = userId != null && userId.equals(recipe.getUserId());
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname, isWriter);
                 })
                 .collect(Collectors.toList());
         return recipes;

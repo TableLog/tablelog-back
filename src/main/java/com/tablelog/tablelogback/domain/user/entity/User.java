@@ -151,4 +151,8 @@ public class User extends BaseEntity {
     public void setOauthAccounts(List<OAuthAccount> accounts) {
         this.oAuthAccounts = accounts;
     }
+
+    public void addPointBalance(Integer point){
+        this.pointBalance = this.pointBalance + point;
+    }
 }

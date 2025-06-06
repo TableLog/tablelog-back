@@ -97,12 +97,15 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
                 ))
                 : Collections.emptyMap();
 
+        Long userId = (userDetails != null) ? userDetails.user().getId() : null;
+
         List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
                 .map(recipe -> {
                     Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
                     Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
                     String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
-                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname);
+                    Boolean isWriter = userId != null && userId.equals(recipe.getUserId());
+                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname, isWriter);
                 })
                 .collect(Collectors.toList());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

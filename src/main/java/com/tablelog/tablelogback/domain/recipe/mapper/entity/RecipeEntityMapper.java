@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.recipe.mapper.entity;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFoodPreviewDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadAllServiceResponseDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeReadResponseDto;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -19,8 +20,13 @@ public interface RecipeEntityMapper {
     @Mapping(source = "likeCount", target = "likeCount")
     @Mapping(source = "isSaved", target = "isSaved")
     @Mapping(source = "nickname", target = "user")
+    RecipeReadResponseDto toRecipeReadDetailResponseDto(
+            Recipe recipe, Long likeCount, Boolean isSaved, String nickname, Boolean isWriter, Boolean hasPurchased);
+    @Mapping(source = "likeCount", target = "likeCount")
+    @Mapping(source = "isSaved", target = "isSaved")
+    @Mapping(source = "nickname", target = "user")
     RecipeReadAllServiceResponseDto toRecipeReadResponseDto(
-            Recipe recipe, Long likeCount, Boolean isSaved, String nickname);
+            Recipe recipe, Long likeCount, Boolean isSaved, String nickname, Boolean isWriter);
     List<RecipeReadAllServiceResponseDto> toRecipeReadAllResponseDto(List<Recipe> recipes);
     RecipeFoodPreviewDto toRecipeFoodPreviewReadResponseDto(Recipe recipe, List<RecipeFood> recipeFoods);
 }
