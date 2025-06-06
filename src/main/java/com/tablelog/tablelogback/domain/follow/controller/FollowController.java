@@ -8,7 +8,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -72,8 +74,9 @@ public class FollowController {
             @PathVariable Long userId,
             @RequestParam int pageNumber
     ){
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK).
-                body(followService.getFollowers(userId, pageNumber));
+                body(followService.getFollowers(userId, pageNumber, userDetails));
     }
 
     @Operation(summary = "팔로잉 전체 조회")
@@ -82,7 +85,18 @@ public class FollowController {
             @PathVariable Long userId,
             @RequestParam int pageNumber
     ){
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK).
-                body(followService.getFollowings(userId, pageNumber));
+                body(followService.getFollowings(userId, pageNumber, userDetails));
+    }
+
+    private UserDetailsImpl getUserDetails(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = null;
+        if(authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())){
+            userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        }
+        return userDetails;
     }
 }

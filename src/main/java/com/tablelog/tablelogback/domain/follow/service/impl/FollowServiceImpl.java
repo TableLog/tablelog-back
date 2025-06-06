@@ -14,6 +14,7 @@ import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,19 +89,25 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
-    public FollowUserListDto getFollowers(Long userId, int pageNumber) {
+    public FollowUserListDto getFollowers(Long userId, int pageNumber, UserDetailsImpl userDetails) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<User> slice = followRepository.findAllFollowersByFollowingId(userId, pageRequest);
         List<User> users = slice.getContent();
 
-        // 로그인 유저(me)가 팔로우하고 있는 Id 중 교집합
         List<Long> targetIds = users.stream()
                 .map(User::getId)
                 .toList();
 
-        Set<Long> idsIsFollow = new HashSet<>(
-                followRepository.findAllFollowingIdsByFollowerId(userId, targetIds)
-        );
+        Long id = (userDetails != null) ? userDetails.user().getId() : null;
+        Set<Long> idsIsFollow;
+        if(userDetails != null) {
+            idsIsFollow = new HashSet<>(
+                    followRepository.findAllFollowerIdsByFollowingId(id, targetIds)
+            );
+        } else {
+            idsIsFollow = Collections.emptySet();;
+        }
+
         List<FollowUserDto> dtos = users.stream()
                 .map(user -> new FollowUserDto(
                         user.getId(),
@@ -112,16 +120,23 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
-    public FollowUserListDto getFollowings(Long userId, int pageNumber) {
+    public FollowUserListDto getFollowings(Long userId, int pageNumber, UserDetailsImpl userDetails) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<User> slice = followRepository.findAllFollowingsByFollowerId(userId, pageRequest);
         List<User> users = slice.getContent();
         List<Long> targetIds = users.stream()
                 .map(User::getId)
                 .toList();
-        Set<Long> idsIsFollow = new HashSet<>(
-                followRepository.findAllFollowingIdsByFollowerId(userId, targetIds)
-        );
+        Long id = (userDetails != null) ? userDetails.user().getId() : null;
+        Set<Long> idsIsFollow;
+        if(userDetails != null) {
+            idsIsFollow = new HashSet<>(
+                    followRepository.findAllFollowingIdsByFollowerId(id, targetIds)
+            );
+        } else {
+            idsIsFollow = Collections.emptySet();;
+        }
+
         List<FollowUserDto> dtos = users.stream()
                 .map(user -> new FollowUserDto(
                         user.getId(),

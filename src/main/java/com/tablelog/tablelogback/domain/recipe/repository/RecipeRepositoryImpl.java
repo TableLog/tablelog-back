@@ -7,7 +7,7 @@ import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFilterCondition
 import com.tablelog.tablelogback.domain.recipe.entity.QRecipe;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 
@@ -18,7 +18,7 @@ public class RecipeRepositoryImpl implements CustomRecipeRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Slice<Recipe> findAllByFilter(RecipeFilterConditionDto condition, PageRequest pageRequest) {
+    public Slice<Recipe> findAllByFilter(RecipeFilterConditionDto condition, Pageable pageable) {
         QRecipe recipe = QRecipe.recipe;
 
         BooleanBuilder builder = new BooleanBuilder();
@@ -44,16 +44,16 @@ public class RecipeRepositoryImpl implements CustomRecipeRepository {
                 .selectFrom(recipe)
                 .where(builder)
                 .orderBy(recipe.id.desc())
-                .offset(pageRequest.getOffset())
-                .limit(pageRequest.getPageSize() + 1);
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize() + 1);
 
         List<Recipe> result = query.fetch();
-        boolean hasNext = result.size() > pageRequest.getPageSize();
+        boolean hasNext = result.size() > pageable.getPageSize();
 
         if (hasNext) {
             result.remove(result.size() - 1);
         }
 
-        return new SliceImpl<>(result, pageRequest, hasNext);
+        return new SliceImpl<>(result, pageable, hasNext);
     }
 }
