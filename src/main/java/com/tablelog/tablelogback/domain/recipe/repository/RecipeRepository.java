@@ -2,7 +2,7 @@ package com.tablelog.tablelogback.domain.recipe.repository;
 
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import io.lettuce.core.dynamic.annotation.Param;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,10 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
-    Slice<Recipe> findAllByUserId(Long id, PageRequest pageRequest);
+    Slice<Recipe> findAllByUserId(Long id, Pageable pageable);
 
-    Slice<Recipe> findAllByIsPaidTrue(PageRequest pageRequest);
-    Slice<Recipe> findAllByIsPaidTrueAndUserId(Long id, PageRequest pageRequest);
+    Slice<Recipe> findAllByIsPaidTrue(Pageable pageable);
+    Slice<Recipe> findAllByIsPaidTrueAndUserId(Long id, Pageable pageable);
 
     @Query(value = """
         SELECT * FROM tb_recipe r
@@ -34,7 +34,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
                     )
                     """,
             nativeQuery = true)
-    Slice<Recipe> searchRecipesByFoodName(@Param("keyword") String keyword, PageRequest pageRequest);
+    Slice<Recipe> searchRecipesByFoodName(@Param("keyword") String keyword, Pageable pageable);
 
     @Query(value = """
         SELECT r.*
@@ -42,5 +42,5 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
         WHERE r.created_at >= :oneWeekAgo
         ORDER BY r.star DESC, r.comment_count DESC, r.created_at DESC
     """, nativeQuery = true)
-    Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, PageRequest pageRequest);
+    Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Pageable pageable);
 }

@@ -50,14 +50,22 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     public void create(final BoardCommentCreateServiceRequestDto boardCommentRequestDto,
             Long board_id
             , User user
+            , Long comment_id
             )throws IOException
     {
         Board board = boardRepository.findById(board_id)
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        BoardComment boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto,board,user);
-        boardCommentRepository.save(boardComment);
+        if(comment_id != null){
+            BoardComment boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto,board,user,comment_id);
+            boardCommentRepository.save(boardComment);
+        }
+        else{
+            BoardComment boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto,board,user,null);
+            boardCommentRepository.save(boardComment);
+        }
 
     }
+
     @Override
     public void update(final BoardCommentUpdateServiceRequestDto boardCommentRequestDto
             , User user
