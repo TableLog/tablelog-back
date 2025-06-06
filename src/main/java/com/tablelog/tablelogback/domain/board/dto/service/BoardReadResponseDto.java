@@ -14,7 +14,9 @@ public record BoardReadResponseDto(
     String  profileImgUrl,
     Integer comment_count,
     Long like_count,
-    String user
+    String user,
+    Boolean isLike,
+    Boolean isMe
 )
 {
 
