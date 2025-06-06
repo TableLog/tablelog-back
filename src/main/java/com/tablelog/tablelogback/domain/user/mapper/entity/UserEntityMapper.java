@@ -4,6 +4,7 @@ import com.tablelog.tablelogback.domain.user.dto.service.request.UserSignUpServi
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import org.mapstruct.Mapper;
@@ -31,6 +32,8 @@ public interface UserEntityMapper {
                       UserRole userRole, String profileImgUrl, String folderName);
 
     UserLoginResponseDto toUserLoginResponseDto(User user, List<OAuthAccountResponseDto> oAuthAccounts);
+
+    UserProfileDto toUserProfileDto(User user, Boolean isFollowed);
 
     FindEmailResponseDto toFindEmailResponseDto(User user);
 }

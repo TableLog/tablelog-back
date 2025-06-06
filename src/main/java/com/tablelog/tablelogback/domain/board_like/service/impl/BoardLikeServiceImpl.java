@@ -79,7 +79,9 @@ public class BoardLikeServiceImpl implements BoardLikeService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+            boolean isLiked = hasBoardLiked(board.getId(), userId);
+            boolean isMine = user.getId().equals(userId);
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMine,isLiked));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
