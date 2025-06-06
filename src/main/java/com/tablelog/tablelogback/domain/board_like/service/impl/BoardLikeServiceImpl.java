@@ -81,7 +81,7 @@ public class BoardLikeServiceImpl implements BoardLikeService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isLiked = hasBoardLiked(board.getId(), userId);
             boolean isMine = user.getId().equals(userId);
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMine,isLiked));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMine,isLiked,user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }

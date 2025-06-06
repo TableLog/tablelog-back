@@ -16,7 +16,8 @@ public record BoardReadResponseDto(
     Long like_count,
     String user,
     Boolean isLike,
-    Boolean isMe
+    Boolean isMe,
+    Long user_id
 )
 {
 
