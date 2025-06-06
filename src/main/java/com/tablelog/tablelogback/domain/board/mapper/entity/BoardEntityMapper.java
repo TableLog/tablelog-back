@@ -29,8 +29,9 @@ public interface BoardEntityMapper {
     @Mapping(source = "comment_count" ,target= "comment_count")
     @Mapping(source = "like_count", target = "like_count")
     @Mapping(source = "board.createdAt", target = "createdAt")
+    @Mapping(source = "user_id",target = "user_id")
     BoardReadResponseDto toReadResponseDto(Board board, User user,Integer comment_count,Long like_count,
-        Boolean isMe,Boolean isLike);
+        Boolean isMe,Boolean isLike,Long user_id);
 //    List<BoardReadResponseDto> toBoardReadResponseDtos(
 //        List<Board> boards,
 //        List<User> users,

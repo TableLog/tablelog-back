@@ -144,7 +144,8 @@ public class BoardServiceImpl implements BoardService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false,
+                user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -161,7 +162,8 @@ public class BoardServiceImpl implements BoardService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,true));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,true,
+                user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -176,7 +178,8 @@ public class BoardServiceImpl implements BoardService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false,
+                user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -188,7 +191,7 @@ public class BoardServiceImpl implements BoardService {
         ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,false,false);
+        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,false,false,user.getId());
     }
     @Override
     public  BoardReadResponseDto getOnceLogin(Long id,User user){
@@ -198,7 +201,7 @@ public class BoardServiceImpl implements BoardService {
         Boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,isMe,isLike);
+        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,isMe,isLike,user.getId());
     }
 
     @Override
@@ -211,7 +214,7 @@ public class BoardServiceImpl implements BoardService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike,user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -225,7 +228,7 @@ public class BoardServiceImpl implements BoardService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike,user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
