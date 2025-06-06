@@ -20,6 +20,7 @@ public interface BoardCommentService {
     void create(BoardCommentCreateServiceRequestDto requestDto
     , Long board_id
     , User user
+    , Long comment_id
     ) throws IOException;
 
     void update(BoardCommentUpdateServiceRequestDto requestDto

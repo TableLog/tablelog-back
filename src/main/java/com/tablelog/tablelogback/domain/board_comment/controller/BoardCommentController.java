@@ -36,16 +36,29 @@ public class BoardCommentController {
     private final BoardCommentService boardCommentService;
 
     @PostMapping("boards/{board_id}/board_comment")
-    public ResponseEntity<?> createBoard(
+    public ResponseEntity<?> creatComment(
             @PathVariable Long board_id,
             @RequestBody BoardCommentCreateControllerRequestDto requestDto,
             // BoardCreateControllerRequestDto controllerRequestDto
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
-        boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user());
+        boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user(),null);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+    @PostMapping("boards/{board_id}/{comment_id}")
+    public ResponseEntity<?> createCommentReply(
+        @PathVariable Long board_id,
+        @PathVariable Long comment_id,
+        @RequestBody BoardCommentCreateControllerRequestDto requestDto,
+        // BoardCreateControllerRequestDto controllerRequestDto
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException {
+        BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
+        boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user(),comment_id);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
     @PutMapping("/boards/{board_id}/board_comments/{board_comment_id}")
     public ResponseEntity<?> updateBoardComment(
             @PathVariable Long board_id,

@@ -21,7 +21,11 @@ public interface BoardCommentEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "BoardCommentRequestDto.content",target = "content")
     @Mapping(source = "board.id",target = "boardId")
-    BoardComment toBoardComment(BoardCommentCreateServiceRequestDto BoardCommentRequestDto,Board board ,User user
+    @Mapping(source = "comment_id",target =  "comment_id")
+    BoardComment toBoardComment(BoardCommentCreateServiceRequestDto BoardCommentRequestDto,
+        Board board ,
+        User user,
+        Long comment_id
     );
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "user.profileImgUrl", target = "profileImgUrl")
