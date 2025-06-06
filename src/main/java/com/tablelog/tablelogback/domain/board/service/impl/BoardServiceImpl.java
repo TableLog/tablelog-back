@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.List;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value.Str;
 
 @RequiredArgsConstructor
 @Service
@@ -73,17 +74,39 @@ public class BoardServiceImpl implements BoardService {
             , List<MultipartFile> multipartFiles
     )throws IOException
     {
-        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
+        User user1 = userRepository.findByNickname(user.getNickname())
+            .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        Board board = boardRepository.findByIdAndUser(board_id,user1.getNickname())
                 .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
         List<String> imageUrls;
+        List<String> old_imageUrls = board.getImage_urls();
         if (multipartFiles == null || multipartFiles.isEmpty()) {
-            imageUrls = board.getImage_urls();
-            System.out.println(imageUrls);
+            imageUrls = boardRequestDto.image_urls();
+            for (String old_imageUrl : old_imageUrls) {
+                if (!imageUrls.contains(old_imageUrl)) {
+                    String image_name = old_imageUrl.replace(url, "");
+                    image_name = image_name.substring(image_name.lastIndexOf("/"));
+                    s3Provider.delete(user.getFolderName() + image_name);
+                }
+            }
+            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+            boardRepository.save(board);
         } else {
-            imageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
+            imageUrls = boardRequestDto.image_urls();
+            List<String> newImageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
+            imageUrls.addAll(newImageUrls);
+            for (String old_imageUrl : old_imageUrls) {
+                if (!imageUrls.contains(old_imageUrl)) {
+                    String image_name = old_imageUrl.replace(url, "");
+                    image_name = image_name.substring(image_name.lastIndexOf("/"));
+                    s3Provider.delete(user.getFolderName() + image_name);
+                }
+            }
+            board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+            boardRepository.save(board);
         }
-        board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
-        boardRepository.save(board);
+//        board.updateBoard(boardRequestDto.title(), boardRequestDto.content(), imageUrls, boardRequestDto.category().toString());
+//        boardRepository.save(board);
     }
     @DeleteMapping
     public void delete(Long board_id,User user){
@@ -121,7 +144,7 @@ public class BoardServiceImpl implements BoardService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -138,7 +161,7 @@ public class BoardServiceImpl implements BoardService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,true));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -153,11 +176,10 @@ public class BoardServiceImpl implements BoardService {
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
-
     @Override
     public  BoardReadResponseDto getOnce(Long id){
         Board board = boardRepository.findById(id)
@@ -166,6 +188,45 @@ public class BoardServiceImpl implements BoardService {
         ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count);
+        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,false,false);
+    }
+    @Override
+    public  BoardReadResponseDto getOnceLogin(Long id,User user){
+        Board board = boardRepository.findById(id)
+            .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        Boolean isMe = board.getUser().equals(user.getNickname());
+        Boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
+        Long like_count = boardLikeRepository.countByBoard(id);
+        Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,isMe,isLike);
+    }
+
+    @Override
+    public BoardListResponseDto getAllByDescAndUser(int pageNumber,User user) {
+        Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
+        List<Board> boardList = boards.getContent();
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            boolean isMe = board.getUser().equals(user.getNickname());
+            boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike));
+        }
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
+    }
+    @Override
+    public BoardListResponseDto getAllByUser(int pageNumber,User user) {
+        Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
+        List<Board> boardList = boards.getContent();
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            boolean isMe = board.getUser().equals(user.getNickname());
+            boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike));
+        }
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
 }
