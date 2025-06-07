@@ -16,7 +16,7 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface RecipeEntityMapper {
     @Mapping(source = "user.id", target = "userId")
-    Recipe toRecipe(RecipeCreateServiceRequestDto requestDto, String folderName, String imgUrl, User user);
+    Recipe toRecipe(RecipeCreateServiceRequestDto requestDto, String folderName, String imgUrl, User user, Integer recipePoint);
     @Mapping(source = "likeCount", target = "likeCount")
     @Mapping(source = "isSaved", target = "isSaved")
     @Mapping(source = "nickname", target = "user")

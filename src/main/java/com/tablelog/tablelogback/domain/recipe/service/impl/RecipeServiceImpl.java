@@ -81,7 +81,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipeImageName = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
         }
         Recipe recipe = recipeEntityMapper.toRecipe(
-                requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user);
+                requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
 
         // 전문가 & 유료 확인
         if (user.getUserRole() != UserRole.EXPERT || !requestDto.isPaid()) {
@@ -270,7 +270,7 @@ public class RecipeServiceImpl implements RecipeService {
         String fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
 
         recipe.updateRecipe(requestDto.title(), requestDto.intro(), folderName, fileUrl,
-                requestDto.recipeCategoryList(), requestDto.price(), requestDto.memo(), requestDto.cookingTime(),
+                requestDto.recipeCategoryList(), requestDto.price(), requestDto.cookingTime(),
                 requestDto.isPaid(), requestDto.recipePoint()
         );
 
