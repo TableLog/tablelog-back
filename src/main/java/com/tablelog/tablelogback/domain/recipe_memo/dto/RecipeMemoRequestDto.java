@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_memo.dto;
 
-public record RecipeMemoCreateDto(
+public record RecipeMemoRequestDto(
         String memo
 ) {
 }

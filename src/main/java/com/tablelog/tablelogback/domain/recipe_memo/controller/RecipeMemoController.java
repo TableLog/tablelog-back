@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_memo.controller;
 
-import com.tablelog.tablelogback.domain.recipe_memo.dto.RecipeMemoCreateDto;
+import com.tablelog.tablelogback.domain.recipe_memo.dto.RecipeMemoRequestDto;
 import com.tablelog.tablelogback.domain.recipe_memo.dto.RecipeMemoResponseDto;
 import com.tablelog.tablelogback.domain.recipe_memo.service.impl.RecipeMemoServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -23,10 +23,10 @@ public class RecipeMemoController {
     @PostMapping("/recipes/{recipeId}/memos")
     public ResponseEntity<?> createRecipeMemo(
             @PathVariable Long recipeId,
-            @RequestBody RecipeMemoCreateDto memoCreateDto,
+            @RequestBody RecipeMemoRequestDto requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        recipeMemoService.createRecipeMemo(recipeId, userDetails.user(), memoCreateDto.memo());
+        recipeMemoService.createRecipeMemo(recipeId, userDetails.user(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -38,5 +38,16 @@ public class RecipeMemoController {
     ){
         RecipeMemoResponseDto recipeMemo = recipeMemoService.getRecipeMemo(recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).body(recipeMemo);
+    }
+
+    @Operation(summary = "레시피 메모 수정")
+    @PutMapping("/recipes/{recipeId}/memos")
+    public ResponseEntity<?> updateRecipeMemo(
+            @PathVariable Long recipeId,
+            @RequestBody RecipeMemoRequestDto requestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeMemoService.updateRecipeMemo(recipeId, userDetails.user(), requestDto);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
