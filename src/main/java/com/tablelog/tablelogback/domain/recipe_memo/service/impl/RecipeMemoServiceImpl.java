@@ -60,4 +60,13 @@ public class RecipeMemoServiceImpl implements RecipeMemoService {
         recipeMemo.updateRecipeMemo(requestDto.memo());
         recipeMemoRepository.save(recipeMemo);
     }
+
+    @Override
+    public void deleteRecipeMemo(Long recipeId, User user){
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        RecipeMemo recipeMemo = recipeMemoRepository.findByRecipeIdAndUserId(recipeId, user.getId())
+                .orElseThrow(() -> new NotFoundRecipeMemoException(RecipeMemoErrorCode.NOT_FOUND_RECIPE_MEMO));
+        recipeMemoRepository.delete(recipeMemo);
+    }
 }

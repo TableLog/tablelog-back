@@ -50,4 +50,14 @@ public class RecipeMemoController {
         recipeMemoService.updateRecipeMemo(recipeId, userDetails.user(), requestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    @Operation(summary = "레시피 메모 삭제")
+    @DeleteMapping("/recipes/{recipeId}/memos")
+    public ResponseEntity<?> deleteRecipeMemo(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeMemoService.deleteRecipeMemo(recipeId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
