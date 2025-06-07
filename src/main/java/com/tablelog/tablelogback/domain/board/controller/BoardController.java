@@ -9,10 +9,12 @@ import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
+import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.BoardCategory;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import com.tablelog.tablelogback.sample.dto.service.TestReadResponseDto;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jdk.jfr.Description;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -70,62 +72,83 @@ public class BoardController {
 
     @GetMapping("/boards")
     public ResponseEntity<BoardListResponseDto> getAll(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam("page") Integer pageNumber
     ) {
-        BoardListResponseDto responseDto = boardService.getAll(pageNumber);
+        if(userDetails==null){
+            BoardListResponseDto responseDto = boardService.getAll(pageNumber);
+            return ResponseEntity.ok(responseDto);
+        }
+        BoardListResponseDto responseDto = boardService.getAllByUser(pageNumber,userDetails.user());
         return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/boards/desc")
     public ResponseEntity<BoardListResponseDto> getAllByDesc(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam("page") Integer pageNumber
     ) {
-        BoardListResponseDto responseDto = boardService.getAllByDesc(pageNumber);
+        if (userDetails==null){
+            BoardListResponseDto responseDto = boardService.getAllByDesc(pageNumber);
+            return ResponseEntity.ok(responseDto);
+        }
+        BoardListResponseDto responseDto = boardService.getAllByDescAndUser(pageNumber,userDetails.user());
         return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/boards/asc")
     public ResponseEntity<BoardListResponseDto> getAllByAsc(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam("page") Integer pageNumber
     ) {
-        BoardListResponseDto responseDto = boardService.getAllByAsc(pageNumber);
-        return ResponseEntity.ok(responseDto);
-    }
-
-    @GetMapping("/boards/{board_id}")
-    public ResponseEntity<BoardReadResponseDto> readAllBoards(
-            @PathVariable Long board_id
-    ){
-        BoardReadResponseDto readResponseDto = boardService.getOnce(board_id);
-        return ResponseEntity.ok(readResponseDto);
-    }
-
-    @GetMapping("/boards/user")
-    public ResponseEntity<BoardListResponseDto> getAllAndUser(
-        @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @RequestParam("page") Integer pageNumber
-    ) {
+        if (userDetails==null){
+            BoardListResponseDto responseDto = boardService.getAllByAsc(pageNumber);
+            return ResponseEntity.ok(responseDto);
+        }
         BoardListResponseDto responseDto = boardService.getAllByUser(pageNumber,userDetails.user());
         return ResponseEntity.ok(responseDto);
     }
 
-    @GetMapping("/boards/desc/user")
-    public ResponseEntity<BoardListResponseDto> getAllByDescAndUser(
-        @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @RequestParam("page") Integer pageNumber
-    ) {
-        BoardListResponseDto responseDto = boardService.getAllByDescAndUser(pageNumber,userDetails.user());
-        return ResponseEntity.ok(responseDto);
-    }
-
-    @GetMapping("/boards/{board_id}/user")
-    public ResponseEntity<BoardReadResponseDto> readAllBoardAndUser(
-        @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @PathVariable Long board_id
+    @GetMapping("/boards/{board_id}")
+    public ResponseEntity<BoardReadResponseDto> readBoard(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long board_id
     ){
+        if (userDetails==null){
+            BoardReadResponseDto responseDto = boardService.getOnce(board_id);
+            return ResponseEntity.ok(responseDto);
+        }
         BoardReadResponseDto readResponseDto = boardService.getOnceLogin(board_id,userDetails.user());
         return ResponseEntity.ok(readResponseDto);
     }
+
+//    @GetMapping("/boards/user")
+//    @Description("")
+//    public ResponseEntity<BoardListResponseDto> getAllAndUser(
+//        @AuthenticationPrincipal UserDetailsImpl userDetails,
+//        @RequestParam("page") Integer pageNumber
+//    ) {
+//        BoardListResponseDto responseDto = boardService.getAllByUser(pageNumber,userDetails.user());
+//        return ResponseEntity.ok(responseDto);
+//    }
+//
+//    @GetMapping("/boards/desc/user")
+//    public ResponseEntity<BoardListResponseDto> getAllByDescAndUser(
+//        @AuthenticationPrincipal UserDetailsImpl userDetails,
+//        @RequestParam("page") Integer pageNumber
+//    ) {
+//        BoardListResponseDto responseDto = boardService.getAllByDescAndUser(pageNumber,userDetails.user());
+//        return ResponseEntity.ok(responseDto);
+//    }
+//
+//    @GetMapping("/boards/{board_id}/user")
+//    public ResponseEntity<BoardReadResponseDto> readAllBoardAndUser(
+//        @AuthenticationPrincipal UserDetailsImpl userDetails,
+//        @PathVariable Long board_id
+//    ){
+//        BoardReadResponseDto readResponseDto = boardService.getOnceLogin(board_id,userDetails.user());
+//        return ResponseEntity.ok(readResponseDto);
+//    }
 
     @GetMapping("/boards/me")
     public String ReadUser(
