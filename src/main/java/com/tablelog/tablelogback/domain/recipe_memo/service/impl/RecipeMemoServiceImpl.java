@@ -4,8 +4,10 @@ import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
+import com.tablelog.tablelogback.domain.recipe_memo.dto.RecipeMemoResponseDto;
 import com.tablelog.tablelogback.domain.recipe_memo.entity.RecipeMemo;
 import com.tablelog.tablelogback.domain.recipe_memo.exception.AlreadyExistsRecipeMemoException;
+import com.tablelog.tablelogback.domain.recipe_memo.exception.NotFoundRecipeMemoException;
 import com.tablelog.tablelogback.domain.recipe_memo.exception.RecipeMemoErrorCode;
 import com.tablelog.tablelogback.domain.recipe_memo.repository.RecipeMemoRepository;
 import com.tablelog.tablelogback.domain.recipe_memo.service.RecipeMemoService;
@@ -32,5 +34,19 @@ public class RecipeMemoServiceImpl implements RecipeMemoService {
                 .memo(memo)
                 .build();
         recipeMemoRepository.save(recipeMemo);
+    }
+
+    @Override
+    public RecipeMemoResponseDto getRecipeMemo(Long recipeId, User user){
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        RecipeMemo recipeMemo = recipeMemoRepository.findByRecipeIdAndUserId(recipeId, user.getId())
+                .orElseThrow(() -> new NotFoundRecipeMemoException(RecipeMemoErrorCode.NOT_FOUND_RECIPE_MEMO));
+        return new RecipeMemoResponseDto(
+                recipeMemo.getId(),
+                recipeMemo.getRecipeId(),
+                recipeMemo.getUserId(),
+                recipeMemo.getMemo()
+        );
     }
 }

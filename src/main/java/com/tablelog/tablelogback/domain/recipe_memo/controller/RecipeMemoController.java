@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.recipe_memo.controller;
 
 import com.tablelog.tablelogback.domain.recipe_memo.dto.RecipeMemoCreateDto;
+import com.tablelog.tablelogback.domain.recipe_memo.dto.RecipeMemoResponseDto;
 import com.tablelog.tablelogback.domain.recipe_memo.service.impl.RecipeMemoServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,5 +28,15 @@ public class RecipeMemoController {
     ){
         recipeMemoService.createRecipeMemo(recipeId, userDetails.user(), memoCreateDto.memo());
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "레시피 메모 단건 조회")
+    @GetMapping("/recipes/{recipeId}/memos")
+    public ResponseEntity<?> createRecipeMemo(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeMemoResponseDto recipeMemo = recipeMemoService.getRecipeMemo(recipeId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).body(recipeMemo);
     }
 }
