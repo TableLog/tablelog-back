@@ -270,7 +270,7 @@ public class RecipeServiceImpl implements RecipeService {
         String fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
 
         recipe.updateRecipe(requestDto.title(), requestDto.intro(), folderName, fileUrl,
-                requestDto.recipeCategoryList(), requestDto.price(), requestDto.memo(), requestDto.cookingTime(),
+                requestDto.recipeCategoryList(), requestDto.price(), requestDto.cookingTime(),
                 requestDto.isPaid(), requestDto.recipePoint()
         );
 
