@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
@@ -102,6 +103,22 @@ public class UserController {
         }
         UserProfileDto responseDto = userService.getUserProfile(userId, userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "사용자 전체 조회 + 검색")
+    @GetMapping("/users/search")
+    public ResponseEntity<FollowUserListDto> findUsers(
+            @RequestParam String keyword,
+            @RequestParam int pageNumber
+    ){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = null;
+        if(authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())){
+            userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        }
+        return ResponseEntity.status(HttpStatus.OK).
+                body(userService.findUsers(keyword, pageNumber, userDetails));
     }
 
     @Operation(summary = "사용자 정보 수정", description = "바꾸는 것만 작성, 안 바꾸면 빈 칸")

@@ -235,4 +235,23 @@ public class BoardServiceImpl implements BoardService {
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
+
+    @Override
+    public BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id) {
+        User user = userRepository.findById(user_id).
+            orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        Slice<Board> boards = boardRepository.findAllByUserOrderByUserAsc(user.getNickname(),PageRequest.of(pageNumber, 9));
+        List<Board> boardList = boards.getContent();
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            User writer = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            boolean isMe = board.getUser().equals(user.getNickname());
+            boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
+        }
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
+    }
 }
