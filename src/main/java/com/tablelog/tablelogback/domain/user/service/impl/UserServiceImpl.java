@@ -1,6 +1,8 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserDto;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
@@ -27,15 +29,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -145,6 +148,43 @@ public class UserServiceImpl implements UserService {
         Boolean isFollowed = userDetails != null
                 && followRepository.existsByFollowerIdAndFollowingId(userDetails.user().getId(), userId);
         return userEntityMapper.toUserProfileDto(user, isFollowed);
+    }
+
+    @Override
+    public FollowUserListDto findUsers(String keyword, int pageNumber, UserDetailsImpl userDetails){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+
+        Slice<User> slice;
+        if(keyword != null && !keyword.isBlank()){
+            // keyword 검색 시 전체 유저 검색
+            slice = userRepository.findByNicknameContaining(keyword, pageRequest);
+        } else {
+            // 기본: 내가 팔로우한 유저들 조회
+            slice = userRepository.findAll(pageRequest);
+        }
+
+        List<User> users = slice.getContent();
+        List<Long> targetIds = users.stream()
+                .map(User::getId)
+                .toList();
+        Long userId = (userDetails != null) ? userDetails.user().getId() : null;
+        Set<Long> idsIsFollow;
+        if(userDetails != null) {
+            idsIsFollow = new HashSet<>(
+                    followRepository.findAllFollowingIdsByFollowerId(userId, targetIds)
+            );
+        } else {
+            idsIsFollow = Collections.emptySet();;
+        }
+        List<FollowUserDto> dtos = users.stream()
+                .map(user -> new FollowUserDto(
+                        user.getId(),
+                        user.getNickname(),
+                        user.getProfileImgUrl(),
+                        idsIsFollow.contains(user.getId())
+                ))
+                .toList();
+        return new FollowUserListDto(dtos, slice.hasNext());
     }
 
     @Transactional
