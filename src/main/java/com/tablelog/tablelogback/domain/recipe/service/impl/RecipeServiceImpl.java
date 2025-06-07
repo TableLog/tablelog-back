@@ -81,7 +81,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipeImageName = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
         }
         Recipe recipe = recipeEntityMapper.toRecipe(
-                requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user);
+                requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
 
         // 전문가 & 유료 확인
         if (user.getUserRole() != UserRole.EXPERT || !requestDto.isPaid()) {

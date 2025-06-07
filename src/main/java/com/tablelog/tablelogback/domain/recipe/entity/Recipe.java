@@ -55,9 +55,6 @@ public class Recipe extends BaseEntity {
     private RecipePrice price;
 
     @Column(nullable = false)
-    private String memo;
-
-    @Column(nullable = false)
     private CookingTime cookingTime;
 
     @Column(nullable = false)
@@ -75,7 +72,7 @@ public class Recipe extends BaseEntity {
     @Builder
     public Recipe(final Long userId, final String title, final String intro, final String folderName,
                   final String imageUrl, final List<RecipeCategory> recipeCategoryList,
-                  final RecipePrice price, final String memo, final CookingTime cookingTime,
+                  final RecipePrice price, final CookingTime cookingTime,
                   final Integer totalCal, final Boolean isPaid, final Integer recipePoint
     ){
         this.userId = userId;
@@ -88,7 +85,6 @@ public class Recipe extends BaseEntity {
         this.starCount = 0;
         this.star = 0F;
         this.price = price;
-        this.memo = memo;
         this.cookingTime = cookingTime;
         this.totalCal = totalCal;
         this.isPaid = isPaid;
@@ -98,7 +94,7 @@ public class Recipe extends BaseEntity {
 
     public void updateRecipe(final String title, final String intro, final String folderName,
                              final String imageUrl, final List<RecipeCategory> recipeCategoryList,
-                             final RecipePrice price, final String memo, final CookingTime cookingTime,
+                             final RecipePrice price,final CookingTime cookingTime,
                              final Boolean isPaid, final Integer recipePoint){
         this.title = title;
         this.intro = intro;
@@ -106,7 +102,6 @@ public class Recipe extends BaseEntity {
         this.imageUrl = imageUrl;
         this.recipeCategoryList = recipeCategoryList;
         this.price = price;
-        this.memo = memo;
         this.cookingTime = cookingTime;
         this.isPaid = isPaid;
         this.recipePoint = recipePoint;

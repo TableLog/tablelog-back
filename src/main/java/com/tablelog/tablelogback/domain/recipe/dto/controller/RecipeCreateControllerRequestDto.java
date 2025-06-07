@@ -15,8 +15,6 @@ public record RecipeCreateControllerRequestDto(
         List<RecipeCategory> recipeCategoryList,
         RecipePrice price,
         CookingTime cookingTime,
-        String memo,
-        Boolean isPaid,
-        Integer recipePoint
+        Boolean isPaid
 ) {
 }
