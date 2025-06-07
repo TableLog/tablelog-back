@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user.service;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
@@ -18,6 +19,7 @@ public interface UserService {
     UserLoginResponseDto login(UserLoginServiceRequestDto userLoginServiceRequestDto);
     UserLoginResponseDto getUser(String token);
     UserProfileDto getUserProfile(Long userId, UserDetailsImpl userDetails);
+    FollowUserListDto findUsers(String keyword, int pageNum, UserDetailsImpl userDetails);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile, HttpServletResponse httpServletResponse)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
