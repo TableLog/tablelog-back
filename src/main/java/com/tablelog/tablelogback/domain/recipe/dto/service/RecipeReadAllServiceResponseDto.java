@@ -15,7 +15,6 @@ public record RecipeReadAllServiceResponseDto(
         Float star,
         RecipePrice price,
         CookingTime cookingTime,
-        String memo,
         Integer totalCal,
         Boolean isPaid,
         Integer recipePoint,
