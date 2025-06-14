@@ -40,7 +40,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
         SELECT r.*
         FROM tb_recipe r
         WHERE r.created_at >= :oneWeekAgo
-        ORDER BY r.star DESC, r.comment_count DESC, r.created_at DESC
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Pageable pageable);
 }
