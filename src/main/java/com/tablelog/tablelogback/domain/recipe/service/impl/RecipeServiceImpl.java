@@ -214,10 +214,15 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user) {
+    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid) {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
+        } else {
+            slice = recipeRepository.findPopularRecipesLastWeekByIsPaidTrue(oneWeekAgo, pageRequest);
+        }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
@@ -231,13 +236,28 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
+    public RecipeSliceResponseDto getAllMyRecipesLatest(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
             slice = recipeRepository.findAllByUserId(userDetails.user().getId(), pageRequest);
         } else {
             slice = recipeRepository.findAllByIsPaidTrueAndUserId(userDetails.user().getId(), pageRequest);
+        }
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceResponseDto getAllMyRecipesPopular(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findPopularRecipesLastWeekByUserId(oneWeekAgo, userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeRepository.findPopularRecipesLastWeekByUserIdAndIsPaidTrue(
+                    oneWeekAgo, userDetails.user().getId(), pageRequest);
         }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

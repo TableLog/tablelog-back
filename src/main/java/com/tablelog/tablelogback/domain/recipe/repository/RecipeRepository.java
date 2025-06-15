@@ -43,4 +43,39 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
         ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Pageable pageable);
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.created_at >= :oneWeekAgo and r.is_paid = true
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesLastWeekByIsPaidTrue(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Pageable pageable);
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.created_at >= :oneWeekAgo 
+          AND r.user_id = :userId
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesLastWeekByUserId(
+            @Param("oneWeekAgo") LocalDateTime oneWeekAgo,
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.created_at >= :oneWeekAgo 
+          AND r.is_paid = true 
+          AND r.user_id = :userId
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesLastWeekByUserIdAndIsPaidTrue(
+            @Param("oneWeekAgo") LocalDateTime oneWeekAgo,
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
 }
