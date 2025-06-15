@@ -9,6 +9,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +21,24 @@ public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
     @Query("SELECT r FROM Recipe r JOIN RecipeLike l ON r.id = l.recipe " +
             "WHERE l.user = :userId AND r.isPaid = true")
     Slice<Recipe> findAllByUserLatestAndIsPaidTrue(@Param("userId") Long userId, Pageable pageable);
+    @Query("""
+        SELECT r
+        FROM Recipe r
+        JOIN RecipeLike l ON r.id = l.recipe
+        WHERE l.user = :userId
+        ORDER BY r.star DESC, r.reviewCount DESC, r.createdAt DESC
+    """)
+    Slice<Recipe> findAllByUserPopular(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Long userId, Pageable pageable);
+
+    @Query("""
+        SELECT r
+        FROM Recipe r
+        JOIN RecipeLike l ON r.id = l.recipe
+        WHERE l.user = :userId AND r.isPaid = true
+        ORDER BY r.star DESC, r.reviewCount DESC, r.createdAt DESC
+    """)
+    Slice<Recipe> findAllByUserPopularAndIsPaidTrue(
+            @Param("oneWeekAgo") LocalDateTime oneWeekAgo, Long userId, Pageable pageable);
     Boolean existsByRecipeAndUser(Long recipe, Long user);
     Long countByRecipe(Long recipe);
     @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto(l.recipe, COUNT(l)) " +

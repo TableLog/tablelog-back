@@ -58,13 +58,24 @@ public class RecipeLikeController {
     }
 
     @Operation(summary = "내 레시피 좋아요 전체 조회 최신순")
-    @GetMapping("/users/me/recipe-likes")
-    public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipes(
+    @GetMapping("/users/me/recipe-likes/latest")
+    public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipesLatest(
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeLikeService.getMyLikedRecipes(isPaid, userDetails, pageNumber));
+                body(recipeLikeService.getMyLikedRecipesLatest(isPaid, userDetails, pageNumber));
+    }
+
+    @Operation(summary = "내 레시피 좋아요 전체 조회 인기순")
+    @GetMapping("/users/me/recipe-likes/popular")
+    public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipesPopular(
+            @RequestParam(required = false) Boolean isPaid,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeLikeService.getMyLikedRecipesPopular(isPaid, userDetails, pageNumber));
     }
 }
