@@ -7,5 +7,5 @@ public interface RecipeSaveService {
     void createRecipeSave(Long recipeId, Long userId);
     void deleteRecipeSave(Long recipeId, Long userId);
     Boolean hasRecipeSaved(Long recipeId, Long userId);
-    RecipeSliceResponseDto getMySavedRecipes(UserDetailsImpl userDetails, int pageNum);
+    RecipeSliceResponseDto getMySavedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNum);
 }

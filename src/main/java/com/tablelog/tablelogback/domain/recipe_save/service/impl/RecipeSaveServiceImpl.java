@@ -64,10 +64,51 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
     }
 
     @Override
-    public RecipeSliceResponseDto getMySavedRecipes(UserDetailsImpl userDetails, int pageNumber) {
+    public RecipeSliceResponseDto getMySavedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeSaveRepository.findAllByUser(userDetails.user().getId(), pageRequest);
+        Slice<Recipe> slice;
+        if (isPaid == null || !isPaid) {
+            slice = recipeSaveRepository.findAllByUser(userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeSaveRepository.findAllByUserLatestAndIsPaidTrue(userDetails.user().getId(), pageRequest);
+        }
+//        Slice<Recipe> slice = recipeSaveRepository.findAllByUser(userDetails.user().getId(), pageRequest);
 
+//        List<Long> recipeIds = slice.getContent().stream()
+//                .map(Recipe::getId)
+//                .collect(Collectors.toList());
+//
+//        List<Long> userIds = slice.getContent().stream()
+//                .map(Recipe::getUserId)
+//                .distinct()
+//                .toList();
+//
+//        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
+//                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
+//
+//        Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
+//                .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
+//
+//        Long userId = userDetails.user().getId();
+//
+//        List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
+//                .map(recipe -> {
+//                    Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
+//                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
+//                    Boolean isWriter = userId.equals(recipe.getUserId());
+//                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, true, nickname, isWriter);
+//                })
+//                .collect(Collectors.toList());
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    private Recipe findRecipe(Long id){
+        return recipeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+    }
+
+    private List<RecipeReadAllServiceResponseDto> mappingRecipes(Slice<Recipe> slice, UserDetailsImpl userDetails) {
         List<Long> recipeIds = slice.getContent().stream()
                 .map(Recipe::getId)
                 .collect(Collectors.toList());
@@ -93,11 +134,6 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
                     return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, true, nickname, isWriter);
                 })
                 .collect(Collectors.toList());
-        return new RecipeSliceResponseDto(recipes, slice.hasNext());
-    }
-
-    private Recipe findRecipe(Long id){
-        return recipeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        return recipes;
     }
 }

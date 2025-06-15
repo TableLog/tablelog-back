@@ -18,15 +18,18 @@ public interface RecipeSaveRepository extends JpaRepository<RecipeSave, Long> {
     @Query("SELECT r FROM Recipe r JOIN RecipeSave s ON r.id = s.recipe " +
             "WHERE s.user = :userId")
     Slice<Recipe> findAllByUser(@Param("userId") Long userId, Pageable pageable);
+    @Query("SELECT r FROM Recipe r JOIN RecipeSave s ON r.id = s.recipe " +
+            "WHERE s.user = :userId AND r.isPaid = true")
+    Slice<Recipe> findAllByUserLatestAndIsPaidTrue(@Param("userId") Long userId, Pageable pageable);
     @Query("""
-    SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeIsSavedDto(
-        s.recipe,
-        COUNT(s) > 0
-    )
-    FROM RecipeSave s
-    WHERE s.recipe IN :recipeIds AND s.user = :userId
-    GROUP BY s.recipe
-""")
+        SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeIsSavedDto(
+            s.recipe,
+            COUNT(s) > 0
+        )
+        FROM RecipeSave s
+        WHERE s.recipe IN :recipeIds AND s.user = :userId
+        GROUP BY s.recipe
+    """)
     List<RecipeIsSavedDto> findSavesByRecipeAndUser(@Param("recipeIds") List<Long> recipeIds,
                                                     @Param("userId") Long userId);
 }

@@ -48,13 +48,14 @@ public class RecipeSaveController {
                 body(recipeSaveService.hasRecipeSaved(recipeId, userDetails.user().getId()));
     }
 
-    @Operation(summary = "내 레시피 저장 전체 조회")
+    @Operation(summary = "내 레시피 저장 전체 조회 최신순")
     @GetMapping("/users/me/recipe-saves")
-    public ResponseEntity<RecipeSliceResponseDto> getMySavedRecipes(
+    public ResponseEntity<RecipeSliceResponseDto> getMySavedRecipesLatest(
+            @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeSaveService.getMySavedRecipes(userDetails, pageNumber));
+                body(recipeSaveService.getMySavedRecipesLatest(isPaid, userDetails, pageNumber));
     }
 }
