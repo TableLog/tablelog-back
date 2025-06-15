@@ -30,6 +30,8 @@ public interface BoardCommentEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "user.profileImgUrl", target = "profileImgUrl")
     @Mapping(source = "boardComment.createdAt", target = "createdAt")
+    @Mapping(source = "boardComment.id",target = "id")
+    @Mapping(source = "boardComment.comment_id",target = "comment_id")
     BoardCommentReadResponseDto toBoardCommentReadResponseDto(BoardComment boardComment,User user);
     List<BoardCommentReadResponseDto> toBoardCommentReadResponseDtos(List<BoardComment> boardComment);
 }
