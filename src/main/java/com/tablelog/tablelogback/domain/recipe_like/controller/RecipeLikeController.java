@@ -57,13 +57,14 @@ public class RecipeLikeController {
                 body(recipeLikeService.getRecipeLikeCountByRecipe(recipeId));
     }
 
-    @Operation(summary = "내 레시피 좋아요 전체 조회")
+    @Operation(summary = "내 레시피 좋아요 전체 조회 최신순")
     @GetMapping("/users/me/recipe-likes")
     public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipes(
+            @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeLikeService.getMyLikedRecipes(userDetails, pageNumber));
+                body(recipeLikeService.getMyLikedRecipes(isPaid, userDetails, pageNumber));
     }
 }

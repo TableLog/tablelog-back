@@ -70,9 +70,14 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
     }
 
     @Override
-    public RecipeSliceResponseDto getMyLikedRecipes(UserDetailsImpl userDetails, int pageNumber){
+    public RecipeSliceResponseDto getMyLikedRecipes(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeLikeRepository.findAllByUser(userDetails.user().getId(), pageRequest);
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeLikeRepository.findAllByUserLatest(userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeLikeRepository.findAllByUserLatestAndIsPaidTrue(userDetails.user().getId(), pageRequest);
+        }
         List<Long> recipeIds = slice.getContent().stream()
                 .map(Recipe::getId)
                 .collect(Collectors.toList());

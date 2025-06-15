@@ -16,7 +16,10 @@ public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
     Optional<RecipeLike> findByRecipeAndUser(Long recipe, Long user);
     @Query("SELECT r FROM Recipe r JOIN RecipeLike l ON r.id = l.recipe " +
             "WHERE l.user = :userId")
-    Slice<Recipe> findAllByUser(@Param("userId") Long userId, Pageable pageable);
+    Slice<Recipe> findAllByUserLatest(@Param("userId") Long userId, Pageable pageable);
+    @Query("SELECT r FROM Recipe r JOIN RecipeLike l ON r.id = l.recipe " +
+            "WHERE l.user = :userId AND r.isPaid = true")
+    Slice<Recipe> findAllByUserLatestAndIsPaidTrue(@Param("userId") Long userId, Pageable pageable);
     Boolean existsByRecipeAndUser(Long recipe, Long user);
     Long countByRecipe(Long recipe);
     @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto(l.recipe, COUNT(l)) " +

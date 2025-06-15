@@ -8,5 +8,5 @@ public interface RecipeLikeService {
     void deleteRecipeLike(Long recipeId, Long userId);
     Boolean hasRecipeLiked(Long recipeId, Long userId);
     Long getRecipeLikeCountByRecipe(Long recipeId);
-    RecipeSliceResponseDto getMyLikedRecipes(UserDetailsImpl userDetails, int pageNum);
+    RecipeSliceResponseDto getMyLikedRecipes(Boolean isPaid, UserDetailsImpl userDetails, int pageNum);
 }
