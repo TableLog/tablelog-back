@@ -6,6 +6,8 @@ public record RecipeFoodReadAllServiceResponseDto(
         Long id,
         Integer amount,
         FoodUnit recipeFoodUnit,
-        Long foodId
+        Long foodId,
+        String foodName,
+        Integer cal
 ) {
 }

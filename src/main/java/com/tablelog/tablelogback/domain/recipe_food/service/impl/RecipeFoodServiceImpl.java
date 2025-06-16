@@ -60,7 +60,7 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(pageNum, 5);
-        Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(recipe.getId(), pageRequest);
+        Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(recipe.getId());
         List<RecipeFoodReadAllServiceResponseDto> recipeFoods =
                 recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(slice.getContent());
         return new RecipeFoodSliceResponseDto(recipeFoods, slice.hasNext());

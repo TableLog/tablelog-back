@@ -125,7 +125,7 @@ public class RecipeController {
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.getAllMyRecipesPopular(userDetails, pageNumber, isPaid));
+                .body(recipeService.getAllMyRecipesLatest(userDetails, pageNumber, isPaid));
     }
 
     @Operation(summary = "내 레시피 전체 조회 인기순")
@@ -136,7 +136,7 @@ public class RecipeController {
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.getAllMyRecipesLatest(userDetails, pageNumber, isPaid));
+                .body(recipeService.getAllMyRecipesPopular(userDetails, pageNumber, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 식재료")
