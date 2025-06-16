@@ -79,14 +79,12 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
 
     @Override
     public RecipeSliceResponseDto getMySavedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if (isPaid == null || !isPaid) {
-            slice = recipeSaveRepository.findAllByUserPopular(oneWeekAgo, userDetails.user().getId(), pageRequest);
+            slice = recipeSaveRepository.findAllByUserPopular(userDetails.user().getId(), pageRequest);
         } else {
-            slice = recipeSaveRepository.findAllByUserPopularAndIsPaidTrue(
-                    oneWeekAgo, userDetails.user().getId(), pageRequest);
+            slice = recipeSaveRepository.findAllByUserPopularAndIsPaidTrue(userDetails.user().getId(), pageRequest);
         }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

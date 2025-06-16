@@ -119,13 +119,12 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
 
     @Override
     public RecipeSliceResponseDto getMyLikedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if (isPaid == null || !isPaid) {
-            slice = recipeLikeRepository.findAllByUserPopular(oneWeekAgo, userDetails.user().getId(), pageRequest);
+            slice = recipeLikeRepository.findAllByUserPopular(userDetails.user().getId(), pageRequest);
         } else {
-            slice = recipeLikeRepository.findAllByUserPopularAndIsPaidTrue(oneWeekAgo, userDetails.user().getId(), pageRequest);
+            slice = recipeLikeRepository.findAllByUserPopularAndIsPaidTrue(userDetails.user().getId(), pageRequest);
         }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

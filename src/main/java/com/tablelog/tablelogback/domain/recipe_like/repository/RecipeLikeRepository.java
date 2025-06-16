@@ -28,7 +28,7 @@ public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
         WHERE l.user = :userId
         ORDER BY r.star DESC, r.reviewCount DESC, r.createdAt DESC
     """)
-    Slice<Recipe> findAllByUserPopular(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Long userId, Pageable pageable);
+    Slice<Recipe> findAllByUserPopular(Long userId, Pageable pageable);
 
     @Query("""
         SELECT r
@@ -37,8 +37,7 @@ public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
         WHERE l.user = :userId AND r.isPaid = true
         ORDER BY r.star DESC, r.reviewCount DESC, r.createdAt DESC
     """)
-    Slice<Recipe> findAllByUserPopularAndIsPaidTrue(
-            @Param("oneWeekAgo") LocalDateTime oneWeekAgo, Long userId, Pageable pageable);
+    Slice<Recipe> findAllByUserPopularAndIsPaidTrue(Long userId, Pageable pageable);
     Boolean existsByRecipeAndUser(Long recipe, Long user);
     Long countByRecipe(Long recipe);
     @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto(l.recipe, COUNT(l)) " +

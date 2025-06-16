@@ -29,7 +29,7 @@ public interface RecipeSaveRepository extends JpaRepository<RecipeSave, Long> {
         WHERE s.user = :userId
         ORDER BY r.star DESC, r.reviewCount DESC, r.createdAt DESC
     """)
-    Slice<Recipe> findAllByUserPopular(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Long userId, Pageable pageable);
+    Slice<Recipe> findAllByUserPopular(Long userId, Pageable pageable);
     @Query("""
         SELECT r
         FROM Recipe r
@@ -37,7 +37,7 @@ public interface RecipeSaveRepository extends JpaRepository<RecipeSave, Long> {
         WHERE s.user = :userId AND r.isPaid = true
         ORDER BY r.star DESC, r.reviewCount DESC, r.createdAt DESC
     """)
-    Slice<Recipe> findAllByUserPopularAndIsPaidTrue(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Long userId, Pageable pageable);
+    Slice<Recipe> findAllByUserPopularAndIsPaidTrue(Long userId, Pageable pageable);
     @Query("""
         SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeIsSavedDto(
             s.recipe,
