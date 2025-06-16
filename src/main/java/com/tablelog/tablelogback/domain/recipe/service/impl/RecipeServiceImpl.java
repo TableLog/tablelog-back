@@ -214,14 +214,22 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid) {
+    public RecipeSliceResponseDto readPopularRecipesLastWeek(int pageNumber, UserDetailsImpl user) {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
-            slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
+            slice = recipeRepository.findPopularRecipes(pageRequest);
         } else {
-            slice = recipeRepository.findPopularRecipesLastWeekByIsPaidTrue(oneWeekAgo, pageRequest);
+            slice = recipeRepository.findPopularRecipesByIsPaidTrue(pageRequest);
         }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());

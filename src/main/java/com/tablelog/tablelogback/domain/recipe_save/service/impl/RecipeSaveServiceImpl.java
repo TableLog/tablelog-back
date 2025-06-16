@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -72,33 +73,21 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
         } else {
             slice = recipeSaveRepository.findAllByUserLatestAndIsPaidTrue(userDetails.user().getId(), pageRequest);
         }
-//        Slice<Recipe> slice = recipeSaveRepository.findAllByUser(userDetails.user().getId(), pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
 
-//        List<Long> recipeIds = slice.getContent().stream()
-//                .map(Recipe::getId)
-//                .collect(Collectors.toList());
-//
-//        List<Long> userIds = slice.getContent().stream()
-//                .map(Recipe::getUserId)
-//                .distinct()
-//                .toList();
-//
-//        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
-//                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
-//
-//        Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
-//                .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
-//
-//        Long userId = userDetails.user().getId();
-//
-//        List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
-//                .map(recipe -> {
-//                    Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
-//                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
-//                    Boolean isWriter = userId.equals(recipe.getUserId());
-//                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, true, nickname, isWriter);
-//                })
-//                .collect(Collectors.toList());
+    @Override
+    public RecipeSliceResponseDto getMySavedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice;
+        if (isPaid == null || !isPaid) {
+            slice = recipeSaveRepository.findAllByUserPopular(oneWeekAgo, userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeSaveRepository.findAllByUserPopularAndIsPaidTrue(
+                    oneWeekAgo, userDetails.user().getId(), pageRequest);
+        }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }

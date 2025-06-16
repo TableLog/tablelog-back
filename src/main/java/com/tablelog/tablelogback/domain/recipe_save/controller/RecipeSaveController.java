@@ -49,7 +49,7 @@ public class RecipeSaveController {
     }
 
     @Operation(summary = "내 레시피 저장 전체 조회 최신순")
-    @GetMapping("/users/me/recipe-saves")
+    @GetMapping("/users/me/recipe-saves/latest")
     public ResponseEntity<RecipeSliceResponseDto> getMySavedRecipesLatest(
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
@@ -57,5 +57,16 @@ public class RecipeSaveController {
     ){
         return ResponseEntity.status(HttpStatus.OK).
                 body(recipeSaveService.getMySavedRecipesLatest(isPaid, userDetails, pageNumber));
+    }
+
+    @Operation(summary = "내 레시피 저장 전체 조회 인기순")
+    @GetMapping("/users/me/recipe-saves/popular")
+    public ResponseEntity<RecipeSliceResponseDto> getMySavedRecipesPopular(
+            @RequestParam(required = false) Boolean isPaid,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK).
+                body(recipeSaveService.getMySavedRecipesPopular(isPaid, userDetails, pageNumber));
     }
 }

@@ -88,6 +88,15 @@ public class RecipeController {
     }
 
     @Operation(summary = "레시피 전체 조회 인기순", description = "최신 일주일")
+    @GetMapping("/recipes/popular/recent")
+    public ResponseEntity<?> readPopularRecipesLastWeek(
+            @RequestParam int pageNumber
+    ) {
+        UserDetailsImpl userDetails = getUserDetails();
+        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipesLastWeek(pageNumber, userDetails));
+    }
+
+    @Operation(summary = "레시피 전체 조회 인기순")
     @GetMapping("/recipes/popular")
     public ResponseEntity<?> readPopularRecipes(
             @RequestParam(required = false) Boolean isPaid,
