@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum ShoppingListErrorCode implements ErrorCode {
+    // 403
+    FORBIDDEN_ACCESS_SHOPPING_LIST(HttpStatus.FORBIDDEN, "ESL403001"),
+
     // 404
     NOT_FOUND_SHOPPING_LIST(HttpStatus.NOT_FOUND, "ESL404001");
 

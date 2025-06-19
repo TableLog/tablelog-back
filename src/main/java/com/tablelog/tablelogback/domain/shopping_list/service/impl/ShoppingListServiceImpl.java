@@ -7,7 +7,9 @@ import com.tablelog.tablelogback.domain.food.repository.FoodRepository;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListSliceResponseDto;
+import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
+import com.tablelog.tablelogback.domain.shopping_list.exception.ForbiddenAccessShoppingListException;
 import com.tablelog.tablelogback.domain.shopping_list.exception.NotFoundShoppingListException;
 import com.tablelog.tablelogback.domain.shopping_list.exception.ShoppingListErrorCode;
 import com.tablelog.tablelogback.domain.shopping_list.mapper.entity.ShoppingListEntityMapper;
@@ -52,33 +54,32 @@ public class ShoppingListServiceImpl implements ShoppingListService {
         PageRequest pageRequest = PageRequest.of(pageNum, 20);
         Slice<ShoppingList> slice = shoppingListRepository.findAllByUserId(user.getId(), pageRequest);
         Long listCount = shoppingListRepository.countAllByUserId(user.getId());
-
         List<ShoppingList> shoppingListEntities = slice.getContent();
-
         List<Long> foodIds = shoppingListEntities.stream()
                 .map(ShoppingList::getFoodId)
                 .distinct()
                 .toList();
-
         Map<Long, String> foodIdToNameMap = foodRepository.findAllById(foodIds).stream()
                 .collect(Collectors.toMap(Food::getId, Food::getFoodName));
-
         List<ShoppingListReadAllServiceResponseDto> shoppingLists = shoppingListEntities.stream()
                 .map(shoppingList -> {
                     String foodName = foodIdToNameMap.getOrDefault(shoppingList.getFoodId(), "알 수 없음");
                     return shoppingListEntityMapper.toShoppingListReadResponseDto(shoppingList, foodName);
                 })
                 .toList();
-
-//        List<ShoppingListReadAllServiceResponseDto> shoppingLists =
-//                shoppingListEntityMapper.toShoppingListReadAllResponseDto(slice.getContent());
         return new ShoppingListSliceResponseDto(listCount, shoppingLists, slice.hasNext());
     }
 
-//    @Override
-//    public void updateShoppingList(Long id, User user){
-//        ShoppingList shoppingList = shoppingListRepository.findByIdAndUserId(id, user.getId())
-//                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
-//        shoppingListRepository.save(shoppingList);
-//    }
+    @Override
+    public void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, Long id, User user){
+        ShoppingList shoppingList = shoppingListRepository.findById(id)
+                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
+        Food food = foodRepository.findById(shoppingList.getFoodId())
+                .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        if(shoppingList.getUserId() != user.getId()){
+            throw new ForbiddenAccessShoppingListException(ShoppingListErrorCode.FORBIDDEN_ACCESS_SHOPPING_LIST);
+        }
+        shoppingList.updateIsChecked(requestDto.isChecked());
+        shoppingListRepository.save(shoppingList);
+    }
 }

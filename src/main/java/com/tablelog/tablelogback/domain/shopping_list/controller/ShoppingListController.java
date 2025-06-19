@@ -3,9 +3,11 @@ package com.tablelog.tablelogback.domain.shopping_list.controller;
 import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.controller.ShoppingListCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.shopping_list.dto.controller.ShoppingListUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListSliceResponseDto;
+import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.mapper.dto.ShoppingListDtoMapper;
 import com.tablelog.tablelogback.domain.shopping_list.service.impl.ShoppingListServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -58,5 +60,18 @@ public class ShoppingListController {
     ){
         return ResponseEntity.status(HttpStatus.OK).body(
                 shoppingListService.readAllShoppingListsByUserId(userDetails.user(), page));
+    }
+
+    @Operation(summary = "장보기 목록 수정")
+    @PutMapping("/shopping-list/{shoppingListId}")
+    public ResponseEntity<?> updateShoppingList(
+            @PathVariable Long shoppingListId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody ShoppingListUpdateControllerRequestDto controllerRequestDto
+    ) {
+        ShoppingListUpdateServiceRequestDto serviceRequestDto =
+                shoppingListDtoMapper.toShoppingListUpdateServiceDto(controllerRequestDto);
+        shoppingListService.updateShoppingList(serviceRequestDto, shoppingListId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

@@ -12,6 +12,6 @@ public interface ShoppingListService {
     void createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user);
     ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user);
     ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum);
-//    void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, User user);
+    void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, Long id, User user);
 //    void deleteShoppingList(User user);
 }
