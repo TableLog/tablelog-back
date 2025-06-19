@@ -11,7 +11,7 @@ import java.io.IOException;
 public interface ShoppingListService {
     void createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user);
     ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user);
-//    ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum);
+    ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum);
 //    void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, User user);
 //    void deleteShoppingList(User user);
 }

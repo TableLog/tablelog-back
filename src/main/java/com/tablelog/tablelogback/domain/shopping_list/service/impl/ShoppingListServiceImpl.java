@@ -21,6 +21,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -44,17 +46,35 @@ public class ShoppingListServiceImpl implements ShoppingListService {
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
         return shoppingListEntityMapper.toShoppingListReadResponseDto(shoppingList, food.getFoodName());
     }
-//
-//    @Override
-//    public ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum){
-//        PageRequest pageRequest = PageRequest.of(pageNum, 20);
-//        Slice<ShoppingList> slice = shoppingListRepository.findAllByUserId(user.getId(), pageRequest);
-//        Long listCount = shoppingListRepository.countAllByUserId(user.getId());
+
+    @Override
+    public ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 20);
+        Slice<ShoppingList> slice = shoppingListRepository.findAllByUserId(user.getId(), pageRequest);
+        Long listCount = shoppingListRepository.countAllByUserId(user.getId());
+
+        List<ShoppingList> shoppingListEntities = slice.getContent();
+
+        List<Long> foodIds = shoppingListEntities.stream()
+                .map(ShoppingList::getFoodId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> foodIdToNameMap = foodRepository.findAllById(foodIds).stream()
+                .collect(Collectors.toMap(Food::getId, Food::getFoodName));
+
+        List<ShoppingListReadAllServiceResponseDto> shoppingLists = shoppingListEntities.stream()
+                .map(shoppingList -> {
+                    String foodName = foodIdToNameMap.getOrDefault(shoppingList.getFoodId(), "알 수 없음");
+                    return shoppingListEntityMapper.toShoppingListReadResponseDto(shoppingList, foodName);
+                })
+                .toList();
+
 //        List<ShoppingListReadAllServiceResponseDto> shoppingLists =
 //                shoppingListEntityMapper.toShoppingListReadAllResponseDto(slice.getContent());
-//        return new ShoppingListSliceResponseDto(listCount, shoppingLists, slice.hasNext());
-//    }
-//
+        return new ShoppingListSliceResponseDto(listCount, shoppingLists, slice.hasNext());
+    }
+
 //    @Override
 //    public void updateShoppingList(Long id, User user){
 //        ShoppingList shoppingList = shoppingListRepository.findByIdAndUserId(id, user.getId())

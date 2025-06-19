@@ -49,4 +49,14 @@ public class ShoppingListController {
                 shoppingListService.readShoppingList(shoppingListId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @Operation(summary = "장보기 목록 전체 조회 By 유저")
+    @GetMapping("/shopping-list")
+    public ResponseEntity<ShoppingListSliceResponseDto> readAllShoppingListsByUserId(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int page
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(
+                shoppingListService.readAllShoppingListsByUserId(userDetails.user(), page));
+    }
 }
