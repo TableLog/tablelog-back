@@ -1,5 +1,9 @@
 package com.tablelog.tablelogback.domain.shopping_list.service.impl;
 
+import com.tablelog.tablelogback.domain.food.entity.Food;
+import com.tablelog.tablelogback.domain.food.exception.FoodErrorCode;
+import com.tablelog.tablelogback.domain.food.exception.NotFoundFoodException;
+import com.tablelog.tablelogback.domain.food.repository.FoodRepository;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListSliceResponseDto;
@@ -23,6 +27,7 @@ import java.util.List;
 public class ShoppingListServiceImpl implements ShoppingListService {
     private final ShoppingListRepository shoppingListRepository;
     private final ShoppingListEntityMapper shoppingListEntityMapper;
+    private final FoodRepository foodRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -31,12 +36,14 @@ public class ShoppingListServiceImpl implements ShoppingListService {
         shoppingListRepository.save(shoppingList);
     }
 
-//    @Override
-//    public ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user){
-//        ShoppingList shoppingList = shoppingListRepository.findByIdAndUserId(id, user.getId())
-//                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
-//        return shoppingListEntityMapper.toShoppingListReadResponseDto(shoppingList);
-//    }
+    @Override
+    public ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user){
+        ShoppingList shoppingList = shoppingListRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
+        Food food = foodRepository.findById(shoppingList.getFoodId())
+                .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        return shoppingListEntityMapper.toShoppingListReadResponseDto(shoppingList, food.getFoodName());
+    }
 //
 //    @Override
 //    public ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum){

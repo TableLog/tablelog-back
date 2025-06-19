@@ -15,7 +15,8 @@ public interface ShoppingListEntityMapper {
     @Mapping(source = "userId",target = "userId")
     ShoppingList toShoppingList(ShoppingListCreateServiceRequestDto requestDto, Long userId);
 
-    ShoppingListReadAllServiceResponseDto toShoppingListReadResponseDto(ShoppingList shoppingList);
+    @Mapping(source = "foodName",target = "foodName")
+    ShoppingListReadAllServiceResponseDto toShoppingListReadResponseDto(ShoppingList shoppingList, String foodName);
 
     List<ShoppingListReadAllServiceResponseDto> toShoppingListReadAllResponseDto(List<ShoppingList> shoppingLists);
 }

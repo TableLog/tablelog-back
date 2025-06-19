@@ -38,4 +38,15 @@ public class ShoppingListController {
         shoppingListService.createShoppingList(serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "장보기 목록 단건 조회")
+    @GetMapping("/shopping-list/{shoppingListId}")
+    public ResponseEntity<ShoppingListReadAllServiceResponseDto> readShoppingList(
+            @PathVariable Long shoppingListId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        ShoppingListReadAllServiceResponseDto responseDto =
+                shoppingListService.readShoppingList(shoppingListId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }
