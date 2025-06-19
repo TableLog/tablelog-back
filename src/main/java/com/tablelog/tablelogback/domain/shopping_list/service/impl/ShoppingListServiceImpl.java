@@ -42,8 +42,7 @@ public class ShoppingListServiceImpl implements ShoppingListService {
 
     @Override
     public ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user){
-        ShoppingList shoppingList = shoppingListRepository.findByIdAndUserId(id, user.getId())
-                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
+        ShoppingList shoppingList = findShoppingList(id);
         Food food = foodRepository.findById(shoppingList.getFoodId())
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
         return shoppingListEntityMapper.toShoppingListReadResponseDto(shoppingList, food.getFoodName());
@@ -72,8 +71,7 @@ public class ShoppingListServiceImpl implements ShoppingListService {
 
     @Override
     public void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, Long id, User user){
-        ShoppingList shoppingList = shoppingListRepository.findById(id)
-                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
+        ShoppingList shoppingList = findShoppingList(id);
         Food food = foodRepository.findById(shoppingList.getFoodId())
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
         if(shoppingList.getUserId() != user.getId()){
@@ -81,5 +79,19 @@ public class ShoppingListServiceImpl implements ShoppingListService {
         }
         shoppingList.updateIsChecked(requestDto.isChecked());
         shoppingListRepository.save(shoppingList);
+    }
+
+    @Override
+    public void deleteShoppingList(Long id, User user){
+        ShoppingList shoppingList = findShoppingList(id);
+        if(shoppingList.getUserId() != user.getId()){
+            throw new ForbiddenAccessShoppingListException(ShoppingListErrorCode.FORBIDDEN_ACCESS_SHOPPING_LIST);
+        }
+        shoppingListRepository.delete(shoppingList);
+    }
+
+    private ShoppingList findShoppingList(Long id){
+        return shoppingListRepository.findById(id)
+                .orElseThrow(() -> new NotFoundShoppingListException(ShoppingListErrorCode.NOT_FOUND_SHOPPING_LIST));
     }
 }

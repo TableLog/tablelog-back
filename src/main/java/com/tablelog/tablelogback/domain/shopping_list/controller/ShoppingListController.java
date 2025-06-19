@@ -1,7 +1,5 @@
 package com.tablelog.tablelogback.domain.shopping_list.controller;
 
-import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewUpdateControllerRequestDto;
-import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.controller.ShoppingListCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.controller.ShoppingListUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListCreateServiceRequestDto;
@@ -18,8 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
 
 @RequiredArgsConstructor
 @RestController
@@ -72,6 +68,16 @@ public class ShoppingListController {
         ShoppingListUpdateServiceRequestDto serviceRequestDto =
                 shoppingListDtoMapper.toShoppingListUpdateServiceDto(controllerRequestDto);
         shoppingListService.updateShoppingList(serviceRequestDto, shoppingListId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "장보기 목록 삭제")
+    @DeleteMapping("/shopping-list/{shoppingListId}")
+    public ResponseEntity<?> deleteShoppingList(
+            @PathVariable Long shoppingListId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        shoppingListService.deleteShoppingList(shoppingListId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
