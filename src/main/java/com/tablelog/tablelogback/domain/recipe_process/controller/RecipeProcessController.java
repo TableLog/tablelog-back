@@ -55,6 +55,17 @@ public class RecipeProcessController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "레시피 조리과정 단건 조회 With Sequence")
+    @GetMapping("/recipes/{recipeId}/recipe-process/sequence/{sequence}")
+    public ResponseEntity<RecipeProcessReadAllServiceResponseDto> readRecipeProcessWithSequence(
+            @PathVariable Long recipeId,
+            @PathVariable Long sequence
+    ){
+        RecipeProcessReadAllServiceResponseDto responseDto =
+                recipeProcessService.readRecipeProcessWithSequence(recipeId, sequence);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
     @Operation(summary = "레시피 조리과정 전체 조회 By 레시피")
     @GetMapping("/recipes/{recipeId}/recipe-process")
     public ResponseEntity<RecipeProcessSliceResponseDto> readAllRecipeProcessByRecipeId(

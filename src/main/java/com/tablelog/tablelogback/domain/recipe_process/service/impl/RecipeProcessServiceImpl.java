@@ -83,6 +83,13 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     }
 
     @Override
+    public RecipeProcessReadAllServiceResponseDto readRecipeProcessWithSequence(Long recipeId, Long sequence){
+        RecipeProcess recipeProcess = recipeProcessRepository.findByRecipeIdAndSequence(recipeId, sequence)
+                .orElseThrow(() -> new NotFoundRecipeProcessException(RecipeProcessErrorCode.NOT_FOUND_RECIPE_PROCESS));
+        return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+    }
+
+    @Override
     public RecipeProcessSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
@@ -90,7 +97,7 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipe.getId(), pageRequest);
         List<RecipeProcessReadAllServiceResponseDto> recipeProcesses =
                 recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(slice.getContent());
-        return new RecipeProcessSliceResponseDto(recipeProcesses, slice.hasNext());
+        return new RecipeProcessSliceResponseDto(recipeProcesses, slice.hasPrevious(), slice.hasNext());
     }
 
     @Transactional

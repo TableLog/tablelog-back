@@ -92,7 +92,8 @@ public class RecipeController {
             @RequestParam int pageNumber
     ) {
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipesLastWeek(pageNumber, userDetails));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readPopularRecipesLastWeek(pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 전체 조회 인기순")
@@ -102,7 +103,8 @@ public class RecipeController {
             @RequestParam int pageNumber
     ) {
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber, userDetails, isPaid));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readPopularRecipes(pageNumber, userDetails, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 사용자")

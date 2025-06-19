@@ -12,14 +12,14 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "TB_RECIPE_PROCESS")
 @Entity
+@Table(name = "TB_RECIPE_PROCESS", uniqueConstraints = {@UniqueConstraint(columnNames = {"recipe_id", "sequence"})})
 public class RecipeProcess extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "sequence", nullable = false)
     private short sequence;
 
     @Column(nullable = false)
@@ -33,7 +33,7 @@ public class RecipeProcess extends BaseEntity {
     @Column(name = "image_url")
     private List<String> recipeProcessImageUrls = new ArrayList<>();
 
-    @Column(nullable = false)
+    @Column(name = "recipe_id", nullable = false)
     private Long recipeId;
 
     @Builder
