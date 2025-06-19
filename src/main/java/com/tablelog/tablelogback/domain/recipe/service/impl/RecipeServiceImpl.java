@@ -14,7 +14,6 @@ import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepositoryImpl;
 import com.tablelog.tablelogback.domain.recipe.service.RecipeService;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
@@ -26,6 +25,8 @@ import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
+import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
+import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -63,6 +64,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
     private final RecipePaymentRepository recipePaymentRepository;
+    private final ShoppingListRepository shoppingListRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -191,13 +193,12 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id){
+    public RecipeFoodPreviewSliceResponseDto readRecipeWithRecipeFood(Long id, int pageNum, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
-        List<RecipeFood> recipeFoods = recipeFoodRepository
-                .findAllByRecipeId(id)
-                .getContent();
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(id, pageRequest);
 
-        List<Long> foodIds = recipeFoods.stream()
+        List<Long> foodIds = slice.stream()
                 .map(RecipeFood::getFoodId)
                 .distinct()
                 .toList();
@@ -205,25 +206,35 @@ public class RecipeServiceImpl implements RecipeService {
         Map<Long, Food> foodMap = foodRepository.findAllById(foodIds).stream()
                 .collect(Collectors.toMap(Food::getId, food -> food));
 
-        List<RecipeFoodReadAllServiceResponseDto> recipeFoodDtos = recipeFoods.stream()
+        List<Long> existingFoodIds;
+        if(userDetails != null){
+            existingFoodIds = shoppingListRepository
+                    .findAllByUserIdAndFoodIdIn(userDetails.user().getId(), foodIds).stream()
+                    .map(ShoppingList::getFoodId)
+                    .toList();
+        } else {
+            existingFoodIds = Collections.emptyList();
+        }
+
+        List<RecipeFoodPreviewDto> previewDtos = slice.stream()
                 .map(rf -> {
                     Food food = foodMap.get(rf.getFoodId());
                     String foodName = food.getFoodName();
                     int calorie = rf.getAmount() * food.getCal();
-                    System.out.println("cal: "+calorie);
+                    boolean isChecked = existingFoodIds.contains(rf.getFoodId());
 
-                    return new RecipeFoodReadAllServiceResponseDto(
+                    return new RecipeFoodPreviewDto(
                             rf.getId(),
                             rf.getAmount(),
                             rf.getRecipeFoodUnit(),
                             rf.getFoodId(),
                             foodName,
-                            calorie
+                            calorie,
+                            isChecked
                     );
                 })
                 .toList();
-
-        return recipeEntityMapper.toRecipeFoodPreviewReadResponseDto(recipe, recipeFoodDtos);
+        return new RecipeFoodPreviewSliceResponseDto(recipe.getTitle(), recipe.getImageUrl(), previewDtos, slice.hasNext());
     }
 
     @Override

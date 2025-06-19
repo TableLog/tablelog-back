@@ -5,10 +5,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface ShoppingListRepository extends JpaRepository<ShoppingList, Long> {
-    Optional<ShoppingList> findByIdAndUserId(Long id, Long userId);
+    List<ShoppingList> findAllByUserIdAndFoodIdIn(Long userId, List<Long> foodIds);
     Slice<ShoppingList> findAllByUserId(Long id, Pageable pageable);
     Long countAllByUserId(Long userId);
     void deleteAllByUserId(Long userId);

@@ -17,7 +17,7 @@ public interface RecipeService {
                       User user
     ) throws IOException;
     RecipeReadResponseDto readRecipe(Long id, UserDetailsImpl user);
-    RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id);
+    RecipeFoodPreviewSliceResponseDto readRecipeWithRecipeFood(Long id, int pageNum, UserDetailsImpl userDetails);
     RecipeSliceResponseDto readAllRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid);
     RecipeSliceResponseDto readPopularRecipesLastWeek(int pageNum, UserDetailsImpl user);
     RecipeSliceResponseDto readPopularRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid);
