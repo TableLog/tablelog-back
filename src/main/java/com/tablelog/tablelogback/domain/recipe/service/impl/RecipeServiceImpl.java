@@ -14,7 +14,6 @@ import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepositoryImpl;
 import com.tablelog.tablelogback.domain.recipe.service.RecipeService;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
@@ -26,6 +25,8 @@ import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
+import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
+import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -63,6 +64,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
     private final RecipePaymentRepository recipePaymentRepository;
+    private final ShoppingListRepository shoppingListRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -78,11 +80,15 @@ public class RecipeServiceImpl implements RecipeService {
     ) throws IOException {
         String recipeFolderName = requestDto.title() + UUID.randomUUID();
         String recipeImageName = null;
-        if (recipeImage != null) {
+        Recipe recipe;
+        if (recipeImage != null && !recipeImage.isEmpty()) {
             recipeImageName = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
+            recipe = recipeEntityMapper.toRecipe(
+                    requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
+        } else {
+            recipe = recipeEntityMapper.toRecipe(
+                    requestDto, recipeFolderName, null, user, 500);
         }
-        Recipe recipe = recipeEntityMapper.toRecipe(
-                requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
 
         // 전문가 & 유료 확인
         if (user.getUserRole() != UserRole.EXPERT || !requestDto.isPaid()) {
@@ -121,13 +127,12 @@ public class RecipeServiceImpl implements RecipeService {
 
         for (RecipeProcessDto rpDto : rpRequestDtos.dtos()) {
             List<String> imageUrls = new ArrayList<>();
-
             List<MultipartFile> files = rpDto.files();
             // 사이즈 3개로 제한
             int s = 0;
-            if (files != null && s <= 2) {
+            if (files != null) {
                 for (MultipartFile image : files) {
-                    if (image != null && !image.isEmpty()) {
+                    if (image != null && !image.isEmpty() && s < 3) {
                         String fileName = s3Provider.originalFileName(image);
                         String filePath = recipeFolderName + S3Provider.SEPARATOR + fileName;
                         String fileUrl = url + filePath;
@@ -135,18 +140,15 @@ public class RecipeServiceImpl implements RecipeService {
                         imageUrls.add(fileUrl);
                         rpImageNames.add(fileName);
                         recipeProcessImages.add(image);
-
                         s++;
                     }
                 }
             }
-
             RecipeProcess process = recipeProcessEntityMapper.toRecipeProcess(recipe.getId(), rpDto, imageUrls);
             recipeProcesses.add(process);
         }
         recipeProcessRepository.saveAll(recipeProcesses);
-
-        saveImage(recipe.getFolderName(), recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
+        saveImage(recipeFolderName, recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
 
         if(user.getRecipeCount() >= 50 && user.getUserRole() == UserRole.NORMAL){
             user.changeRole(UserRole.EXPERT);
@@ -166,11 +168,12 @@ public class RecipeServiceImpl implements RecipeService {
         if(recipeImage != null && !recipeImage.isEmpty()) {
             s3Provider.saveFile(recipeImage, recipeImageName);
         }
-        if(rpImage != null) {
+        if (rpImage != null && rpImageName != null && rpImage.size() == rpImageName.size()) {
             for (int i = 0; i < rpImage.size(); i++) {
                 MultipartFile image = rpImage.get(i);
+                String filePath = recipeFolderName + S3Provider.SEPARATOR + rpImageName.get(i);
                 if (!image.isEmpty()) {
-                    s3Provider.saveFile(image, recipeFolderName + S3Provider.SEPARATOR + rpImageName.get(i));
+                    s3Provider.saveFile(image, filePath);
                 }
             }
         }
@@ -191,13 +194,12 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id){
+    public RecipeFoodPreviewSliceResponseDto readRecipeWithRecipeFood(Long id, int pageNum, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
-        List<RecipeFood> recipeFoods = recipeFoodRepository
-                .findAllByRecipeId(id)
-                .getContent();
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(id, pageRequest);
 
-        List<Long> foodIds = recipeFoods.stream()
+        List<Long> foodIds = slice.stream()
                 .map(RecipeFood::getFoodId)
                 .distinct()
                 .toList();
@@ -205,25 +207,35 @@ public class RecipeServiceImpl implements RecipeService {
         Map<Long, Food> foodMap = foodRepository.findAllById(foodIds).stream()
                 .collect(Collectors.toMap(Food::getId, food -> food));
 
-        List<RecipeFoodReadAllServiceResponseDto> recipeFoodDtos = recipeFoods.stream()
+        List<Long> existingFoodIds;
+        if(userDetails != null){
+            existingFoodIds = shoppingListRepository
+                    .findAllByUserIdAndFoodIdIn(userDetails.user().getId(), foodIds).stream()
+                    .map(ShoppingList::getFoodId)
+                    .toList();
+        } else {
+            existingFoodIds = Collections.emptyList();
+        }
+
+        List<RecipeFoodPreviewDto> previewDtos = slice.stream()
                 .map(rf -> {
                     Food food = foodMap.get(rf.getFoodId());
                     String foodName = food.getFoodName();
                     int calorie = rf.getAmount() * food.getCal();
-                    System.out.println("cal: "+calorie);
+                    boolean isChecked = existingFoodIds.contains(rf.getFoodId());
 
-                    return new RecipeFoodReadAllServiceResponseDto(
+                    return new RecipeFoodPreviewDto(
                             rf.getId(),
                             rf.getAmount(),
                             rf.getRecipeFoodUnit(),
                             rf.getFoodId(),
                             foodName,
-                            calorie
+                            calorie,
+                            isChecked
                     );
                 })
                 .toList();
-
-        return recipeEntityMapper.toRecipeFoodPreviewReadResponseDto(recipe, recipeFoodDtos);
+        return new RecipeFoodPreviewSliceResponseDto(recipe.getTitle(), recipe.getImageUrl(), previewDtos, slice.hasNext());
     }
 
     @Override

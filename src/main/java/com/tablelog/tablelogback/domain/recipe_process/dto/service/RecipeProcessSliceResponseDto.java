@@ -4,6 +4,7 @@ import java.util.List;
 
 public record RecipeProcessSliceResponseDto(
         List<RecipeProcessReadAllServiceResponseDto> recipeProcesses,
+        Boolean hasPrev,
         Boolean hasNext
 ) {
 }

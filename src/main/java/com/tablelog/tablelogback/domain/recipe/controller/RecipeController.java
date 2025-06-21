@@ -2,10 +2,7 @@ package com.tablelog.tablelogback.domain.recipe.controller;
 
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeUpdateControllerRequestDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFilterConditionDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFoodPreviewDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe.mapper.dto.RecipeDtoMapper;
 import com.tablelog.tablelogback.domain.recipe.service.impl.RecipeServiceImpl;
 import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodCreateControllerRequestDto;
@@ -70,11 +67,13 @@ public class RecipeController {
 
     @Operation(summary = "레시피 단건 조회 레시피 식재료 보기")
     @GetMapping("/recipes/{recipeId}/foods")
-    public ResponseEntity<RecipeFoodPreviewDto> readRecipeWithRecipeFood(
-            @PathVariable Long recipeId
+    public ResponseEntity<RecipeFoodPreviewSliceResponseDto> readRecipeWithRecipeFood(
+            @PathVariable Long recipeId,
+            @RequestParam int pageNumber
     ){
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.readRecipeWithRecipeFood(recipeId));
+                .body(recipeService.readRecipeWithRecipeFood(recipeId, pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 전체 조회 최신순 10개씩", description = "false면 전체 조회")
@@ -93,7 +92,8 @@ public class RecipeController {
             @RequestParam int pageNumber
     ) {
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipesLastWeek(pageNumber, userDetails));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readPopularRecipesLastWeek(pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 전체 조회 인기순")
@@ -103,7 +103,8 @@ public class RecipeController {
             @RequestParam int pageNumber
     ) {
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber, userDetails, isPaid));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readPopularRecipes(pageNumber, userDetails, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 사용자")
