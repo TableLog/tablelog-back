@@ -6,6 +6,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFilterConditionDto;
 import com.tablelog.tablelogback.domain.recipe.entity.QRecipe;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
+import com.tablelog.tablelogback.global.enums.RecipeCalorieRange;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -32,8 +33,14 @@ public class RecipeRepositoryImpl implements CustomRecipeRepository {
             builder.and(recipe.cookingTime.eq(condition.cookingTime()));
         }
 
-        if (condition.cal() != null) {
-            builder.and(recipe.totalCal.loe(condition.cal()));
+        if (condition.calorieRange() != null) {
+            RecipeCalorieRange r = condition.calorieRange();
+            if (r.getMin() != null) {
+                builder.and(recipe.totalCal.goe(r.getMin()));
+            }
+            if (r.getMax() != null) {
+                builder.and(recipe.totalCal.loe(r.getMax()));
+            }
         }
 
         if (condition.recipePrice() != null) {
