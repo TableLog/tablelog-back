@@ -36,4 +36,8 @@ public class BoardComment extends BaseEntity {
     public void update(String content){
         this.content = content;
     }
+
+    public void updateUser(String user){
+        this.user = user;
+    }
 }
