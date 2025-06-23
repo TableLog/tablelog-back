@@ -1,6 +1,10 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.board.entity.Board;
+import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
+import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
+import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.follow.dto.FollowUserDto;
 import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
@@ -55,6 +59,8 @@ public class UserServiceImpl implements UserService {
     private final OAuthAccountService oAuthAccountService;
     private final OAuthAccountRepository oAuthAccountRepository;
     private final FollowRepository followRepository;
+    private final BoardRepository boardRepository;
+    private final BoardCommentRepository boardCommentRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -224,7 +230,23 @@ public class UserServiceImpl implements UserService {
             if(userRepository.existsByNickname(serviceRequestDto.nickname())){
                 throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
             }
-            user.updateNickname(serviceRequestDto.nickname());
+            String oldNickname = user.getNickname();
+            String newNickname = serviceRequestDto.nickname();
+            user.updateNickname(newNickname);
+
+            // 보드
+            List<Board> boards = boardRepository.findAllByUser(oldNickname);
+            for(Board board : boards){
+                board.updateUser(newNickname);
+            }
+            boardRepository.saveAll(boards);
+
+            // 보드 댓글
+            List<BoardComment> comments = boardCommentRepository.findAllByUser(oldNickname);
+            for(BoardComment comment : comments){
+                comment.updateUser(newNickname);
+            }
+            boardRepository.saveAll(boards);
         }
 
         // 프로필 이미지
