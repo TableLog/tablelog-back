@@ -186,7 +186,7 @@ public class RecipeServiceImpl implements RecipeService {
         Boolean isSaved = isSaved(userDetails, id);
         User user = userRepository.findById(recipe.getUserId())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        Boolean isWriter = user.getId().equals(recipe.getUserId());
+        Boolean isWriter = userDetails != null && user.getId().equals(recipe.getUserId());
         Boolean hasPurchased = userDetails != null
                 && recipePaymentRepository.existsByUserIdAndRecipeId(user.getId(), recipe.getId());
         return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
