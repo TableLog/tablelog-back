@@ -65,10 +65,10 @@ public class User extends BaseEntity {
     private Long boardCount;
 
     @Column(nullable = false)
-    private Long followerCount;;
+    private Long followerCount;
 
     @Column(nullable = false)
-    private Long followingCount;;
+    private Long followingCount;
 
     @Builder
     public User(

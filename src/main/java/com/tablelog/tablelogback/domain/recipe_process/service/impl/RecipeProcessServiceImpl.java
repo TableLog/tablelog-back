@@ -4,13 +4,7 @@ import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.exception.ForbiddenAccessRecipeProcessException;
 import com.tablelog.tablelogback.domain.recipe_process.exception.NotFoundRecipeProcessException;
@@ -33,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
 @Service
@@ -83,21 +78,35 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     }
 
     @Override
-    public RecipeProcessReadAllServiceResponseDto readRecipeProcessWithSequence(Long recipeId, Long sequence){
+    public RecipeProcessSliceResponseDto readRecipeProcessWithSequence(Long recipeId, Long sequence){
         RecipeProcess recipeProcess = recipeProcessRepository.findByRecipeIdAndSequence(recipeId, sequence)
                 .orElseThrow(() -> new NotFoundRecipeProcessException(RecipeProcessErrorCode.NOT_FOUND_RECIPE_PROCESS));
-        return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+        PageRequest pageRequest = PageRequest.of(Math.toIntExact(sequence), 1);
+        Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipeId, pageRequest);
+        RecipeProcessReadAllServiceResponseDto raDto =
+                recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+        return new RecipeProcessSliceResponseDto(raDto, slice.hasPrevious(), slice.hasNext());
     }
 
     @Override
-    public RecipeProcessSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page) {
+    public RecipeProcessReadAllSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(page, 5);
+        int totalCount = recipeProcessRepository.countByRecipeId(recipeId);
         Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipe.getId(), pageRequest);
-        List<RecipeProcessReadAllServiceResponseDto> recipeProcesses =
+        List<RecipeProcessReadAllServiceResponseDto> rpDtos =
                 recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(slice.getContent());
-        return new RecipeProcessSliceResponseDto(recipeProcesses, slice.hasPrevious(), slice.hasNext());
+        List<RecipeProcessSliceResponseDto> recipeProcesses =
+                IntStream.range(0, rpDtos.size())
+                        .mapToObj(i -> {
+                            int globalIndex = page * 5 + i;
+                            boolean hasPrev = globalIndex > 0;
+                            boolean hasNext = globalIndex < totalCount - 1;
+                            return new RecipeProcessSliceResponseDto(rpDtos.get(i), hasPrev, hasNext);
+                        })
+                        .toList();
+        return new RecipeProcessReadAllSliceResponseDto(recipeProcesses, slice.hasNext(), totalCount);
     }
 
     @Transactional

@@ -51,4 +51,8 @@ public class Board extends BaseEntity {
         }
         this.category = category;
     }
+
+    public void updateUser(String user){
+        this.user = user;
+    }
 }

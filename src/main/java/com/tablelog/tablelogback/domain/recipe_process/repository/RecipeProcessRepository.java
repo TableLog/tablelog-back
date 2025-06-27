@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface RecipeProcessRepository extends JpaRepository<RecipeProcess, Long> {
     Slice<RecipeProcess> findAllByRecipeId(Long id, Pageable pageable);
     Optional<RecipeProcess> findByRecipeIdAndSequence(Long recipeId, Long sequence);
+    int countByRecipeId(Long recipeId);
     void deleteAllByRecipeId(Long recipeId);
 }
