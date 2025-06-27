@@ -33,8 +33,8 @@ public class ShoppingListController {
     ) {
         ShoppingListCreateServiceRequestDto serviceRequestDto =
                 shoppingListDtoMapper.toShoppingListCreateServiceDto(controllerRequestDto);
-        shoppingListService.createShoppingList(serviceRequestDto, userDetails.user());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        Long id = shoppingListService.createShoppingList(serviceRequestDto, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).body(id);
     }
 
     @Operation(summary = "장보기 목록 단건 조회")

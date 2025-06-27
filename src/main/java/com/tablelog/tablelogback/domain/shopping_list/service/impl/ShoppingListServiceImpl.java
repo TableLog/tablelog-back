@@ -35,9 +35,10 @@ public class ShoppingListServiceImpl implements ShoppingListService {
     private final UserRepository userRepository;
 
     @Override
-    public void createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user){
+    public Long createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user){
         ShoppingList shoppingList = shoppingListEntityMapper.toShoppingList(requestDto, user.getId());
         shoppingListRepository.save(shoppingList);
+        return shoppingList.getId();
     }
 
     @Override
