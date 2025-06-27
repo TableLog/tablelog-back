@@ -7,10 +7,7 @@ import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.exception.ForbiddenAccessRecipeProcessException;
 import com.tablelog.tablelogback.domain.recipe_process.exception.NotFoundRecipeProcessException;
@@ -83,21 +80,28 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     }
 
     @Override
-    public RecipeProcessReadAllServiceResponseDto readRecipeProcessWithSequence(Long recipeId, Long sequence){
+    public RecipeProcessSliceResponseDto readRecipeProcessWithSequence(Long recipeId, Long sequence){
         RecipeProcess recipeProcess = recipeProcessRepository.findByRecipeIdAndSequence(recipeId, sequence)
                 .orElseThrow(() -> new NotFoundRecipeProcessException(RecipeProcessErrorCode.NOT_FOUND_RECIPE_PROCESS));
-        return recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+        PageRequest pageRequest = PageRequest.of(Math.toIntExact(sequence), 1);
+        Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipeId, pageRequest);
+        RecipeProcessReadAllServiceResponseDto raDto =
+                recipeProcessEntityMapper.toRecipeProcessReadResponseDto(recipeProcess);
+        return new RecipeProcessSliceResponseDto(raDto, slice.hasPrevious(), slice.hasNext());
     }
 
     @Override
-    public RecipeProcessSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page) {
+    public RecipeProcessReadAllSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(page, 5);
         Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipe.getId(), pageRequest);
-        List<RecipeProcessReadAllServiceResponseDto> recipeProcesses =
+        List<RecipeProcessReadAllServiceResponseDto> rpDtos =
                 recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(slice.getContent());
-        return new RecipeProcessSliceResponseDto(recipeProcesses, slice.hasPrevious(), slice.hasNext());
+        List<RecipeProcessSliceResponseDto> recipeProcesses = rpDtos.stream()
+                .map(dto -> new RecipeProcessSliceResponseDto(dto, slice.hasPrevious(), slice.hasNext()))
+                .toList();
+        return new RecipeProcessReadAllSliceResponseDto(recipeProcesses, slice.hasNext());
     }
 
     @Transactional
