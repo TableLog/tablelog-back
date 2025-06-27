@@ -4,9 +4,6 @@ import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.exception.ForbiddenAccessRecipeProcessException;
@@ -30,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
 @Service
@@ -95,13 +93,20 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(page, 5);
+        int totalCount = recipeProcessRepository.countByRecipeId(recipeId);
         Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipe.getId(), pageRequest);
         List<RecipeProcessReadAllServiceResponseDto> rpDtos =
                 recipeProcessEntityMapper.toRecipeProcessReadAllResponseDto(slice.getContent());
-        List<RecipeProcessSliceResponseDto> recipeProcesses = rpDtos.stream()
-                .map(dto -> new RecipeProcessSliceResponseDto(dto, slice.hasPrevious(), slice.hasNext()))
-                .toList();
-        return new RecipeProcessReadAllSliceResponseDto(recipeProcesses, slice.hasNext());
+        List<RecipeProcessSliceResponseDto> recipeProcesses =
+                IntStream.range(0, rpDtos.size())
+                        .mapToObj(i -> {
+                            int globalIndex = page * 5 + i;
+                            boolean hasPrev = globalIndex > 0;
+                            boolean hasNext = globalIndex < totalCount - 1;
+                            return new RecipeProcessSliceResponseDto(rpDtos.get(i), hasPrev, hasNext);
+                        })
+                        .toList();
+        return new RecipeProcessReadAllSliceResponseDto(recipeProcesses, slice.hasNext(), totalCount);
     }
 
     @Transactional
