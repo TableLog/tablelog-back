@@ -149,10 +149,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
         recipeProcessRepository.saveAll(recipeProcesses);
         saveImage(recipeFolderName, recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
-
-        if(user.getRecipeCount() >= 50 && user.getUserRole() == UserRole.NORMAL){
-            user.changeRole(UserRole.EXPERT);
-        }
+        
         user.addPointBalance(3000);
         userRepository.save(user);
     }
