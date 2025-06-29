@@ -9,7 +9,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import java.io.IOException;
 
 public interface ShoppingListService {
-    void createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user);
+    Long createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user);
     ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user);
     ShoppingListSliceResponseDto readAllShoppingListsByUserId(User user, int pageNum);
     void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, Long id, User user);
