@@ -23,9 +23,6 @@ public class ChatServiceImpl implements ChatService {
     }
     // TODO 사용자가 나눈 채팅 기록 저장
 
-
-
-
     public ChatServiceImpl(RedisTemplate<String, String> redisTemplate2) {
         this.redisTemplate2 = redisTemplate2;
     }
