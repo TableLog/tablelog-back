@@ -64,6 +64,8 @@ public class WebSecurityConfig {
             config.setAllowedMethods(Collections.singletonList("*"));
 //            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
             config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080","http://localhost:5500",
+            "http://localhost:5173",
+            "http://localhost:4173",
             "https://jiangxy.github.io/"));
             config.setMaxAge(3600L);
             config.setAllowCredentials(true);
