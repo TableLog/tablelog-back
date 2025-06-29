@@ -181,13 +181,13 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
-        User user = userRepository.findById(recipe.getUserId())
-                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        User writer = userRepository.findById(recipe.getUserId()).orElse(null);
+        String writerName = (writer != null) ? writer.getNickname() : "Unknown";
         Boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
         Boolean hasPurchased = userDetails != null
-                && recipePaymentRepository.existsByUserIdAndRecipeId(user.getId(), recipe.getId());
+                && recipePaymentRepository.existsByUserIdAndRecipeId(userDetails.user().getId(), recipe.getId());
         return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
-                isSaved, user.getNickname(), isWriter, hasPurchased);
+                isSaved, writerName, isWriter, hasPurchased);
     }
 
     @Override
@@ -385,6 +385,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .toList();
 
         // 작성자 이름 조회
+        // 탈퇴한 사람이면 Unknown
         Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
                 .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
 
