@@ -12,4 +12,6 @@ public interface RecipeReviewRepository extends JpaRepository<RecipeReview, Long
     Slice<RecipeReview> findAllByUser(String user, Pageable pageable);
     Boolean existsByPrrId(Long prrId);
     void deleteByPrrId(Long prrId);
+
+    void deleteAllByUser(String user);
 }
