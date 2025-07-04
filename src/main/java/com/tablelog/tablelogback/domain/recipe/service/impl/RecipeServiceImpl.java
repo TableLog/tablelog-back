@@ -28,8 +28,6 @@ import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveReposit
 import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
 import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
-import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
-import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
@@ -183,11 +181,12 @@ public class RecipeServiceImpl implements RecipeService {
         Boolean isSaved = isSaved(userDetails, id);
         User writer = userRepository.findById(recipe.getUserId()).orElse(null);
         String writerName = (writer != null) ? writer.getNickname() : "Unknown";
+        Boolean isExpertWriter = writer != null && writer.getUserRole() == UserRole.EXPERT;
         Boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
         Boolean hasPurchased = userDetails != null
                 && recipePaymentRepository.existsByUserIdAndRecipeId(userDetails.user().getId(), recipe.getId());
         return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
-                isSaved, writerName, isWriter, hasPurchased);
+                isSaved, writerName, isExpertWriter, isWriter, hasPurchased);
     }
 
     @Override
