@@ -71,7 +71,8 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         if(userDetails != null){
             isReviewer = userDetails.user().getNickname().equals(recipeReview.getUser());
         }
-        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer);
+        boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
+        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, isWriter);
     }
 
     @Override
@@ -160,12 +161,16 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     private List<RecipeReviewReadResponseDto> mappingRecipeReviews(
-            Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview){
+            Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview
+    ){
         List<RecipeReviewReadResponseDto> recipeReviews = slice.getContent().stream()
             .map(recipeReview -> {
                 boolean isReviewer = isMyReview
                         || (userDetails != null && userDetails.user().getNickname().equals(recipeReview.getUser()));
-                return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer);
+                Recipe recipe = recipeRepository.findById(recipeReview.getRecipeId())
+                        .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+                boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
+                return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, isWriter);
             })
             .collect(Collectors.toList());
         return recipeReviews;

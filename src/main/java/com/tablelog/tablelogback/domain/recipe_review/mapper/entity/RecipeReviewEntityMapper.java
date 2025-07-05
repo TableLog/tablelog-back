@@ -15,7 +15,7 @@ public interface RecipeReviewEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "recipeId", target = "recipeId")
     RecipeReview toRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user);
-    RecipeReviewReadResponseDto toRecipeReviewReadResponseDto(RecipeReview recipeReview, Boolean isReviewer);
+    RecipeReviewReadResponseDto toRecipeReviewReadResponseDto(RecipeReview recipeReview, Boolean isReviewer, Boolean isWriter);
 
     @Mapping(source = "modifiedAt", target = "modifiedAt")
     List<RecipeReviewReadResponseDto> toRecipeReviewReadAllResponseDtoLists(List<RecipeReview> recipeReviewList);
