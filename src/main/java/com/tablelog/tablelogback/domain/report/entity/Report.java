@@ -33,14 +33,19 @@ public class Report extends BaseEntity {
     @Column
     private ApplyStatus status;
 
+    @Column(nullable = false)
+    private Long targetId;
+
     @Builder
     public Report(final Long reporterId, final Long reportedUserId,
-                  final String reportContent, final ReportType reportType
+                  final String reportContent, final ReportType reportType,
+                  final Long targetId
     ) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.reportContent = reportContent;
         this.reportType = reportType;
         this.status = ApplyStatus.APPLIED;
+        this.targetId = targetId;
     }
 }

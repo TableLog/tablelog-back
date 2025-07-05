@@ -5,6 +5,7 @@ import com.tablelog.tablelogback.global.enums.ReportType;
 public record ReportCreateControllerRequestDto(
         Long reportedUserId,
         String reportContent,
-        ReportType reportType
+        ReportType reportType,
+        Long targetId
 ) {
 }

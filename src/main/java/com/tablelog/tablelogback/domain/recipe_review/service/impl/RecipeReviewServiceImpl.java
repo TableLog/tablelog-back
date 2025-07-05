@@ -76,7 +76,8 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
 
     @Override
     public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(
-            Long recipeId, int pageNumber, UserDetailsImpl userDetails) {
+            Long recipeId, int pageNumber, UserDetailsImpl userDetails
+    ) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));

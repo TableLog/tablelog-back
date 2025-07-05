@@ -3,8 +3,10 @@ package com.tablelog.tablelogback.domain.report.controller;
 import com.tablelog.tablelogback.domain.report.dto.controller.ReportCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportReadResponseDto;
+import com.tablelog.tablelogback.domain.report.dto.service.ReportSliceResponseDto;
 import com.tablelog.tablelogback.domain.report.mapper.dto.ReportDtoMapper;
 import com.tablelog.tablelogback.domain.report.service.impl.ReportServiceImpl;
+import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,7 +47,17 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    // 신고 전체 조회
+    @Operation(summary = "신고 전체 조회 By status")
+    @GetMapping("/admin/reports")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReportSliceResponseDto> getAllReports(
+            @RequestParam(required = false) ApplyStatus status,
+            @RequestParam int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        ReportSliceResponseDto responseDto = reportService.getAllReports(status, pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 
     // 관리자가 신고 승인
 

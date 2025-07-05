@@ -9,6 +9,7 @@ public record ReportReadResponseDto(
         Long reportedUserId,
         String reportContent,
         ReportType reportType,
-        ApplyStatus status
+        ApplyStatus status,
+        Long targetId
 ) {
 }
