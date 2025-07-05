@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user_license.service.impl;
 
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCountResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
@@ -71,5 +72,12 @@ public class UserLicenseServiceImpl implements UserLicenseService {
         return new UserLicenseSliceResponseDto(userLicenses, slice.hasNext());
     }
 
-    // 레시피 개수, 사업자 개수 추가, 특허증 개수 추가
+    @Override
+    public UserLicenseCountResponseDto getCountByUser(User user){
+        Long recipeCount = user.getRecipeCount();
+        Long businessCount = userLicenseRepository
+                .countByUserIdAndLicenseType(user.getId(), LicenseType.BUSINESS_REGISTRATION);
+        Long patentCount = userLicenseRepository.countByUserIdAndLicenseType(user.getId(), LicenseType.PATENT);
+        return userLicenseEntityMapper.toUserLicenseCountResponseDto(user.getId(), recipeCount, businessCount, patentCount);
+    }
 }

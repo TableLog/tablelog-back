@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user_license.controller;
 
 import com.tablelog.tablelogback.domain.user_license.dto.controller.UserLicenseCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCountResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.domain.user_license.mapper.dto.UserLicenseDtoMapper;
@@ -42,7 +43,7 @@ public class UserLicenseController {
 
     @Operation(summary = "전문가 인증 라이센스 조회 By User", description = "licenseType null이면 전체 조회")
     @GetMapping("/users/license")
-    public ResponseEntity<UserLicenseSliceResponseDto> getAllLicensesByUser(
+    public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicensesByUser(
             @RequestParam(required = false) LicenseType licenseType,
             @RequestParam("page") Integer pageNumber,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -56,7 +57,14 @@ public class UserLicenseController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    // get 단건은?
+    @Operation(summary = "라이센스 개수 조회 By User")
+    @GetMapping("/users/license/count")
+    public ResponseEntity<UserLicenseCountResponseDto> getUserLicenseCountByUser(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        UserLicenseCountResponseDto responseDto = userLicenseService.getCountByUser(userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 
-    // get 라이센스 개수
+    // get 단건은?
 }
