@@ -30,7 +30,7 @@ public class AdminUserController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws JacksonException {
         adminUserService.approveDeleteUser(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     // 전문가 인증 승인 -> 요청은 유저에서

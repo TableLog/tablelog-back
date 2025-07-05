@@ -28,7 +28,7 @@ public class AdminUser extends BaseEntity {
     private AdminRequestType requestType;
 
     @Builder
-    public AdminUser(Long userId, ApplyStatus status, AdminRequestType requestType){
+    public AdminUser(final Long userId, final ApplyStatus status, final AdminRequestType requestType){
         this.userId = userId;
         this.status = status;
         this.requestType = requestType;
