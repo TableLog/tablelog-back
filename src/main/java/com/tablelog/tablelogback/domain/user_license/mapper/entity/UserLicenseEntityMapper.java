@@ -1,9 +1,12 @@
 package com.tablelog.tablelogback.domain.user_license.mapper.entity;
 
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.entity.UserLicense;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import java.util.List;
 
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
@@ -12,4 +15,6 @@ public interface UserLicenseEntityMapper {
     @Mapping(source = "userId", target = "userId")
     @Mapping(source = "imageUrl", target = "imageUrl")
     UserLicense toUserLicense(UserLicenseCreateServiceRequestDto requestDto, Long userId, String imageUrl);
+
+    List<UserLicenseReadResponseDto> toUserLicenseReadAllResponseDto(List<UserLicense> userLicenses);
 }

@@ -3,9 +3,8 @@ package com.tablelog.tablelogback.global.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum LicenseType {
-    사업자등록증,
-    특허증,
-    개수;
+    BUSINESS_REGISTRATION, // 사업자 등록증
+    PATENT; // 특허
 
     @JsonCreator
     public static LicenseType fromString(String inputValue) {
