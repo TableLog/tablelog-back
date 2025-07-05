@@ -24,7 +24,8 @@ import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
-import com.tablelog.tablelogback.global.enums.RequestStatus;
+import com.tablelog.tablelogback.global.enums.AdminRequestType;
+import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
@@ -64,7 +65,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         List<User> users = userRepository.findByIsDeletedAndModifiedAtBefore(true, cutoff);
         for(User user : users){
             if(!adminUserRepository.existsByUserId(user.getId())){
-                AdminUser adminUser = new AdminUser(user.getId(), RequestStatus.REQUESTED);
+                AdminUser adminUser = new AdminUser(user.getId(), ApplyStatus.APPLIED, AdminRequestType.WITHDRAWAL);
                 adminUserRepository.save(adminUser);
                 System.out.println(adminUser.getUserId());
             }
@@ -114,7 +115,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             s3Provider.delete(user.getFolderName() + image_name);
         }
 
-        adminUser.updateStatus(RequestStatus.APPROVE);
+        adminUser.updateStatus(ApplyStatus.APPROVED);
         adminUserRepository.save(adminUser);
     }
 }

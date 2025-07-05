@@ -1,11 +1,9 @@
 package com.tablelog.tablelogback.domain.admin_user.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
-import com.tablelog.tablelogback.global.enums.RequestStatus;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.tablelog.tablelogback.global.enums.AdminRequestType;
+import com.tablelog.tablelogback.global.enums.ApplyStatus;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,20 +15,26 @@ import lombok.NoArgsConstructor;
 @Entity
 public class AdminUser extends BaseEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long userId;
 
-    private RequestStatus status;
+    @Column
+    private ApplyStatus status;
+
+    @Column
+    private AdminRequestType requestType;
 
     @Builder
-    public AdminUser(Long userId, RequestStatus status){
+    public AdminUser(Long userId, ApplyStatus status, AdminRequestType requestType){
         this.userId = userId;
         this.status = status;
+        this.requestType = requestType;
     }
 
-    public void updateStatus(RequestStatus status){
+    public void updateStatus(ApplyStatus status){
         this.status = status;
     }
 }
