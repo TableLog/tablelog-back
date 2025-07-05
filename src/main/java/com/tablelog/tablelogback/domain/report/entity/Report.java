@@ -34,7 +34,9 @@ public class Report extends BaseEntity {
     private ApplyStatus status;
 
     @Builder
-    public Report(Long reporterId, Long reportedUserId, String reportContent, ReportType reportType){
+    public Report(final Long reporterId, final Long reportedUserId,
+                  final String reportContent, final ReportType reportType
+    ) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.reportContent = reportContent;

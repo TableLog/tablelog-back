@@ -1,7 +1,10 @@
 package com.tablelog.tablelogback.domain.report.service.impl;
 
 import com.tablelog.tablelogback.domain.report.dto.service.ReportCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.report.dto.service.ReportReadResponseDto;
 import com.tablelog.tablelogback.domain.report.entity.Report;
+import com.tablelog.tablelogback.domain.report.exception.NotFoundReportException;
+import com.tablelog.tablelogback.domain.report.exception.ReportErrorCode;
 import com.tablelog.tablelogback.domain.report.mapper.entity.ReportEntityMapper;
 import com.tablelog.tablelogback.domain.report.repository.ReportRepository;
 import com.tablelog.tablelogback.domain.report.service.ReportService;
@@ -26,5 +29,12 @@ public class ReportServiceImpl implements ReportService {
         }
         Report report = reportEntityMapper.toReport(serviceRequestDto, user.getId());
         reportRepository.save(report);
+    }
+
+    @Override
+    public ReportReadResponseDto getReport(Long id){
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
+        return reportEntityMapper.toReportReadResponseDto(report);
     }
 }

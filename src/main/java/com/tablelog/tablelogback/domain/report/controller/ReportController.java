@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.report.controller;
 
 import com.tablelog.tablelogback.domain.report.dto.controller.ReportCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.report.dto.service.ReportReadResponseDto;
 import com.tablelog.tablelogback.domain.report.mapper.dto.ReportDtoMapper;
 import com.tablelog.tablelogback.domain.report.service.impl.ReportServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -10,11 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -34,4 +33,22 @@ public class ReportController {
         reportService.createReport(serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "신고 단건 조회")
+    @GetMapping("/admin/report/{reportId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReportReadResponseDto> getReport(
+            @PathVariable Long reportId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        ReportReadResponseDto responseDto = reportService.getReport(reportId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    // 신고 전체 조회
+
+    // 관리자가 신고 승인
+
+
+    // 관리자가 신고 거절
 }
