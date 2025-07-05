@@ -32,7 +32,7 @@ public class RecipeReviewController {
     @PostMapping("/recipes/{recipeId}/recipe-reviews")
     public ResponseEntity<?> createRecipeReview(
             @PathVariable Long recipeId,
-            RecipeReviewCreateControllerRequestDto requestDto,
+            @RequestBody RecipeReviewCreateControllerRequestDto requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         RecipeReviewCreateServiceRequestDto serviceRequestDto =
