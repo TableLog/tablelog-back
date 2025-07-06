@@ -60,7 +60,7 @@ public class ReportController {
     }
 
     @Operation(summary = "관리자가 신고 승인")
-    @PostMapping("/admin/reports/{reportId}")
+    @PostMapping("/admin/reports/{reportId}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> approveReport(
             @PathVariable Long reportId,
@@ -70,6 +70,16 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "관리자가 신고 거절")
+    @PostMapping("/admin/reports/{reportId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> rejectReport(
+            @PathVariable Long reportId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        reportService.rejectReport(reportId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 
-    // 관리자가 신고 거절
+    // 관리자가 신고 처리 중
 }

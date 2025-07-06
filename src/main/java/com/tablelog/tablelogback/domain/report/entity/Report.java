@@ -56,4 +56,8 @@ public class Report extends BaseEntity {
     public void reject(){
         this.status = ApplyStatus.REJECTED;
     }
+
+    public void processing(){
+        this.status = ApplyStatus.PROCESSING;
+    }
 }
