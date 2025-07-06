@@ -25,7 +25,7 @@ public class RecipeLikeController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         recipeLikeService.createRecipeLike(recipeId, userDetails.user().getId());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "좋아요 삭제")
