@@ -27,7 +27,7 @@ public class FollowController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         followService.createFollow(userId, userDetails.user());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "언팔로우")

@@ -43,4 +43,6 @@ public interface RecipeLikeRepository extends JpaRepository<RecipeLike, Long> {
     @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeLikeCountDto(l.recipe, COUNT(l)) " +
             "FROM RecipeLike l WHERE l.recipe IN :recipeIds GROUP BY l.recipe")
     List<RecipeLikeCountDto> countLikesByRecipeIds(@Param("recipeIds") List<Long> recipeIds);
+
+    void deleteAllByUser(Long user);
 }
