@@ -73,4 +73,12 @@ public class ReportServiceImpl implements ReportService {
         report.reject();
         reportRepository.save(report);
     }
+
+    @Override
+    public void processingReport(Long id){
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
+        report.processing();
+        reportRepository.save(report);
+    }
 }

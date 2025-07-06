@@ -15,4 +15,6 @@ public interface ReportService {
     void approveReport(Long id);
 
     void rejectReport(Long id);
+
+    void processingReport(Long id);
 }

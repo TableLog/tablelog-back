@@ -81,5 +81,14 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    // 관리자가 신고 처리 중
+    @Operation(summary = "관리자가 신고 처리 중")
+    @PostMapping("/admin/reports/{reportId}/processing")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> processingReport(
+            @PathVariable Long reportId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        reportService.processingReport(reportId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
