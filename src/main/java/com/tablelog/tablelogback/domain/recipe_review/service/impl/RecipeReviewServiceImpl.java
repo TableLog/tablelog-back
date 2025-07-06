@@ -4,10 +4,7 @@ import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseDto;
-import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_review.entity.RecipeReview;
 import com.tablelog.tablelogback.domain.recipe_review.exception.ForbiddenAccessRecipeReviewException;
 import com.tablelog.tablelogback.domain.recipe_review.exception.NotFoundRecipeReviewException;
@@ -44,21 +41,26 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     public void createRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user){
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user, 0L);
+        recipeReviewRepository.save(recipeReview);
+        recipe.updateReviewCount(recipe.getReviewCount() + 1);
+        recipe.addStar(serviceRequestDto.star());
+        user.addPointBalance(100);
+    }
+
+    @Transactional
+    public void createRecipeReply(RecipeReviewReplyCreateServiceRequestDto serviceRequestDto, Long recipeId, User user){
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         // 대댓글은 작성자만 한 개만 가능
-        if(serviceRequestDto.prrId() != 0){
-            if(recipeReviewRepository.existsByPrrId(serviceRequestDto.prrId()) || !isRecipeAuthorOrAdmin(recipe, user)){
-                throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
-            }
-            RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user);
-            recipeReviewRepository.save(recipeReview);
+        if(serviceRequestDto.prrId() == 0L){
+            throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
         }
-        else {
-            RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user);
-            recipeReviewRepository.save(recipeReview);
-            recipe.updateReviewCount(recipe.getReviewCount() + 1);
-            recipe.addStar(serviceRequestDto.star());
-            user.addPointBalance(100);
+        if(recipeReviewRepository.existsByPrrId(serviceRequestDto.prrId()) || !isRecipeAuthorOrAdmin(recipe, user)){
+            throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
         }
+        RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReply(serviceRequestDto, recipeId, user);
+        recipeReviewRepository.save(recipeReview);
     }
 
     @Override
@@ -71,12 +73,14 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         if(userDetails != null){
             isReviewer = userDetails.user().getNickname().equals(recipeReview.getUser());
         }
-        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer);
+        boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
+        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, isWriter);
     }
 
     @Override
     public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(
-            Long recipeId, int pageNumber, UserDetailsImpl userDetails) {
+            Long recipeId, int pageNumber, UserDetailsImpl userDetails
+    ) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
@@ -160,12 +164,16 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     private List<RecipeReviewReadResponseDto> mappingRecipeReviews(
-            Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview){
+            Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview
+    ){
         List<RecipeReviewReadResponseDto> recipeReviews = slice.getContent().stream()
             .map(recipeReview -> {
                 boolean isReviewer = isMyReview
                         || (userDetails != null && userDetails.user().getNickname().equals(recipeReview.getUser()));
-                return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer);
+                Recipe recipe = recipeRepository.findById(recipeReview.getRecipeId())
+                        .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+                boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
+                return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, isWriter);
             })
             .collect(Collectors.toList());
         return recipeReviews;

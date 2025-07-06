@@ -23,7 +23,9 @@ public record RecipeReadResponseDto(
         Long likeCount,
         Boolean isSaved,
         String user,
+        Boolean isExpertWriter,
         Boolean isWriter,
-        Boolean hasPurchased
+        Boolean hasPurchased,
+        Long writerId
 ) {
 }
