@@ -1,5 +1,11 @@
 package com.tablelog.tablelogback.domain.report.service.impl;
 
+import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
+import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
+import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
+import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
+import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
+import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportReadResponseDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportSliceResponseDto;
@@ -14,6 +20,7 @@ import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
+import com.tablelog.tablelogback.global.enums.ReportType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -28,12 +35,15 @@ public class ReportServiceImpl implements ReportService {
     private final UserRepository userRepository;
     private final ReportEntityMapper reportEntityMapper;
     private final ReportRepository reportRepository;
+    private final BoardRepository boardRepository;
+    private final RecipeRepository recipeRepository;
 
     @Override
     public void createReport(ReportCreateServiceRequestDto serviceRequestDto, User user){
         if(!userRepository.existsById(serviceRequestDto.reportedUserId())){
             throw new NotFoundUserException(UserErrorCode.NOT_FOUND_USER);
         }
+        validateTargetExists(serviceRequestDto.reportType(), serviceRequestDto.targetId());
         Report report = reportEntityMapper.toReport(serviceRequestDto, user.getId());
         reportRepository.save(report);
     }
@@ -78,7 +88,20 @@ public class ReportServiceImpl implements ReportService {
     public void processingReport(Long id){
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
+        validateTargetExists(report.getReportType(), report.getTargetId());
         report.processing();
         reportRepository.save(report);
     }
+
+    private void validateTargetExists(ReportType type, Long id) {
+        switch (type) {
+            case R_USER -> userRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            case R_BOARD -> boardRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+            case R_RECIPE -> recipeRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        }
+    }
+
 }
