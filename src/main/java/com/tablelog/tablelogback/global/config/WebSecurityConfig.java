@@ -36,12 +36,12 @@ public class WebSecurityConfig {
                 );
 
         http
-                .authorizeHttpRequests((authorizeHttpRequests) ->
-                                authorizeHttpRequests
-                                    .requestMatchers("/ws/**").permitAll()
-                                    .requestMatchers("/api/v1/**").permitAll() // 초기 개발 진행 위해
-                                    .requestMatchers( "/","/swagger-ui/**", "/v3/api-docs/**").permitAll()
-//                                .anyRequest().authenticated()
+                .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/v1/**").permitAll() // 초기 개발 진행 위해
+                        .requestMatchers( "/","/swagger-ui/**", "/v3/api-docs/**").permitAll()
+//                        .anyRequest().authenticated()
                 );
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();

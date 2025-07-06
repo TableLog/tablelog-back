@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
@@ -121,7 +120,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserLoginResponseDto login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
+    public Boolean login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
         User user = userRepository.findByEmail(userLoginServiceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
@@ -132,7 +131,14 @@ public class UserServiceImpl implements UserService {
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
-        return userEntityMapper.toUserLoginResponseDto(user, dtos);
+        // 탈퇴 요청 중 유저가 재로그인하면
+        boolean recovered = false;
+        if (user.getIsDeleted()) {
+            user.updateIsDeleted(false);
+            userRepository.save(user);
+            recovered = true;
+        }
+        return recovered;
     }
 
     @Override
@@ -292,21 +298,24 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(final User user,
                            final HttpServletResponse response
-    ) throws JacksonException {
+    ) {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        // isDeleted true로 변경
+        user.updateIsDeleted(true);
+        userRepository.save(user);
+        // 로그아웃 처리
         jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
-        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
-
-        if (user.getProfileImgUrl() == null){
-            userRepository.deleteById(user.getId());
-        } else {
-            String image_name = user.getProfileImgUrl().replace(url,"");
-            image_name = image_name.substring(image_name.lastIndexOf("/"));
-            userRepository.deleteById(user.getId());
-            s3Provider.delete(user.getFolderName() + image_name);
+        if(user.getProvider() == UserProvider.kakao){
+            jwtUtil.deleteCookie("Kakao-Access-Token", response);
+            jwtUtil.deleteCookie("Kakao-Refresh-Token", response);
+            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+        } else if(user.getProvider() == UserProvider.google){
+            jwtUtil.deleteCookie("Google-Access-Token", response);
+            jwtUtil.deleteCookie("Google-Refresh-Token", response);
         }
+        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
     }
 
     @Override

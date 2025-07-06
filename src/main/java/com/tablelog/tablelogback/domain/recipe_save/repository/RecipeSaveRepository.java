@@ -49,4 +49,6 @@ public interface RecipeSaveRepository extends JpaRepository<RecipeSave, Long> {
     """)
     List<RecipeIsSavedDto> findSavesByRecipeAndUser(@Param("recipeIds") List<Long> recipeIds,
                                                     @Param("userId") Long userId);
+
+    void deleteAllByUser(Long userId);
 }

@@ -13,6 +13,7 @@ public record RecipeReviewReadResponseDto(
         String user,
         LocalDateTime modifiedAt,
         Long prrId,
-        boolean isReviewer
+        boolean isReviewer,
+        boolean isWriter
 ) {
 }

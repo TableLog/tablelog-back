@@ -25,7 +25,7 @@ public class RecipeSaveController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         recipeSaveService.createRecipeSave(recipeId, userDetails.user().getId());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "레시피 저장 삭제")
