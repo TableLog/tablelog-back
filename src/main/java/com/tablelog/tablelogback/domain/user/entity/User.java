@@ -70,6 +70,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Long followingCount;
 
+    @Column
+    private Boolean isDeleted;
+
     @Builder
     public User(
             final String email,
@@ -98,6 +101,7 @@ public class User extends BaseEntity {
         this.boardCount = 0L;
         this.followerCount = 0L;
         this.followingCount = 0L;
+        this.isDeleted = false;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -154,5 +158,9 @@ public class User extends BaseEntity {
 
     public void addPointBalance(Integer point){
         this.pointBalance = this.pointBalance + point;
+    }
+
+    public void updateIsDeleted(Boolean isDeleted){
+        this.isDeleted = isDeleted;
     }
 }

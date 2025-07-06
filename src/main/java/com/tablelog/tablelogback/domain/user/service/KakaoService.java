@@ -181,7 +181,7 @@ public class KakaoService {
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
-    public void unlinkKakao(String kakaoAccessToken, HttpServletResponse httpServletResponse) throws JacksonException {
+    public void unlinkKakao(String kakaoAccessToken) throws JacksonException {
         SocialUserInfoDto socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
         User user = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
