@@ -11,4 +11,6 @@ public interface ReportService {
     ReportReadResponseDto getReport(Long id);
 
     ReportSliceResponseDto getAllReports(ApplyStatus status, int pageNum);
+
+    void approveReport(Long id);
 }

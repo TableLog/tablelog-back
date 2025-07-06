@@ -48,4 +48,12 @@ public class Report extends BaseEntity {
         this.status = ApplyStatus.APPLIED;
         this.targetId = targetId;
     }
+
+    public void approve(){
+        this.status = ApplyStatus.APPROVED;
+    }
+
+    public void reject(){
+        this.status = ApplyStatus.REJECTED;
+    }
 }

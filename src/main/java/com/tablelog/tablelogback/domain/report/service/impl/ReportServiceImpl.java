@@ -57,4 +57,12 @@ public class ReportServiceImpl implements ReportService {
         List<ReportReadResponseDto> reports = reportEntityMapper.toReportReadAllResponseDto(slice.getContent());
         return new ReportSliceResponseDto(reports, slice.hasNext());
     }
+
+    @Override
+    public void approveReport(Long id){
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
+        report.approve();
+        reportRepository.save(report);
+    }
 }

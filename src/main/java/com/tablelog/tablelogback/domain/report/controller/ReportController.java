@@ -26,7 +26,7 @@ public class ReportController {
     private final ReportServiceImpl reportService;
 
     @Operation(summary = "신고 생성")
-    @PostMapping("/report")
+    @PostMapping("/reports")
     public ResponseEntity<?> createReport(
             @RequestBody ReportCreateControllerRequestDto requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -37,7 +37,7 @@ public class ReportController {
     }
 
     @Operation(summary = "신고 단건 조회")
-    @GetMapping("/admin/report/{reportId}")
+    @GetMapping("/admin/reports/{reportId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ReportReadResponseDto> getReport(
             @PathVariable Long reportId,
@@ -47,7 +47,7 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @Operation(summary = "신고 전체 조회 By status")
+    @Operation(summary = "관리자가 신고 전체 조회 By status")
     @GetMapping("/admin/reports")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ReportSliceResponseDto> getAllReports(
@@ -59,7 +59,16 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    // 관리자가 신고 승인
+    @Operation(summary = "관리자가 신고 승인")
+    @PostMapping("/admin/reports/{reportId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> approveReport(
+            @PathVariable Long reportId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        reportService.approveReport(reportId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 
 
     // 관리자가 신고 거절
