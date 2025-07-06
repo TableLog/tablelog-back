@@ -1,8 +1,8 @@
 package com.tablelog.tablelogback.domain.user_license.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
+import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.enums.LicenseType;
-import com.tablelog.tablelogback.global.enums.RequestStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,7 +31,7 @@ public class UserLicense extends BaseEntity {
     private String imageUrl;
 
     @Column
-    private RequestStatus status;
+    private ApplyStatus status;
 
     @Builder
     public UserLicense(final Long userId, final String licenseName, final LicenseType licenseType,
@@ -40,6 +40,6 @@ public class UserLicense extends BaseEntity {
         this.licenseName = licenseName;
         this.licenseType = licenseType;
         this.imageUrl = imageUrl;
-        this.status = RequestStatus.REQUESTED;
+        this.status = ApplyStatus.APPLIED;
     }
 }
