@@ -49,14 +49,14 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public ReportReadResponseDto getReport(Long id){
+    public ReportReadResponseDto readReport(Long id){
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
         return reportEntityMapper.toReportReadResponseDto(report);
     }
 
     @Override
-    public ReportSliceResponseDto getAllReports(ApplyStatus status, int pageNum){
+    public ReportSliceResponseDto readAllReports(ApplyStatus status, int pageNum){
         PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Report> slice = null;
         if(status == null){
