@@ -4,6 +4,7 @@ import java.util.List;
 
 public record RecipeReviewSliceResponseDto(
         List<RecipeReviewReadResponseDto> contents,
-        boolean hasNext
+        boolean hasNext,
+        Boolean isWriter
 ) {
 }

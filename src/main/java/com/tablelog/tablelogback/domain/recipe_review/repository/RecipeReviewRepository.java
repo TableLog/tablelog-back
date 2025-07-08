@@ -6,11 +6,20 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface RecipeReviewRepository extends JpaRepository<RecipeReview, Long> {
     Slice<RecipeReview> findAllByRecipeId(Long recipeId, Pageable pageable);
+
     Slice<RecipeReview> findAllByUser(String user, Pageable pageable);
+
+    Slice<RecipeReview> findAllByRecipeIdAndPrrId(Long recipeId, Long prrId, Pageable pageable);
+
+    List<RecipeReview> findAllByPrrIdIn(List<Long> recipeIds);
+
     Boolean existsByPrrId(Long prrId);
+
     void deleteByPrrId(Long prrId);
 
     void deleteAllByUser(String user);

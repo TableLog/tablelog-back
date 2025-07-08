@@ -25,9 +25,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 @Service
@@ -41,6 +42,10 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     public void createRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user){
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        // 작성자 댓글 생성 불가
+        if(Objects.equals(user.getId(), recipe.getUserId())){
+            throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
+        }
         RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user, 0L);
         recipeReviewRepository.save(recipeReview);
         recipe.updateReviewCount(recipe.getReviewCount() + 1);
@@ -73,8 +78,12 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         if(userDetails != null){
             isReviewer = userDetails.user().getNickname().equals(recipeReview.getUser());
         }
-        boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
-        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, isWriter);
+        User reviewUser = userRepository.findByNickname(recipeReview.getUser())
+                .orElse(null);
+        String profileImgUrl = Optional.ofNullable(reviewUser)
+                .map(User::getProfileImgUrl)
+                .orElse(null);
+        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, profileImgUrl);
     }
 
     @Override
@@ -84,9 +93,13 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<RecipeReview> slice = recipeReviewRepository.findAllByRecipeId(recipe.getId(), pageRequest);
+
+        // 댓글만 조회
+        Slice<RecipeReview> slice = recipeReviewRepository.findAllByRecipeIdAndPrrId(recipe.getId(), 0L, pageRequest);
+
         List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, false);
-        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
+        boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
+        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext(), isWriter);
     }
 
     @Override
@@ -100,7 +113,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
             isMyReview = true;
         }
         List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, isMyReview);
-        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
+        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext(), null);
     }
 
     @Override
@@ -108,7 +121,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(userDetails.user().getNickname(), pageRequest);
         List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, true);
-        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext());
+        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext(), null);
     }
 
     @Transactional
@@ -166,16 +179,49 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     private List<RecipeReviewReadResponseDto> mappingRecipeReviews(
             Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview
     ){
-        List<RecipeReviewReadResponseDto> recipeReviews = slice.getContent().stream()
-            .map(recipeReview -> {
-                boolean isReviewer = isMyReview
-                        || (userDetails != null && userDetails.user().getNickname().equals(recipeReview.getUser()));
-                Recipe recipe = recipeRepository.findById(recipeReview.getRecipeId())
-                        .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
-                boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
-                return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, isWriter);
-            })
-            .collect(Collectors.toList());
-        return recipeReviews;
+        List<RecipeReview> comments = slice.getContent();
+
+        // 댓글 id 조회
+        List<Long> commentIds = comments.stream()
+                .map(RecipeReview::getId)
+                .collect(Collectors.toList());
+
+        // 답글 조회
+        List<RecipeReview> replies = recipeReviewRepository.findAllByPrrIdIn(commentIds);
+        Map<Long, RecipeReview> replyMap = replies.stream()
+                .collect(Collectors.toMap(RecipeReview::getPrrId, Function.identity()));
+
+        // 유저 집합
+        Set<String> allNicknames = Stream.concat(
+                comments.stream().map(RecipeReview::getUser),
+                replies.stream().map(RecipeReview::getUser)
+        ).collect(Collectors.toSet());
+
+        // 유저 프로필 이미지
+        Map<String, String> profileImgMap = userRepository.findAllByNicknameIn(allNicknames).stream()
+                .collect(Collectors.toMap(User::getNickname, User::getProfileImgUrl));
+        // null 오류????????????????? 뭐가 문제인지?
+
+        return comments.stream()
+                .map(comment -> {
+                    boolean isReviewer = isMyReview
+                            || (userDetails != null && userDetails.user().getNickname().equals(comment.getUser()));
+
+                    String profileImgUrl = profileImgMap.get(comment.getUser());
+
+                    // 답글 매핑
+                    RecipeReview reply = replyMap.get(comment.getId());
+                    RecipeReviewReadResponseDto replyDto = null;
+                    if (reply != null) {
+                        boolean isReplyReviewer = userDetails != null
+                                && userDetails.user().getNickname().equals(reply.getUser());
+                        String replyProfileImgUrl = profileImgMap.get(reply.getUser());
+                        replyDto = recipeReviewEntityMapper
+                                .toRecipeReviewReadResponseDto(reply, isReplyReviewer, replyProfileImgUrl);
+                    }
+
+                    return recipeReviewEntityMapper.toDtoWithReply(comment, isReviewer, profileImgUrl, replyDto);
+                })
+                .collect(Collectors.toList());
     }
 }

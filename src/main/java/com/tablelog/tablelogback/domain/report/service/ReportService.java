@@ -8,9 +8,9 @@ import com.tablelog.tablelogback.global.enums.ApplyStatus;
 
 public interface ReportService {
     void createReport(ReportCreateServiceRequestDto serviceRequestDto, User user);
-    ReportReadResponseDto getReport(Long id);
+    ReportReadResponseDto readReport(Long id);
 
-    ReportSliceResponseDto getAllReports(ApplyStatus status, int pageNum);
+    ReportSliceResponseDto readAllReports(ApplyStatus status, int pageNum);
 
     void approveReport(Long id);
 

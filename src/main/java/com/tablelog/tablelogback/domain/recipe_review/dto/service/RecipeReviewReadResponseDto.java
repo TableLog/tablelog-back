@@ -14,6 +14,7 @@ public record RecipeReviewReadResponseDto(
         LocalDateTime modifiedAt,
         Long prrId,
         boolean isReviewer,
-        boolean isWriter
+        String profileImgUrl,
+        RecipeReviewReadResponseDto reply
 ) {
 }

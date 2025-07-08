@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
@@ -26,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Slice<User> findByNicknameContaining(String keyword, Pageable pageable);
 
     List<User> findByIsDeletedAndModifiedAtBefore(Boolean isDeleted, LocalDateTime now);
+
+    List<User> findAllByNicknameIn(Set<String> nicknames);
 
     boolean existsByEmail(String email);
 

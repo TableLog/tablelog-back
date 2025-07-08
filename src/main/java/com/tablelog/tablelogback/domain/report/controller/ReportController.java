@@ -39,23 +39,23 @@ public class ReportController {
     @Operation(summary = "신고 단건 조회")
     @GetMapping("/admin/reports/{reportId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ReportReadResponseDto> getReport(
+    public ResponseEntity<ReportReadResponseDto> readReport(
             @PathVariable Long reportId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        ReportReadResponseDto responseDto = reportService.getReport(reportId);
+        ReportReadResponseDto responseDto = reportService.readReport(reportId);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @Operation(summary = "관리자가 신고 전체 조회 By status")
     @GetMapping("/admin/reports")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ReportSliceResponseDto> getAllReports(
+    public ResponseEntity<ReportSliceResponseDto> readAllReports(
             @RequestParam(required = false) ApplyStatus status,
             @RequestParam int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        ReportSliceResponseDto responseDto = reportService.getAllReports(status, pageNum);
+        ReportSliceResponseDto responseDto = reportService.readAllReports(status, pageNum);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
