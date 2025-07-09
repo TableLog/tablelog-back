@@ -10,12 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface UserLicenseService {
-    void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto,
-                           User user, MultipartFile multipartFile) throws IOException;
+    void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto, User user) throws IOException;
 
     UserLicenseSliceResponseDto getAllUserLicenseByUser(int pageNum, User user);
 
     UserLicenseSliceResponseDto getAllUserLicensesByUserAndLicenseType(LicenseType licenseType, int pageNum, User user);
 
     UserLicenseCountResponseDto getCountByUser(User user);
+
+    UserLicenseSliceResponseDto getAllUserLicenseByUserId(Long userId, int pageNumber);
 }

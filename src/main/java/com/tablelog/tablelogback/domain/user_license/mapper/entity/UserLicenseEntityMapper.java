@@ -14,8 +14,7 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 @Mapper(componentModel = SPRING)
 public interface UserLicenseEntityMapper {
     @Mapping(source = "userId", target = "userId")
-    @Mapping(source = "imageUrl", target = "imageUrl")
-    UserLicense toUserLicense(UserLicenseCreateServiceRequestDto requestDto, Long userId, String imageUrl);
+    UserLicense toUserLicense(UserLicenseCreateServiceRequestDto requestDto, Long userId);
 
     List<UserLicenseReadResponseDto> toUserLicenseReadAllResponseDto(List<UserLicense> userLicenses);
 
