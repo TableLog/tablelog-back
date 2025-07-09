@@ -28,4 +28,5 @@ public interface UserService {
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
     void updatePassword(UpdatePasswordServiceRequestDto serviceRequestDto);
     FindEmailResponseDto findEmail(findEmailServiceRequestDto serviceRequestDto);
+    void requestExpertVerification(User user);
 }

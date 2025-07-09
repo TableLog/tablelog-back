@@ -1,5 +1,7 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
+import com.tablelog.tablelogback.domain.admin_user.entity.AdminUser;
+import com.tablelog.tablelogback.domain.admin_user.repository.AdminUserRepository;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
@@ -19,6 +21,8 @@ import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
+import com.tablelog.tablelogback.global.enums.AdminRequestType;
+import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
@@ -60,6 +64,7 @@ public class UserServiceImpl implements UserService {
     private final FollowRepository followRepository;
     private final BoardRepository boardRepository;
     private final BoardCommentRepository boardCommentRepository;
+    private final AdminUserRepository adminUserRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -373,5 +378,15 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUserNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         return userEntityMapper.toFindEmailResponseDto(user);
+    }
+
+    @Override
+    public void requestExpertVerification(User user){
+        AdminUser adminUser = AdminUser.builder()
+                .userId(user.getId())
+                .status(ApplyStatus.APPLIED)
+                .requestType(AdminRequestType.EXPERT_VERIFY)
+                .build();
+        adminUserRepository.save(adminUser);
     }
 }
