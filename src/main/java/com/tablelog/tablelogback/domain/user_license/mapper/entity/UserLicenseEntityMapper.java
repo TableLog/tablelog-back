@@ -16,6 +16,8 @@ public interface UserLicenseEntityMapper {
     @Mapping(source = "userId", target = "userId")
     UserLicense toUserLicense(UserLicenseCreateServiceRequestDto requestDto, Long userId);
 
+    UserLicenseReadResponseDto toUserLicenseReadResponseDto(UserLicense userLicense);
+
     List<UserLicenseReadResponseDto> toUserLicenseReadAllResponseDto(List<UserLicense> userLicenses);
 
     UserLicenseCountResponseDto toUserLicenseCountResponseDto(

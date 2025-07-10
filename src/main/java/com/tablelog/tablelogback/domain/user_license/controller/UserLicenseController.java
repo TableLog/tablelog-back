@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.user_license.controller;
 import com.tablelog.tablelogback.domain.user_license.dto.controller.UserLicenseCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCountResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.domain.user_license.mapper.dto.UserLicenseDtoMapper;
 import com.tablelog.tablelogback.domain.user_license.service.impl.UserLicenseServiceImpl;
@@ -17,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -66,8 +66,8 @@ public class UserLicenseController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @Operation(summary = "관리자가 전문가 승인 위해 유저의 라이센스 조회")
-    @GetMapping("/admin/expert/license/{userId}")
+    @Operation(summary = "관리자가 전문가 승인 위해 유저의 라이센스 전체 조회")
+    @GetMapping("/admin/users/{userId}/licenses")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicenseByUserId(
             @PathVariable Long userId,
@@ -78,5 +78,14 @@ public class UserLicenseController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    // get 단건은?
+    @Operation(summary = "관리자가 전문가 승인 위해 라이센스 단건 조회")
+    @GetMapping("/admin/licenses/{licenseId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserLicenseReadResponseDto> getUserLicense(
+            @PathVariable Long licenseId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        UserLicenseReadResponseDto responseDto = userLicenseService.getUserLicense(licenseId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }

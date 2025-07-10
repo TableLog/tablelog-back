@@ -10,7 +10,6 @@ public record UserLicenseReadResponseDto(
         Long userId,
         String licenseName,
         LicenseType licenseType,
-        ApplyStatus status,
         LocalDateTime modifiedAt
 ) {
 }

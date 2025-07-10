@@ -3,9 +3,9 @@ package com.tablelog.tablelogback.domain.user_license.service;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCountResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.global.enums.LicenseType;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -19,4 +19,6 @@ public interface UserLicenseService {
     UserLicenseCountResponseDto getCountByUser(User user);
 
     UserLicenseSliceResponseDto getAllUserLicenseByUserId(Long userId, int pageNumber);
+
+    UserLicenseReadResponseDto getUserLicense(Long id);
 }

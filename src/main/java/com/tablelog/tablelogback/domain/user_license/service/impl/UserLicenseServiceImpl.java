@@ -6,6 +6,8 @@ import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCrea
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.domain.user_license.entity.UserLicense;
+import com.tablelog.tablelogback.domain.user_license.exception.NotFoundUserLicenseException;
+import com.tablelog.tablelogback.domain.user_license.exception.UserLicenseErrorCode;
 import com.tablelog.tablelogback.domain.user_license.mapper.entity.UserLicenseEntityMapper;
 import com.tablelog.tablelogback.domain.user_license.repository.UserLicenseRepository;
 import com.tablelog.tablelogback.domain.user_license.service.UserLicenseService;
@@ -15,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,9 +30,6 @@ public class UserLicenseServiceImpl implements UserLicenseService {
 
     @Override
     public void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto, User user) throws IOException {
-        String fileName;
-        String imageUrl = null;
-        String folderName = user.getNickname();
         UserLicense userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto, user.getId());
         userLicenseRepository.save(userLicense);
     }
@@ -77,5 +75,12 @@ public class UserLicenseServiceImpl implements UserLicenseService {
         List<UserLicenseReadResponseDto> userLicenses =
                 userLicenseEntityMapper.toUserLicenseReadAllResponseDto(slice.getContent());
         return new UserLicenseSliceResponseDto(userLicenses, slice.hasNext());
+    }
+
+    @Override
+    public UserLicenseReadResponseDto getUserLicense(Long id){
+        UserLicense userLicense = userLicenseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundUserLicenseException(UserLicenseErrorCode.NOT_FOUND_USER_LICENSE));
+        return userLicenseEntityMapper.toUserLicenseReadResponseDto(userLicense);
     }
 }
