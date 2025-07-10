@@ -1,7 +1,10 @@
 package com.tablelog.tablelogback.domain.admin_user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.admin_user.dto.controller.AdminUserRejectReasonControllerRequestDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserRejectReasonServiceRequestDto;
 import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserSliceReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.mapper.dto.AdminUserDtoMapper;
 import com.tablelog.tablelogback.domain.admin_user.service.impl.AdminUserServiceImpl;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "관리자 - 유저 API", description = "")
 public class AdminUserController {
     private final AdminUserServiceImpl adminUserService;
+    private final AdminUserDtoMapper adminUserDtoMapper;
 
     @Operation(summary = "회원탈퇴 승인")
     @DeleteMapping("/admin/withdraw/{id}")
@@ -52,6 +56,20 @@ public class AdminUserController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         adminUserService.reviewExpertVerification(id);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "전문가 인증 처리 - 거절")
+    @PostMapping("/admin/expert/{id}/rejection")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> rejectExpertVerification(
+            @PathVariable Long id,
+            @RequestBody AdminUserRejectReasonControllerRequestDto controllerRequestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        AdminUserRejectReasonServiceRequestDto serviceRequestDto =
+                adminUserDtoMapper.toAdminUserRejectReasonServiceRequestDto(controllerRequestDto);
+        adminUserService.rejectExpertVerification(id, serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 

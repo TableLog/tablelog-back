@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.admin_user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserRejectReasonServiceRequestDto;
 import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserSliceReadResponseDto;
 import com.tablelog.tablelogback.domain.admin_user.entity.AdminUser;
 import com.tablelog.tablelogback.domain.admin_user.exception.AdminUserErrorCode;
@@ -165,5 +166,16 @@ public class AdminUserServiceImpl implements AdminUserService {
             adminUser.updateRejectReason("조건이 충족되지 않습니다");
             adminUserRepository.save(adminUser);
         }
+    }
+
+    @Override
+    public void rejectExpertVerification(
+            Long id, AdminUserRejectReasonServiceRequestDto serviceRequestDto
+    ){
+        AdminUser adminUser = adminUserRepository.findById(id)
+                .orElseThrow(() -> new NotFoundAdminUserException(AdminUserErrorCode.NOT_FOUND_ADMIN_USER));
+        adminUser.updateStatus(ApplyStatus.REJECTED);
+        adminUser.updateRejectReason(serviceRequestDto.rejectReason());
+        adminUserRepository.save(adminUser);
     }
 }
