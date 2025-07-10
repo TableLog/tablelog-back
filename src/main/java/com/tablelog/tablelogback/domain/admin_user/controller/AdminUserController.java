@@ -1,8 +1,7 @@
 package com.tablelog.tablelogback.domain.admin_user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.tablelog.tablelogback.domain.admin_user.dto.AdminUserReadResponseDto;
-import com.tablelog.tablelogback.domain.admin_user.dto.AdminUserSliceReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserSliceReadResponseDto;
 import com.tablelog.tablelogback.domain.admin_user.service.impl.AdminUserServiceImpl;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -45,14 +44,16 @@ public class AdminUserController {
                 adminUserService.getAllAdminUser(status, pageNum));
     }
 
-    @Operation(summary = "전문가 인증 승인")
+    @Operation(summary = "전문가 인증 처리", description = "승인과 비슷, 조건 안 맞으면 자동 거절됨")
     @PostMapping("/admin/expert/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> approveExpertVerification(
+    public ResponseEntity<?> reviewExpertVerification(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-    ) throws JacksonException {
-        adminUserService.approveExpertVerification(id);
+    ) {
+        adminUserService.reviewExpertVerification(id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
+    // 중복 사용자 확인
 }

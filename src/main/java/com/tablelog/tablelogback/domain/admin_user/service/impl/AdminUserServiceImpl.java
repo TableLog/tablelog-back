@@ -1,8 +1,8 @@
 package com.tablelog.tablelogback.domain.admin_user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.tablelog.tablelogback.domain.admin_user.dto.AdminUserReadResponseDto;
-import com.tablelog.tablelogback.domain.admin_user.dto.AdminUserSliceReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserSliceReadResponseDto;
 import com.tablelog.tablelogback.domain.admin_user.entity.AdminUser;
 import com.tablelog.tablelogback.domain.admin_user.exception.AdminUserErrorCode;
 import com.tablelog.tablelogback.domain.admin_user.exception.NotFoundAdminUserException;
@@ -29,10 +29,7 @@ import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user_license.repository.UserLicenseRepository;
-import com.tablelog.tablelogback.global.enums.AdminRequestType;
-import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.UserProvider;
-import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.global.enums.*;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
@@ -148,22 +145,25 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public void approveExpertVerification(Long id){
+    public void reviewExpertVerification(Long id){
         AdminUser adminUser = adminUserRepository.findById(id)
                 .orElseThrow(() -> new NotFoundAdminUserException(AdminUserErrorCode.NOT_FOUND_ADMIN_USER));
         User user = userRepository.findById(adminUser.getUserId())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Long recipeCount = recipeRepository.countByUserId(user.getId());
         user.updateRecipeCount(recipeCount);
-        if(recipeCount >= 50){
+        boolean hasBusinessLicense = userLicenseRepository
+                .existsByUserIdAndLicenseType(user.getId(), LicenseType.BUSINESS_REGISTRATION);
+        boolean hasPatent = userLicenseRepository.existsByUserIdAndLicenseType(user.getId(), LicenseType.PATENT);
+        if (recipeCount >= 50 || hasBusinessLicense || hasPatent) {
             user.changeRole(UserRole.EXPERT);
             adminUser.updateStatus(ApplyStatus.APPROVED);
             userRepository.save(user);
             adminUserRepository.save(adminUser);
-            return;
+        } else {
+            adminUser.updateStatus(ApplyStatus.REJECTED);
+            adminUser.updateRejectReason("조건이 충족되지 않습니다");
+            adminUserRepository.save(adminUser);
         }
-//        List<UserLicense> userLicenseList = userLicenseRepository.findAllByUserId()
-        // 사업자 등록증 내역 확인
-        // 특허 내역 확인
     }
 }

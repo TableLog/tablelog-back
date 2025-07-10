@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.admin_user.mapper.entity;
 
-import com.tablelog.tablelogback.domain.admin_user.dto.AdminUserReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserReadResponseDto;
 import com.tablelog.tablelogback.domain.admin_user.entity.AdminUser;
 import org.mapstruct.Mapper;
 
