@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface PointTransactionRepository extends JpaRepository<PointTransaction, Long> {
     Slice<PointTransaction> findAllByUserId(Long userId, Pageable pageable);
     Slice<PointTransaction> findAllByUserIdAndPointType(Long userId, PointType pointType, Pageable pageable);
+    void deleteAllByUserId(Long userId);
 }
