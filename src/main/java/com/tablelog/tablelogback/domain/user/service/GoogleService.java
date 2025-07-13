@@ -30,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -65,7 +64,6 @@ public class GoogleService {
     private final UserRepository userRepository;
     private final UserEntityMapper userEntityMapper;
     private final JwtUtil jwtUtil;
-    private final PasswordEncoder passwordEncoder;
     private final HttpServletResponse httpServletResponse;
     private final RefreshTokenRepository refreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
