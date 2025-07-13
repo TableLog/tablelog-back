@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserService {
             fileUrl = serviceRequestDto.imgUrl();
             user = userEntityMapper.toSocialUser(serviceRequestDto, encodedPassword, UserRole.NORMAL, fileUrl, folderName);
         }
-        user.updatePointBalance(1000);
+        user.addPointBalance(1000);
         userRepository.save(user);
         PointTransaction pointTransaction = PointTransaction.builder()
                 .userId(user.getId())
