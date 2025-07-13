@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.user_license.controller;
 import com.tablelog.tablelogback.domain.user_license.dto.controller.UserLicenseCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCountResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.domain.user_license.mapper.dto.UserLicenseDtoMapper;
 import com.tablelog.tablelogback.domain.user_license.service.impl.UserLicenseServiceImpl;
@@ -14,9 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -32,16 +33,15 @@ public class UserLicenseController {
     @PostMapping(value = "/users/license", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createUserLicense(
             @RequestPart UserLicenseCreateControllerRequestDto controllerRequestDto,
-            @RequestPart(value = "multipartFile") MultipartFile multipartFile,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         UserLicenseCreateServiceRequestDto serviceRequestDto =
                 userLicenseDtoMapper.toUserLicenseCreateServiceDto(controllerRequestDto);
-        userLicenseService.createUserLicense(serviceRequestDto, userDetails.user(), multipartFile);
+        userLicenseService.createUserLicense(serviceRequestDto, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "전문가 인증 라이센스 조회 By User", description = "licenseType null이면 전체 조회")
+    @Operation(summary = "전문가 인증 라이센스 전체 조회 By User", description = "licenseType null이면 전체 조회")
     @GetMapping("/users/license")
     public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicensesByUser(
             @RequestParam(required = false) LicenseType licenseType,
@@ -66,5 +66,26 @@ public class UserLicenseController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    // get 단건은?
+    @Operation(summary = "관리자가 전문가 승인 위해 유저의 라이센스 전체 조회")
+    @GetMapping("/admin/users/{userId}/licenses")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicenseByUserId(
+            @PathVariable Long userId,
+            @RequestParam("page") Integer pageNumber,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        UserLicenseSliceResponseDto responseDto = userLicenseService.getAllUserLicenseByUserId(userId, pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 전문가 승인 위해 라이센스 단건 조회")
+    @GetMapping("/admin/licenses/{licenseId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserLicenseReadResponseDto> getUserLicense(
+            @PathVariable Long licenseId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        UserLicenseReadResponseDto responseDto = userLicenseService.getUserLicense(licenseId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }

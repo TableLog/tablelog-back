@@ -6,6 +6,8 @@ import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCrea
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.domain.user_license.entity.UserLicense;
+import com.tablelog.tablelogback.domain.user_license.exception.NotFoundUserLicenseException;
+import com.tablelog.tablelogback.domain.user_license.exception.UserLicenseErrorCode;
 import com.tablelog.tablelogback.domain.user_license.mapper.entity.UserLicenseEntityMapper;
 import com.tablelog.tablelogback.domain.user_license.repository.UserLicenseRepository;
 import com.tablelog.tablelogback.domain.user_license.service.UserLicenseService;
@@ -15,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,24 +27,10 @@ public class UserLicenseServiceImpl implements UserLicenseService {
     private final UserLicenseRepository userLicenseRepository;
     private final S3Provider s3Provider;
     private final UserLicenseEntityMapper userLicenseEntityMapper;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    private final String SEPARATOR = "/";
 
     @Override
-    public void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto,
-                                  User user, MultipartFile multipartFile
-    ) throws IOException {
-        String fileName;
-        String imageUrl = null;
-        String folderName = user.getNickname();
-
-        if (multipartFile != null && !multipartFile.isEmpty()) {
-            fileName = s3Provider.originalFileName(multipartFile);
-            imageUrl = url + folderName + SEPARATOR + fileName;
-            s3Provider.createFolder(folderName);
-            s3Provider.saveFile(multipartFile, folderName + SEPARATOR + fileName);
-        }
-        UserLicense userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto, user.getId(), imageUrl);
+    public void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto, User user) throws IOException {
+        UserLicense userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto, user.getId());
         userLicenseRepository.save(userLicense);
     }
 
@@ -79,5 +66,21 @@ public class UserLicenseServiceImpl implements UserLicenseService {
                 .countByUserIdAndLicenseType(user.getId(), LicenseType.BUSINESS_REGISTRATION);
         Long patentCount = userLicenseRepository.countByUserIdAndLicenseType(user.getId(), LicenseType.PATENT);
         return userLicenseEntityMapper.toUserLicenseCountResponseDto(user.getId(), recipeCount, businessCount, patentCount);
+    }
+
+    @Override
+    public UserLicenseSliceResponseDto getAllUserLicenseByUserId(Long userId, int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+        Slice<UserLicense> slice = userLicenseRepository.findAllByUserId(userId, pageRequest);
+        List<UserLicenseReadResponseDto> userLicenses =
+                userLicenseEntityMapper.toUserLicenseReadAllResponseDto(slice.getContent());
+        return new UserLicenseSliceResponseDto(userLicenses, slice.hasNext());
+    }
+
+    @Override
+    public UserLicenseReadResponseDto getUserLicense(Long id){
+        UserLicense userLicense = userLicenseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundUserLicenseException(UserLicenseErrorCode.NOT_FOUND_USER_LICENSE));
+        return userLicenseEntityMapper.toUserLicenseReadResponseDto(userLicense);
     }
 }

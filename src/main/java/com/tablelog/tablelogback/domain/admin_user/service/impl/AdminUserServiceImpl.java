@@ -1,15 +1,20 @@
 package com.tablelog.tablelogback.domain.admin_user.service.impl;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserReadResponseDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserRejectReasonServiceRequestDto;
+import com.tablelog.tablelogback.domain.admin_user.dto.service.AdminUserSliceReadResponseDto;
 import com.tablelog.tablelogback.domain.admin_user.entity.AdminUser;
 import com.tablelog.tablelogback.domain.admin_user.exception.AdminUserErrorCode;
 import com.tablelog.tablelogback.domain.admin_user.exception.NotFoundAdminUserException;
+import com.tablelog.tablelogback.domain.admin_user.mapper.entity.AdminUserEntityMapper;
 import com.tablelog.tablelogback.domain.admin_user.repository.AdminUserRepository;
 import com.tablelog.tablelogback.domain.admin_user.service.AdminUserService;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
+import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
 import com.tablelog.tablelogback.domain.recipe_memo.repository.RecipeMemoRepository;
 import com.tablelog.tablelogback.domain.recipe_review.repository.RecipeReviewRepository;
@@ -24,12 +29,13 @@ import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
-import com.tablelog.tablelogback.global.enums.AdminRequestType;
-import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.UserProvider;
+import com.tablelog.tablelogback.domain.user_license.repository.UserLicenseRepository;
+import com.tablelog.tablelogback.global.enums.*;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +62,9 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final S3Provider s3Provider;
     private final KakaoService kakaoService;
     private final GoogleService googleService;
+    private final RecipeRepository recipeRepository;
+    private final UserLicenseRepository userLicenseRepository;
+    private final AdminUserEntityMapper adminUserEntityMapper;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     @Scheduled(cron = "0 0 0 * * *") // 매일 00시
@@ -65,7 +74,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         List<User> users = userRepository.findByIsDeletedAndModifiedAtBefore(true, cutoff);
         for(User user : users){
             if(!adminUserRepository.existsByUserId(user.getId())){
-                AdminUser adminUser = new AdminUser(user.getId(), ApplyStatus.APPLIED, AdminRequestType.WITHDRAWAL);
+                AdminUser adminUser = AdminUser.builder()
+                        .userId(user.getId())
+                        .status(ApplyStatus.APPLIED)
+                        .requestType(AdminRequestType.WITHDRAWAL)
+                .build();
                 adminUserRepository.save(adminUser);
                 System.out.println(adminUser.getUserId());
             }
@@ -116,6 +129,53 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         adminUser.updateStatus(ApplyStatus.APPROVED);
+        adminUserRepository.save(adminUser);
+    }
+
+    @Override
+    public AdminUserSliceReadResponseDto getAllAdminUser(ApplyStatus status, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<AdminUser> slice;
+        if(status == null){
+            slice = adminUserRepository.findAll(pageRequest);
+        } else {
+            slice = adminUserRepository.findAllByStatus(status, pageRequest);
+        }
+        List<AdminUserReadResponseDto> responseDtos = adminUserEntityMapper.toAdminUserResponseDto(slice.getContent());
+        return new AdminUserSliceReadResponseDto(responseDtos, slice.hasNext());
+    }
+
+    @Override
+    public void reviewExpertVerification(Long id){
+        AdminUser adminUser = adminUserRepository.findById(id)
+                .orElseThrow(() -> new NotFoundAdminUserException(AdminUserErrorCode.NOT_FOUND_ADMIN_USER));
+        User user = userRepository.findById(adminUser.getUserId())
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        Long recipeCount = recipeRepository.countByUserId(user.getId());
+        user.updateRecipeCount(recipeCount);
+        boolean hasBusinessLicense = userLicenseRepository
+                .existsByUserIdAndLicenseType(user.getId(), LicenseType.BUSINESS_REGISTRATION);
+        boolean hasPatent = userLicenseRepository.existsByUserIdAndLicenseType(user.getId(), LicenseType.PATENT);
+        if (recipeCount >= 50 || hasBusinessLicense || hasPatent) {
+            user.changeRole(UserRole.EXPERT);
+            adminUser.updateStatus(ApplyStatus.APPROVED);
+            userRepository.save(user);
+            adminUserRepository.save(adminUser);
+        } else {
+            adminUser.updateStatus(ApplyStatus.REJECTED);
+            adminUser.updateRejectReason("조건이 충족되지 않습니다");
+            adminUserRepository.save(adminUser);
+        }
+    }
+
+    @Override
+    public void rejectExpertVerification(
+            Long id, AdminUserRejectReasonServiceRequestDto serviceRequestDto
+    ){
+        AdminUser adminUser = adminUserRepository.findById(id)
+                .orElseThrow(() -> new NotFoundAdminUserException(AdminUserErrorCode.NOT_FOUND_ADMIN_USER));
+        adminUser.updateStatus(ApplyStatus.REJECTED);
+        adminUser.updateRejectReason(serviceRequestDto.rejectReason());
         adminUserRepository.save(adminUser);
     }
 }

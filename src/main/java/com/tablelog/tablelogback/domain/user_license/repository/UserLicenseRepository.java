@@ -10,4 +10,6 @@ public interface UserLicenseRepository extends JpaRepository<UserLicense, Long> 
     Slice<UserLicense> findAllByUserId(Long userId, Pageable pageable);
     Slice<UserLicense> findAllByUserIdAndLicenseType(Long userId, Pageable pageable, LicenseType licenseType);
     Long countByUserIdAndLicenseType(Long userId, LicenseType licenseType);
+
+    boolean existsByUserIdAndLicenseType(Long userId, LicenseType licenseType);
 }

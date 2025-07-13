@@ -207,4 +207,13 @@ public class UserController {
         FindEmailResponseDto responseDto = userService.findEmail(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @Operation(summary = "전문가 인증 요청")
+    @PostMapping("/users/request/expert-verification")
+    public ResponseEntity<?> requestExpertVerification(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        userService.requestExpertVerification(userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }

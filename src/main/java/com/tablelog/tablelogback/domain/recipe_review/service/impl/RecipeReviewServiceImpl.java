@@ -199,8 +199,11 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
 
         // 유저 프로필 이미지
         Map<String, String> profileImgMap = userRepository.findAllByNicknameIn(allNicknames).stream()
-                .collect(Collectors.toMap(User::getNickname, User::getProfileImgUrl));
-        // null 오류????????????????? 뭐가 문제인지?
+                .filter(user -> user.getNickname() != null) // null 방지
+                .collect(Collectors.toMap(
+                        User::getNickname,
+                        user -> user.getProfileImgUrl() != null ? user.getProfileImgUrl() : ""
+                ));
 
         return comments.stream()
                 .map(comment -> {

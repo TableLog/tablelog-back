@@ -1,7 +1,6 @@
 package com.tablelog.tablelogback.domain.user_license.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
-import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.enums.LicenseType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,19 +26,10 @@ public class UserLicense extends BaseEntity {
     @Column(nullable = false)
     private LicenseType licenseType;
 
-    @Column
-    private String imageUrl;
-
-    @Column
-    private ApplyStatus status;
-
     @Builder
-    public UserLicense(final Long userId, final String licenseName, final LicenseType licenseType,
-                       final String imageUrl){
+    public UserLicense(final Long userId, final String licenseName, final LicenseType licenseType){
         this.userId = userId;
         this.licenseName = licenseName;
         this.licenseType = licenseType;
-        this.imageUrl = imageUrl;
-        this.status = ApplyStatus.APPLIED;
     }
 }

@@ -27,6 +27,9 @@ public class AdminUser extends BaseEntity {
     @Column
     private AdminRequestType requestType;
 
+    @Column
+    private String rejectReason;
+
     @Builder
     public AdminUser(final Long userId, final ApplyStatus status, final AdminRequestType requestType){
         this.userId = userId;
@@ -36,5 +39,9 @@ public class AdminUser extends BaseEntity {
 
     public void updateStatus(ApplyStatus status){
         this.status = status;
+    }
+
+    public void updateRejectReason(String rejectReason){
+        this.rejectReason = rejectReason;
     }
 }

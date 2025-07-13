@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
+    Long countByUserId(Long userId);
     Slice<Recipe> findAllByUserId(Long id, Pageable pageable);
 
     Slice<Recipe> findAllByIsPaidTrue(Pageable pageable);
