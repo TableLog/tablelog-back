@@ -113,7 +113,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         for(OAuthAccount oAuthAccount : accounts){
             if(oAuthAccount.getProvider() == UserProvider.kakao){
                 // admin 키로 삭제 예정
-//                kakaoService.unlinkKakao(kakaoAccessToken);
+                String kakaoAccessToken = kakaoService.reissueToken(user).get("access_token").asText();
+                kakaoService.unlinkKakao(kakaoAccessToken);
             } else if(oAuthAccount.getProvider() == UserProvider.google){
                 String googleAccessToken = googleService.reissueToken(user).get("access_token").asText();
                 googleService.unlinkGoogle(googleAccessToken);
