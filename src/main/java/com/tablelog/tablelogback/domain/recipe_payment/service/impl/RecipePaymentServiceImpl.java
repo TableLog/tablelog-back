@@ -76,13 +76,20 @@ public class RecipePaymentServiceImpl implements RecipePaymentService {
                         .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         writer.updatePointBalance(writer.getPointBalance() + recipe.getRecipePoint());
         recipePayment.updatePaymentStatus(PaymentStatus.결제완료);
-        PointTransaction pointTransaction = PointTransaction.builder()
+        PointTransaction pointTransaction1 = PointTransaction.builder()
                 .userId(user.getId())
                 .amount(recipe.getRecipePoint())
                 .pointReason(PointReason.레시피구매)
                 .pointType(PointType.USE)
                 .build();
-        pointTransactionRepository.save(pointTransaction);
+        pointTransactionRepository.save(pointTransaction1);
+        PointTransaction pointTransaction2 = PointTransaction.builder()
+                .userId(writer.getId())
+                .amount(recipe.getRecipePoint())
+                .pointReason(PointReason.레시피판매)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction2);
     }
 
     @Override
