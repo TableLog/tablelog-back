@@ -62,13 +62,13 @@ public class BoardLikeServiceImpl implements BoardLikeService {
     }
 
     @Override
-    public Long getBoardLikeCountByBoard(Long boardId) {
+    public Long readBoardLikeCountByBoard(Long boardId) {
         Board board = findBoard(boardId);
         return boardLikeRepository.countByBoard(boardId);
     }
 
     @Override
-    public BoardListResponseDto getMyLikedBoards(Long userId, int pageNumber) {
+    public BoardListResponseDto readMyLikedBoards(Long userId, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
