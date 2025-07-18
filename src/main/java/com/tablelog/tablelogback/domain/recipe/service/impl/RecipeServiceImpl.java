@@ -38,7 +38,6 @@ import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -71,8 +70,6 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeMemoRepository recipeMemoRepository;
     private final PointTransactionRepository pointTransactionRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
     private final String SEPARATOR = "/";
 
     @Override
@@ -343,7 +340,16 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = validateRecipe(id, user);
 
         String folderName = recipe.getFolderName();
-        String fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
+        String fileUrl = requestDto.imageUrl();
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            if (recipe.getImageUrl() != null && requestDto.imageUrl() == null) {
+                s3Provider.delete(recipe.getImageUrl());
+                fileUrl = null;
+                folderName = null;
+            }
+        } else {
+            fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
+        }
 
         recipe.updateRecipe(requestDto.title(), requestDto.intro(), folderName, fileUrl,
                 requestDto.recipeCategoryList(), requestDto.price(), requestDto.cookingTime(),
