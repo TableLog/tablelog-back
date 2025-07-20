@@ -9,6 +9,8 @@ import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRep
 import com.tablelog.tablelogback.domain.follow.dto.FollowUserDto;
 import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
@@ -21,10 +23,7 @@ import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
-import com.tablelog.tablelogback.global.enums.AdminRequestType;
-import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.UserProvider;
-import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.global.enums.*;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
@@ -65,6 +64,7 @@ public class UserServiceImpl implements UserService {
     private final BoardRepository boardRepository;
     private final BoardCommentRepository boardCommentRepository;
     private final AdminUserRepository adminUserRepository;
+    private final PointTransactionRepository pointTransactionRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -119,8 +119,15 @@ public class UserServiceImpl implements UserService {
             fileUrl = serviceRequestDto.imgUrl();
             user = userEntityMapper.toSocialUser(serviceRequestDto, encodedPassword, UserRole.NORMAL, fileUrl, folderName);
         }
-        user.updatePointBalance(1000);
+        user.addPointBalance(1000);
         userRepository.save(user);
+        PointTransaction pointTransaction = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(1000)
+                .pointReason(PointReason.회원가입)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction);
         return user;
     }
 

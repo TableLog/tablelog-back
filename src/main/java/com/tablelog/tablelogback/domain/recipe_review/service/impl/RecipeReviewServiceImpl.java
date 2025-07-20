@@ -1,5 +1,7 @@
 package com.tablelog.tablelogback.domain.recipe_review.service.impl;
 
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
@@ -16,6 +18,8 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.enums.PointReason;
+import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +41,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     private final RecipeReviewEntityMapper recipeReviewEntityMapper;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final PointTransactionRepository pointTransactionRepository;
 
     @Transactional
     public void createRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user){
@@ -51,6 +56,13 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         recipe.updateReviewCount(recipe.getReviewCount() + 1);
         recipe.addStar(serviceRequestDto.star());
         user.addPointBalance(100);
+        PointTransaction pointTransaction = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(100)
+                .pointReason(PointReason.레시피댓글등록)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction);
     }
 
     @Transactional

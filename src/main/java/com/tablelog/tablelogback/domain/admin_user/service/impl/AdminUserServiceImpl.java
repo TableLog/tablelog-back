@@ -14,6 +14,7 @@ import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
 import com.tablelog.tablelogback.domain.recipe_memo.repository.RecipeMemoRepository;
@@ -65,6 +66,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final RecipeRepository recipeRepository;
     private final UserLicenseRepository userLicenseRepository;
     private final AdminUserEntityMapper adminUserEntityMapper;
+    private final PointTransactionRepository pointTransactionRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     @Scheduled(cron = "0 0 0 * * *") // 매일 00시
@@ -103,14 +105,16 @@ public class AdminUserServiceImpl implements AdminUserService {
         recipeMemoRepository.deleteAllByUserId(userId);
         recipeSaveRepository.deleteAllByUser(userId);
         recipeReviewRepository.deleteAllByUser(user.getNickname());
-        shoppingListRepository.countAllByUserId(userId);
+        shoppingListRepository.deleteAllByUserId(userId);
+        pointTransactionRepository.deleteAllByUserId(userId);
 
         List<OAuthAccount> accounts = oAuthAccountRepository.findAllByUserId(userId)
                 .orElseThrow(() -> new NotFoundOAuthAccountException(UserErrorCode.NOT_FOUND_SOCIAL_ACCOUNT));
         for(OAuthAccount oAuthAccount : accounts){
             if(oAuthAccount.getProvider() == UserProvider.kakao){
                 // admin 키로 삭제 예정
-//                kakaoService.unlinkKakao(kakaoAccessToken);
+                String kakaoAccessToken = kakaoService.reissueToken(user).get("access_token").asText();
+                kakaoService.unlinkKakao(kakaoAccessToken);
             } else if(oAuthAccount.getProvider() == UserProvider.google){
                 String googleAccessToken = googleService.reissueToken(user).get("access_token").asText();
                 googleService.unlinkGoogle(googleAccessToken);

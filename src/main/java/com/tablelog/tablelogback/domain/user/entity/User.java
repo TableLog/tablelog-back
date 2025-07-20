@@ -128,10 +128,6 @@ public class User extends BaseEntity {
         this.pointBalance = this.pointBalance + point;
     }
 
-    public void updateProvider(UserProvider provider){
-        this.provider = provider;
-    }
-
     public void updateMarketingOptIn(Boolean marketingOptIn){
         this.marketingOptIn = marketingOptIn;
     }

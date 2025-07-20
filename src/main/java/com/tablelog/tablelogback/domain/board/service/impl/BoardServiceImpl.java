@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.board.service.impl;
 
-
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
@@ -13,10 +12,14 @@ import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.enums.PointReason;
+import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -41,6 +44,7 @@ public class BoardServiceImpl implements BoardService {
     private final BoardEntityMapper boardEntityMapper;
     private final BoardLikeRepository boardLikeRepository;
     private final BoardCommentRepository boardCommentRepository;
+    private final PointTransactionRepository pointTransactionRepository;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     private final UserRepository userRepository;
@@ -66,6 +70,13 @@ public class BoardServiceImpl implements BoardService {
         boardRepository.save(board);
         user.addPointBalance(300);
         userRepository.save(user);
+        PointTransaction pointTransaction = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(300)
+                .pointReason(PointReason.피드등록)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction);
     }
     @Override
     public void update(final BoardUpdateServiceRequestDto boardRequestDto

@@ -16,6 +16,7 @@ public record RecipeUpdateServiceRequestDto(
         RecipePrice price,
         CookingTime cookingTime,
         Boolean isPaid,
-        Integer recipePoint
+        Integer recipePoint,
+        String imageUrl
 ) {
 }

@@ -32,7 +32,7 @@ public class RecipeMemoController {
 
     @Operation(summary = "레시피 메모 단건 조회")
     @GetMapping("/recipes/{recipeId}/memos")
-    public ResponseEntity<?> createRecipeMemo(
+    public ResponseEntity<?> getRecipeMemo(
             @PathVariable Long recipeId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
