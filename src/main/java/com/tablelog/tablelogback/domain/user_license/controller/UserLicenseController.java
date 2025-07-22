@@ -32,7 +32,7 @@ public class UserLicenseController {
     @Operation(summary = "라이센스 생성")
     @PostMapping(value = "/users/license", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createUserLicense(
-            @RequestPart UserLicenseCreateControllerRequestDto controllerRequestDto,
+            @RequestBody UserLicenseCreateControllerRequestDto controllerRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         UserLicenseCreateServiceRequestDto serviceRequestDto =
