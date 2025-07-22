@@ -10,5 +10,6 @@ import com.tablelog.tablelogback.global.enums.InquiryType;
 public interface InquiryService {
     void createInquiryAboutFood(InquiryCreateServiceRequestDto serviceRequestDto, User user);
     InquiryReadResponseDto readInquiry(Long inquiryId, User user);
-//    InquirySliceReadResponseDto getAllInquiries(ApplyStatus applyStatus, InquiryType inquiryType, int pageNum);
+    InquirySliceReadResponseDto readAllInquiriesByUser(
+            ApplyStatus applyStatus, InquiryType inquiryType, int pageNum, User user);
 }

@@ -18,5 +18,5 @@ public interface InquiryEntityMapper {
 
     InquiryReadResponseDto toInquiryReadResponseDto(Inquiry inquiry);
 
-//    InquirySliceReadResponseDto toInquiryReadAllResponseDto(List<Inquiry> inquiries);
+    List<InquiryReadResponseDto> toInquiryReadAllResponseDto(List<Inquiry> inquiries);
 }
