@@ -68,4 +68,14 @@ public class InquiryServiceImpl implements InquiryService {
         List<InquiryReadResponseDto> inquiries = inquiryEntityMapper.toInquiryReadAllResponseDto(slice.getContent());
         return new InquirySliceReadResponseDto(inquiries, slice.hasNext());
     }
+
+    @Override
+    public void deleteInquiry(Long inquiryId, User user){
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new NotFoundInquiryException(InquiryErrorCode.NOT_FOUND_INQUIRY));
+        if (user.getUserRole() != UserRole.ADMIN && !user.getId().equals(inquiry.getUserId())) {
+            throw new ForbiddenAccessInquiryException(InquiryErrorCode.FORBIDDEN_ACCESS_INQUIRY);
+        }
+        inquiryRepository.delete(inquiry);
+    }
 }

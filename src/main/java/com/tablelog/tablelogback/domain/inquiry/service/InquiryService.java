@@ -14,4 +14,5 @@ public interface InquiryService {
             ApplyStatus applyStatus, InquiryType inquiryType, int pageNum, User user);
     InquirySliceReadResponseDto readAllInquiriesByAdmin(
             ApplyStatus applyStatus, InquiryType inquiryType, int pageNum);
+    void deleteInquiry(Long inquiryId, User user);
 }

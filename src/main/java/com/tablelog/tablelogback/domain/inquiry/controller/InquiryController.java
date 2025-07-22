@@ -75,6 +75,16 @@ public class InquiryController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "문의 삭제")
+    @DeleteMapping("/inquiries/{inquiryId}")
+    public ResponseEntity<?> deleteInquiry(
+            @PathVariable Long inquiryId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+
+    ){
+        inquiryService.deleteInquiry(inquiryId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+    
     // 문의 생성 - 중복 유저
-    // 관리자가 문의 전체 조회
 }
