@@ -11,6 +11,9 @@ public enum InquiryErrorCode implements ErrorCode {
     // 400
     INVALID_INQUIRY_TYPE(HttpStatus.BAD_REQUEST, "EI400001"),
 
+    // 403
+    FORBIDDEN_ACCESS_INQUIRY(HttpStatus.FORBIDDEN, "EI403001"),
+
     // 404
     NOT_FOUND_INQUIRY(HttpStatus.NOT_FOUND, "EI404001");
 
