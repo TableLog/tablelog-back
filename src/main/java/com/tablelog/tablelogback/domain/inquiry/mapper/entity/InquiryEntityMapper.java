@@ -13,7 +13,7 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @Mapper(componentModel = SPRING)
 public interface InquiryEntityMapper {
-    @Mapping(source = "userId",target = "userId")
+    @Mapping(source = "userId", target = "userId")
     Inquiry toInquiry(InquiryCreateServiceRequestDto serviceRequestDto, Long userId);
 
     InquiryReadResponseDto toInquiryReadResponseDto(Inquiry inquiry);

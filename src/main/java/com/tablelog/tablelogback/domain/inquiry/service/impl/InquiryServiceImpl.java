@@ -39,6 +39,15 @@ public class InquiryServiceImpl implements InquiryService {
     }
 
     @Override
+    public void createInquiryAboutDupUser(InquiryCreateServiceRequestDto serviceRequestDto){
+        if(serviceRequestDto.inquiryType() != InquiryType.DUPLICATE_USER){
+            throw new InvalidInquiryTypeException(InquiryErrorCode.INVALID_INQUIRY_TYPE);
+        }
+        Inquiry inquiry = inquiryEntityMapper.toInquiry(serviceRequestDto, null);
+        inquiryRepository.save(inquiry);
+    }
+
+    @Override
     public InquiryReadResponseDto readInquiry(Long inquiryId, User user){
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new NotFoundInquiryException(InquiryErrorCode.NOT_FOUND_INQUIRY));

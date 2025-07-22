@@ -27,14 +27,23 @@ public class InquiryController {
     private final InquiryServiceImpl inquiryService;
 
     @Operation(summary = "문의 생성 - 재료 추가")
-    @PostMapping("/inquiries")
+    @PostMapping("/inquiries/food")
     public ResponseEntity<?> createInquiryAboutFood(
             @RequestBody InquiryCreateControllerRequestDto controllerRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
-
     ){
         InquiryCreateServiceRequestDto serviceRequestDto = inquiryDtoMapper.toInquiryCreateDto(controllerRequestDto);
         inquiryService.createInquiryAboutFood(serviceRequestDto, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "문의 생성 - 중복 유저")
+    @PostMapping("/inquiries/dup-user")
+    public ResponseEntity<?> createInquiryAboutDupUser(
+            @RequestBody InquiryCreateControllerRequestDto controllerRequestDto
+    ){
+        InquiryCreateServiceRequestDto serviceRequestDto = inquiryDtoMapper.toInquiryCreateDto(controllerRequestDto);
+        inquiryService.createInquiryAboutDupUser(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -85,6 +94,4 @@ public class InquiryController {
         inquiryService.deleteInquiry(inquiryId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-    
-    // 문의 생성 - 중복 유저
 }
