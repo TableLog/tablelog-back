@@ -30,7 +30,7 @@ public class UserLicenseController {
     private final UserLicenseServiceImpl userLicenseService;
 
     @Operation(summary = "라이센스 생성")
-    @PostMapping(value = "/users/license", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/users/license")
     public ResponseEntity<?> createUserLicense(
             @RequestBody UserLicenseCreateControllerRequestDto controllerRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
