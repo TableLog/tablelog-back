@@ -58,4 +58,14 @@ public class InquiryServiceImpl implements InquiryService {
         List<InquiryReadResponseDto> inquiries = inquiryEntityMapper.toInquiryReadAllResponseDto(slice.getContent());
         return new InquirySliceReadResponseDto(inquiries, slice.hasNext());
     }
+
+    @Override
+    public InquirySliceReadResponseDto readAllInquiriesByAdmin(
+            ApplyStatus applyStatus, InquiryType inquiryType, int pageNum
+    ){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Inquiry> slice = inquiryRepository.findAllByAdminWithOptionalFilters(applyStatus, inquiryType, pageRequest);
+        List<InquiryReadResponseDto> inquiries = inquiryEntityMapper.toInquiryReadAllResponseDto(slice.getContent());
+        return new InquirySliceReadResponseDto(inquiries, slice.hasNext());
+    }
 }

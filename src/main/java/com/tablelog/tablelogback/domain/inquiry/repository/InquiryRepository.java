@@ -22,4 +22,15 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             @Param("inquiryType") InquiryType inquiryType,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT i FROM Inquiry i
+    WHERE (:applyStatus IS NULL OR i.applyStatus = :applyStatus)
+    AND (:inquiryType IS NULL OR i.inquiryType = :inquiryType)
+""")
+    Slice<Inquiry> findAllByAdminWithOptionalFilters(
+            @Param("applyStatus") ApplyStatus applyStatus,
+            @Param("inquiryType") InquiryType inquiryType,
+            Pageable pageable
+    );
 }

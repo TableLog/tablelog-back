@@ -50,7 +50,7 @@ public class InquiryController {
 
     @Operation(summary = "문의 전체 조회 By 유저")
     @GetMapping("/inquiries")
-    public ResponseEntity<?> readAllInquiries(
+    public ResponseEntity<?> readAllInquiriesByUser(
             @RequestParam(required = false) ApplyStatus applyStatus,
             @RequestParam(required = false) InquiryType inquiryType,
             @RequestParam int pageNum,
@@ -61,7 +61,20 @@ public class InquiryController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "문의 전체 조회 By 관리자")
+    @GetMapping("/admin/inquiries")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> readAllInquiriesByAdmin(
+            @RequestParam(required = false) ApplyStatus applyStatus,
+            @RequestParam(required = false) InquiryType inquiryType,
+            @RequestParam int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        InquirySliceReadResponseDto responseDto = inquiryService
+                .readAllInquiriesByAdmin(applyStatus, inquiryType, pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
     // 문의 생성 - 중복 유저
     // 관리자가 문의 전체 조회
-    // 유저가 문의 전체 조회
 }

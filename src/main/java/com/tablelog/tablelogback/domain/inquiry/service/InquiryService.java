@@ -12,4 +12,6 @@ public interface InquiryService {
     InquiryReadResponseDto readInquiry(Long inquiryId, User user);
     InquirySliceReadResponseDto readAllInquiriesByUser(
             ApplyStatus applyStatus, InquiryType inquiryType, int pageNum, User user);
+    InquirySliceReadResponseDto readAllInquiriesByAdmin(
+            ApplyStatus applyStatus, InquiryType inquiryType, int pageNum);
 }
