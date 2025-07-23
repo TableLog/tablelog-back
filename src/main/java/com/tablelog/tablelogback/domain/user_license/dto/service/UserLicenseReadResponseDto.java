@@ -10,6 +10,7 @@ public record UserLicenseReadResponseDto(
         Long userId,
         String licenseName,
         LicenseType licenseType,
+        String imageUrl,
         LocalDateTime modifiedAt
 ) {
 }

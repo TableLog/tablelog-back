@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -30,14 +31,15 @@ public class UserLicenseController {
     private final UserLicenseServiceImpl userLicenseService;
 
     @Operation(summary = "라이센스 생성")
-    @PostMapping(value = "/users/license")
+    @PostMapping(value = "/users/license", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createUserLicense(
-            @RequestBody UserLicenseCreateControllerRequestDto controllerRequestDto,
+            @RequestPart UserLicenseCreateControllerRequestDto controllerRequestDto,
+            @RequestPart(value = "multipartFile", required = false) MultipartFile multipartFile,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         UserLicenseCreateServiceRequestDto serviceRequestDto =
                 userLicenseDtoMapper.toUserLicenseCreateServiceDto(controllerRequestDto);
-        userLicenseService.createUserLicense(serviceRequestDto, userDetails.user());
+        userLicenseService.createUserLicense(serviceRequestDto, multipartFile, userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

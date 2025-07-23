@@ -6,11 +6,13 @@ import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseCrea
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseReadResponseDto;
 import com.tablelog.tablelogback.domain.user_license.dto.service.UserLicenseSliceResponseDto;
 import com.tablelog.tablelogback.global.enums.LicenseType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 public interface UserLicenseService {
-    void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto, User user) throws IOException;
+    void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto,
+                           MultipartFile multipartFile, User user) throws IOException;
 
     UserLicenseSliceResponseDto getAllUserLicenseByUser(int pageNum, User user);
 
