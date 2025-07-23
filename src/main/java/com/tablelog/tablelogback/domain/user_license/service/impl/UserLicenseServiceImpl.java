@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -27,10 +28,24 @@ public class UserLicenseServiceImpl implements UserLicenseService {
     private final UserLicenseRepository userLicenseRepository;
     private final S3Provider s3Provider;
     private final UserLicenseEntityMapper userLicenseEntityMapper;
+    private final String SEPARATOR = "/";
 
     @Override
-    public void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto, User user) throws IOException {
-        UserLicense userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto, user.getId());
+    public void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto,
+                                  MultipartFile multipartFile, User user
+    ) throws IOException {
+        UserLicense userLicense;
+
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto,
+                    user.getId(), null);
+        } else {
+            s3Provider.createFolder(serviceRequestDto.licenseName());
+            String imageName = serviceRequestDto.licenseName() + SEPARATOR + s3Provider.originalFileName(multipartFile);
+            String imageUrl = s3Provider.saveFile(multipartFile, imageName);
+            userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto,
+                    user.getId(), imageUrl);
+        }
         userLicenseRepository.save(userLicense);
     }
 

@@ -10,7 +10,7 @@ public record AdminUserReadResponseDto(
         Long userId,
         ApplyStatus status,
         AdminRequestType requestType,
-        LocalDateTime modifiedAt,
+        LocalDateTime createdAt,
         String rejectReason
 ) {
 }

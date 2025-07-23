@@ -26,10 +26,14 @@ public class UserLicense extends BaseEntity {
     @Column(nullable = false)
     private LicenseType licenseType;
 
+    @Column
+    private String imageUrl;
+
     @Builder
-    public UserLicense(final Long userId, final String licenseName, final LicenseType licenseType){
+    public UserLicense(final Long userId, final String licenseName, final LicenseType licenseType, final String imageUrl){
         this.userId = userId;
         this.licenseName = licenseName;
         this.licenseType = licenseType;
+        this.imageUrl = imageUrl;
     }
 }
