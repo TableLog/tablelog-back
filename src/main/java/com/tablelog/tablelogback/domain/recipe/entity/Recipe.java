@@ -119,18 +119,18 @@ public class Recipe extends BaseEntity {
         this.recipePoint = recipePoint;
     }
 
-    public void addStar(int star) {
+    public void addStar(Float star) {
         this.totalStar += star;
         this.starCount++;
+        this.star = (float) (this.totalStar / this.starCount);
+    }
+
+    public void updateStar(Float oldStar, Float newStar) {
+        this.totalStar = (int) (this.totalStar - oldStar + newStar);
         this.star = (float) this.totalStar / this.starCount;
     }
 
-    public void updateStar(byte oldStar, byte newStar) {
-        this.totalStar = this.totalStar - oldStar + newStar;
-        this.star = (float) this.totalStar / this.starCount;
-    }
-
-    public void deleteStar(byte star) {
+    public void deleteStar(Float star) {
         this.totalStar -= star;
         this.starCount--;
         if (this.starCount > 0) {

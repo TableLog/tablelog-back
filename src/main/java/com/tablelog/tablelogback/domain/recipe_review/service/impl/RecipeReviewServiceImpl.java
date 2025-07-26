@@ -135,7 +135,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     @Override
-    public RecipeReviewSliceResponseDto readAllRecipeReviewsByUser(Long userId, int pageNumber, UserDetailsImpl userDetails) {
+    public RecipeReviewSliceResponseByUserDto readAllRecipeReviewsByUser(Long userId, int pageNumber, UserDetailsImpl userDetails) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
@@ -144,16 +144,16 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         if(userDetails != null && userDetails.user().getId().equals(userId)){
             isMyReview = true;
         }
-        List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, isMyReview);
-        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext(), null);
+        List<RecipeReviewReadResponseByUserDto> recipeReviews = mappingRecipeReviewsByUser(slice, userDetails, isMyReview);
+        return new RecipeReviewSliceResponseByUserDto(recipeReviews, slice.hasNext(), null);
     }
 
     @Override
-    public RecipeReviewSliceResponseDto getAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNumber) {
+    public RecipeReviewSliceResponseByUserDto getAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(userDetails.user().getNickname(), pageRequest);
-        List<RecipeReviewReadResponseDto> recipeReviews = mappingRecipeReviews(slice, userDetails, true);
-        return new RecipeReviewSliceResponseDto(recipeReviews, slice.hasNext(), null);
+        List<RecipeReviewReadResponseByUserDto> recipeReviews = mappingRecipeReviewsByUser(slice, userDetails, true);
+        return new RecipeReviewSliceResponseByUserDto(recipeReviews, slice.hasNext(), null);
     }
 
     @Transactional
@@ -235,9 +235,6 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         Map<Long, Recipe> recipeMap = recipes.stream()
                 .collect(Collectors.toMap(Recipe::getId, Function.identity()));
 
-
-
-
         // 유저 집합
         Set<String> allNicknames = Stream.concat(
                 comments.stream().map(RecipeReview::getUser),
@@ -263,26 +260,92 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
                     RecipeReview reply = replyMap.get(comment.getId());
                     RecipeReviewReadResponseDto replyDto = null;
                     if (reply != null) {
-                        boolean isReplyReviewer = userDetails != null
-                                && userDetails.user().getNickname().equals(reply.getUser());
+                        boolean isReplyReviewer = userDetails != null &&
+                                userDetails.user().getNickname().equals(reply.getUser());
                         String replyProfileImgUrl = profileImgMap.get(reply.getUser());
-                        replyDto = recipeReviewEntityMapper
-                                .toRecipeReviewReadResponseDto(reply, isReplyReviewer, replyProfileImgUrl);
-                    }
 
+                        replyDto = recipeReviewEntityMapper.toRecipeReviewReadResponseDto(
+                                reply, isReplyReviewer, replyProfileImgUrl
+                        );
+                    }
+                    return recipeReviewEntityMapper.toDtoWithReply(
+                            comment, isReviewer, profileImgUrl, replyDto);
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    private List<RecipeReviewReadResponseByUserDto> mappingRecipeReviewsByUser(
+            Slice<RecipeReview> slice, UserDetailsImpl userDetails, boolean isMyReview
+    ){
+        List<RecipeReview> comments = slice.getContent();
+
+        // 댓글 id 조회
+        List<Long> commentIds = comments.stream()
+                .map(RecipeReview::getId)
+                .collect(Collectors.toList());
+
+        // 답글 조회
+        List<RecipeReview> replies = recipeReviewRepository.findAllByPrrIdIn(commentIds);
+        Map<Long, RecipeReview> replyMap = replies.stream()
+                .collect(Collectors.toMap(RecipeReview::getPrrId, Function.identity()));
+
+        // 레시피 id 조회
+        List<Long> recipeIds = comments.stream()
+                .map(RecipeReview::getRecipeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 레시피 조회 및 매핑
+        List<Recipe> recipes = recipeRepository.findAllById(recipeIds);
+        Map<Long, Recipe> recipeMap = recipes.stream()
+                .collect(Collectors.toMap(Recipe::getId, Function.identity()));
+
+        // 유저 집합
+        Set<String> allNicknames = Stream.concat(
+                comments.stream().map(RecipeReview::getUser),
+                replies.stream().map(RecipeReview::getUser)
+        ).collect(Collectors.toSet());
+
+        // 유저 프로필 이미지
+        Map<String, String> profileImgMap = userRepository.findAllByNicknameIn(allNicknames).stream()
+                .filter(user -> user.getNickname() != null) // null 방지
+                .collect(Collectors.toMap(
+                        User::getNickname,
+                        user -> user.getProfileImgUrl() != null ? user.getProfileImgUrl() : ""
+                ));
+
+        return comments.stream()
+                .map(comment -> {
+                    boolean isReviewer = isMyReview
+                            || (userDetails != null && userDetails.user().getNickname().equals(comment.getUser()));
+
+                    String profileImgUrl = profileImgMap.get(comment.getUser());
+
+                    // 댓글용 레시피 정보
+                    Recipe commentRecipe = recipeMap.get(comment.getRecipeId());
+                    String commentImageUrl = commentRecipe != null ? commentRecipe.getImageUrl() : null;
+                    String commentTitle = commentRecipe != null ? commentRecipe.getTitle() : null;
+
+                    // 답글 매핑
 //                    RecipeReview reply = replyMap.get(comment.getId());
-//                    RecipeReviewReadResponseDto replyDto = null;
+//                    RecipeReviewReadResponseByUserDto replyDto = null;
 //                    if (reply != null) {
-//                        boolean isReplyReviewer = userDetails != null
-//                                && userDetails.user().getNickname().equals(reply.getUser());
+//                        boolean isReplyReviewer = userDetails != null &&
+//                                userDetails.user().getNickname().equals(reply.getUser());
+//                        String replyProfileImgUrl = profileImgMap.get(reply.getUser());
+//
 //                        Recipe replyRecipe = recipeMap.get(reply.getRecipeId());
 //                        String replyImageUrl = replyRecipe != null ? replyRecipe.getImageUrl() : null;
 //                        String replyTitle = replyRecipe != null ? replyRecipe.getTitle() : null;
-//                        replyDto = recipeReviewEntityMapper
-//                                .toRecipeReviewReadResponseDto(reply, isReplyReviewer, replyImageUrl, replyTitle);
+//
+//                        replyDto = recipeReviewEntityMapper.toRecipeReviewReadResponseByUserDto(
+//                                reply, isReplyReviewer, replyProfileImgUrl, replyTitle, replyImageUrl
+//                        );
 //                    }
-
-                    return recipeReviewEntityMapper.toDtoWithReply(comment, isReviewer, profileImgUrl, replyDto);
+                    return recipeReviewEntityMapper.toDtoWithReplyByUser(
+                            comment, isReviewer, profileImgUrl, commentTitle, commentImageUrl, null);
                 })
                 .collect(Collectors.toList());
     }

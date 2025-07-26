@@ -2,6 +2,8 @@ package com.tablelog.tablelogback.domain.recipe_review.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,8 +21,9 @@ public class RecipeReview extends BaseEntity {
     @Column
     private String content;
 
-    @Column
-    private Byte star;
+    @DecimalMin(value = "0.0", inclusive = true, message = "별점은 0 이상이어야 합니다.")
+    @DecimalMax(value = "5.0", inclusive = true, message = "별점은 5 이하이어야 합니다.")
+    private Float star;
 
     @Column(nullable = false)
     private Long recipeId;
@@ -32,7 +35,7 @@ public class RecipeReview extends BaseEntity {
     private Long prrId; // parentRecipeReviewId
 
     @Builder
-    public RecipeReview(final String content, final Byte star, final Long recipeId,
+    public RecipeReview(final String content, final Float star, final Long recipeId,
                         final String user, final Long prrId){
         this.content = content;
         this.star = star;
@@ -41,7 +44,7 @@ public class RecipeReview extends BaseEntity {
         this.prrId = prrId;
     }
 
-    public void updateRecipeReview(final String content, final Byte star, final Long recipeId,
+    public void updateRecipeReview(final String content, final Float star, final Long recipeId,
                                    final String user, final Long prrId){
         this.content = content;
         this.star = star;
