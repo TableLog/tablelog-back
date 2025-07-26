@@ -86,7 +86,7 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber, userDetails, isPaid));
     }
 
-    @Operation(summary = "레시피 전체 조회 인기순", description = "최신 일주일")
+    @Operation(summary = "레시피 전체 조회 인기순 최신 일주일")
     @GetMapping("/recipes/popular/recent")
     public ResponseEntity<?> readPopularRecipesLastWeek(
             @RequestParam int pageNumber
