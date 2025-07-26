@@ -81,7 +81,9 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     @Override
-    public RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id, UserDetailsImpl userDetails) {
+    public RecipeReviewReadResponseDto readRecipeReview(
+            Long recipeId, Long id, Boolean includeReplies, UserDetailsImpl userDetails
+    ) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeReview recipeReview = recipeReviewRepository.findById(id)
@@ -95,7 +97,25 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         String profileImgUrl = Optional.ofNullable(reviewUser)
                 .map(User::getProfileImgUrl)
                 .orElse(null);
-        return recipeReviewEntityMapper.toRecipeReviewReadResponseDto(recipeReview, isReviewer, profileImgUrl);
+
+        // 답글 포함 조회
+        if (Boolean.TRUE.equals(includeReplies)) {
+            RecipeReview reply = recipeReviewRepository.findAllByPrrId(recipeReview.getId());
+            if(reply != null) {
+                User replyUser = userRepository.findByNickname(reply.getUser())
+                        .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+                String replyProfileImgUrl = replyUser.getProfileImgUrl();
+                boolean isReplyReviewer = false;
+                if (userDetails != null) {
+                    isReplyReviewer = userDetails.user().getNickname().equals(reply.getUser());
+                }
+                RecipeReviewReadResponseDto replyDto = recipeReviewEntityMapper
+                        .toRecipeReviewReadResponseDto(reply, isReplyReviewer, replyProfileImgUrl);
+                return recipeReviewEntityMapper.toDtoWithReply(recipeReview, isReviewer, profileImgUrl, replyDto);
+            }
+        }
+        // 답글 없이 단건 조회
+        return recipeReviewEntityMapper.toDtoWithReply(recipeReview, isReviewer, profileImgUrl, null);
     }
 
     @Override
@@ -143,8 +163,8 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         RecipeReview recipeReview = validateRecipeReview(id, user);
 
         if(recipeReview.getPrrId() == 0){
-            byte oldStar = recipeReview.getStar();
-            byte newStar = requestDto.star();
+            Float oldStar = recipeReview.getStar();
+            Float newStar = requestDto.star();
             recipeReview.updateRecipeReview(requestDto.content(), newStar, recipeId,
                     user.getNickname(), requestDto.prrId());
             recipe.updateStar(oldStar, newStar);
@@ -203,6 +223,21 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         Map<Long, RecipeReview> replyMap = replies.stream()
                 .collect(Collectors.toMap(RecipeReview::getPrrId, Function.identity()));
 
+        // 레시피 id 조회
+        List<Long> recipeIds = comments.stream()
+                .map(RecipeReview::getRecipeId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 레시피 조회 및 매핑
+        List<Recipe> recipes = recipeRepository.findAllById(recipeIds);
+        Map<Long, Recipe> recipeMap = recipes.stream()
+                .collect(Collectors.toMap(Recipe::getId, Function.identity()));
+
+
+
+
         // 유저 집합
         Set<String> allNicknames = Stream.concat(
                 comments.stream().map(RecipeReview::getUser),
@@ -234,6 +269,18 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
                         replyDto = recipeReviewEntityMapper
                                 .toRecipeReviewReadResponseDto(reply, isReplyReviewer, replyProfileImgUrl);
                     }
+
+//                    RecipeReview reply = replyMap.get(comment.getId());
+//                    RecipeReviewReadResponseDto replyDto = null;
+//                    if (reply != null) {
+//                        boolean isReplyReviewer = userDetails != null
+//                                && userDetails.user().getNickname().equals(reply.getUser());
+//                        Recipe replyRecipe = recipeMap.get(reply.getRecipeId());
+//                        String replyImageUrl = replyRecipe != null ? replyRecipe.getImageUrl() : null;
+//                        String replyTitle = replyRecipe != null ? replyRecipe.getTitle() : null;
+//                        replyDto = recipeReviewEntityMapper
+//                                .toRecipeReviewReadResponseDto(reply, isReplyReviewer, replyImageUrl, replyTitle);
+//                    }
 
                     return recipeReviewEntityMapper.toDtoWithReply(comment, isReviewer, profileImgUrl, replyDto);
                 })
