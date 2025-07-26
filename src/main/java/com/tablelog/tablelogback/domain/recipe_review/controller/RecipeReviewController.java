@@ -60,11 +60,12 @@ public class RecipeReviewController {
     @GetMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
     public ResponseEntity<RecipeReviewReadResponseDto> readRecipeReview(
             @PathVariable Long recipeId,
-            @PathVariable Long recipeReviewId
+            @PathVariable Long recipeReviewId,
+            @RequestParam Boolean includeReplies
     ){
         UserDetailsImpl userDetails = findUserDetails();
         RecipeReviewReadResponseDto responseDto =
-                recipeReviewService.readRecipeReview(recipeId, recipeReviewId, userDetails);
+                recipeReviewService.readRecipeReview(recipeId, recipeReviewId, includeReplies, userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 

@@ -266,6 +266,10 @@ public class RecipeServiceImpl implements RecipeService {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
+        if(recipes.size() == 0){
+            slice = recipeRepository.findPopularRecipes(pageRequest);
+            recipes = mappingRecipes(slice, user);
+        }
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 

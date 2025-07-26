@@ -2,7 +2,7 @@ package com.tablelog.tablelogback.domain.recipe_review.dto.service;
 
 import java.time.LocalDateTime;
 
-public record RecipeReviewReadResponseDto(
+public record RecipeReviewReadResponseByUserDto(
         Long id,
         String content,
         Float star,
@@ -12,6 +12,8 @@ public record RecipeReviewReadResponseDto(
         Long prrId,
         boolean isReviewer,
         String profileImgUrl,
-        RecipeReviewReadResponseDto reply
+        String recipeTitle,
+        String recipeImageUrl,
+        RecipeReviewReadResponseByUserDto reply
 ) {
 }

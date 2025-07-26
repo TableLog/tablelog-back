@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.recipe_review.mapper.entity;
 
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseByUserDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReplyCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.entity.RecipeReview;
@@ -23,26 +24,88 @@ public interface RecipeReviewEntityMapper {
     @Mapping(source = "recipeId", target = "recipeId")
     RecipeReview toRecipeReply(RecipeReviewReplyCreateServiceRequestDto serviceRequestDto, Long recipeId, User user);
 
-    RecipeReviewReadResponseDto toRecipeReviewReadResponseDto(
-            RecipeReview recipeReview, Boolean isReviewer, String profileImgUrl);
+    default RecipeReviewReadResponseDto toRecipeReviewReadResponseDto(
+            RecipeReview review,
+            boolean isReviewer,
+            String profileImgUrl
+    ) {
+        return new RecipeReviewReadResponseDto(
+                review.getId(),
+                review.getContent(),
+                review.getStar(),
+                review.getRecipeId(),
+                review.getUser(),
+                review.getModifiedAt(),
+                review.getPrrId(),
+                isReviewer,
+                profileImgUrl,
+                null
+        );
+    }
 
     default RecipeReviewReadResponseDto toDtoWithReply(
-            RecipeReview recipeReview,
+            RecipeReview review,
             boolean isReviewer,
             String profileImgUrl,
             RecipeReviewReadResponseDto reply
     ) {
-        RecipeReviewReadResponseDto base = toRecipeReviewReadResponseDto(recipeReview, isReviewer, profileImgUrl);
         return new RecipeReviewReadResponseDto(
-                base.id(),
-                base.content(),
-                base.star(),
-                base.recipeId(),
-                base.user(),
-                base.modifiedAt(),
-                base.prrId(),
-                base.isReviewer(),
-                base.profileImgUrl(),
+                review.getId(),
+                review.getContent(),
+                review.getStar(),
+                review.getRecipeId(),
+                review.getUser(),
+                review.getModifiedAt(),
+                review.getPrrId(),
+                isReviewer,
+                profileImgUrl,
+                reply
+        );
+    }
+
+    default RecipeReviewReadResponseByUserDto toRecipeReviewReadResponseByUserDto(
+            RecipeReview review,
+            boolean isReviewer,
+            String profileImgUrl,
+            String title,
+            String imageUrl
+    ) {
+        return new RecipeReviewReadResponseByUserDto(
+                review.getId(),
+                review.getContent(),
+                review.getStar(),
+                review.getRecipeId(),
+                review.getUser(),
+                review.getModifiedAt(),
+                review.getPrrId(),
+                isReviewer,
+                profileImgUrl,
+                title,
+                imageUrl,
+                null
+        );
+    }
+
+    default RecipeReviewReadResponseByUserDto toDtoWithReplyByUser(
+            RecipeReview review,
+            boolean isReviewer,
+            String profileImgUrl,
+            String title,
+            String imageUrl,
+            RecipeReviewReadResponseByUserDto reply
+    ) {
+        return new RecipeReviewReadResponseByUserDto(
+                review.getId(),
+                review.getContent(),
+                review.getStar(),
+                review.getRecipeId(),
+                review.getUser(),
+                review.getModifiedAt(),
+                review.getPrrId(),
+                isReviewer,
+                profileImgUrl,
+                title,
+                imageUrl,
                 reply
         );
     }
