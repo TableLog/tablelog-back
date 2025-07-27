@@ -329,23 +329,23 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
                     String commentTitle = commentRecipe != null ? commentRecipe.getTitle() : null;
 
                     // 답글 매핑
-//                    RecipeReview reply = replyMap.get(comment.getId());
-//                    RecipeReviewReadResponseByUserDto replyDto = null;
-//                    if (reply != null) {
-//                        boolean isReplyReviewer = userDetails != null &&
-//                                userDetails.user().getNickname().equals(reply.getUser());
-//                        String replyProfileImgUrl = profileImgMap.get(reply.getUser());
-//
-//                        Recipe replyRecipe = recipeMap.get(reply.getRecipeId());
-//                        String replyImageUrl = replyRecipe != null ? replyRecipe.getImageUrl() : null;
-//                        String replyTitle = replyRecipe != null ? replyRecipe.getTitle() : null;
-//
-//                        replyDto = recipeReviewEntityMapper.toRecipeReviewReadResponseByUserDto(
-//                                reply, isReplyReviewer, replyProfileImgUrl, replyTitle, replyImageUrl
-//                        );
-//                    }
+                    RecipeReview reply = replyMap.get(comment.getId());
+                    RecipeReviewReadResponseByUserDto replyDto = null;
+                    if (reply != null) {
+                        boolean isReplyReviewer = userDetails != null &&
+                                userDetails.user().getNickname().equals(reply.getUser());
+                        String replyProfileImgUrl = profileImgMap.get(reply.getUser());
+
+                        Recipe replyRecipe = recipeMap.get(reply.getRecipeId());
+                        String replyImageUrl = replyRecipe != null ? replyRecipe.getImageUrl() : null;
+                        String replyTitle = replyRecipe != null ? replyRecipe.getTitle() : null;
+
+                        replyDto = recipeReviewEntityMapper.toRecipeReviewReadResponseByUserDto(
+                                reply, isReplyReviewer, replyProfileImgUrl, replyTitle, replyImageUrl
+                        );
+                    }
                     return recipeReviewEntityMapper.toDtoWithReplyByUser(
-                            comment, isReviewer, profileImgUrl, commentTitle, commentImageUrl, null);
+                            comment, isReviewer, profileImgUrl, commentTitle, commentImageUrl, replyDto);
                 })
                 .collect(Collectors.toList());
     }
