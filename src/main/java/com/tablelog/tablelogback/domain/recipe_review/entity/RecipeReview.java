@@ -18,7 +18,7 @@ public class RecipeReview extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(length = 300)
     private String content;
 
     @DecimalMin(value = "0.0", inclusive = true, message = "별점은 0 이상이어야 합니다.")
