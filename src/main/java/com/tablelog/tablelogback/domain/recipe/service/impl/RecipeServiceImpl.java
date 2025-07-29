@@ -329,6 +329,14 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice =recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
     public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);

@@ -25,6 +25,7 @@ public interface RecipeService {
     RecipeSliceResponseDto getAllMyRecipesLatest(UserDetailsImpl user, int pageNum, Boolean isPaid);
     RecipeSliceResponseDto getAllMyRecipesPopular(UserDetailsImpl user, int pageNum, Boolean isPaid);
     RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNum, UserDetailsImpl user);
+    RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user);
     RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum, UserDetailsImpl user);
     void updateRecipe(Long id, RecipeUpdateServiceRequestDto requestDto, User user,
                       MultipartFile multipartFile) throws IOException;

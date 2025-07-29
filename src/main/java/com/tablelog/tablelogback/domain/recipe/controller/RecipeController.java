@@ -151,6 +151,17 @@ public class RecipeController {
                 .body(recipeService.readAllRecipeByFoodName(keyword, pageNumber, userDetails));
     }
 
+    @Operation(summary = "레시피 전체 조회 검색(레시피제목+유저닉네임)")
+    @GetMapping("/recipes/filter/search")
+    public ResponseEntity<?> readAllRecipesByTitleOrNickname(
+            @RequestParam String keyword,
+            @RequestParam int pageNumber
+    ) {
+        UserDetailsImpl userDetails = getUserDetails();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readAllRecipeByTitleOrNickname(keyword, pageNumber, userDetails));
+    }
+
     @Operation(summary = "레시피 필터링")
     @GetMapping("/recipes/filter")
     public ResponseEntity<?> filterRecipes (
