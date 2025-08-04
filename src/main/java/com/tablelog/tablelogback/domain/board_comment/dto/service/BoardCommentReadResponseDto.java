@@ -11,7 +11,8 @@ public record BoardCommentReadResponseDto(
         String profileImgUrl,
         LocalDateTime createdAt,
         Long id,
-        Long comment_id
+        Long commentId,
+        String comment_count
 ) {
 
 }
