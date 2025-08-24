@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public enum ReportType {
     R_BOARD,
     R_RECIPE,
-    R_USER;
+    R_USER,
+    R_BOARD_COMMENT,
+    R_RECIPE_REVIEW;
 
 
     @JsonCreator

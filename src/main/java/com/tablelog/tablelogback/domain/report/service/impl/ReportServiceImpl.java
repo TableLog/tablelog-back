@@ -3,9 +3,15 @@ package com.tablelog.tablelogback.domain.report.service.impl;
 import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
 import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
+import com.tablelog.tablelogback.domain.board_comment.exception.BoardCommentErrorCode;
+import com.tablelog.tablelogback.domain.board_comment.exception.NotFoundBoardCommentException;
+import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
+import com.tablelog.tablelogback.domain.recipe_review.exception.NotFoundRecipeReviewException;
+import com.tablelog.tablelogback.domain.recipe_review.exception.RecipeReviewErrorCode;
+import com.tablelog.tablelogback.domain.recipe_review.repository.RecipeReviewRepository;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportReadResponseDto;
 import com.tablelog.tablelogback.domain.report.dto.service.ReportSliceResponseDto;
@@ -37,6 +43,8 @@ public class ReportServiceImpl implements ReportService {
     private final ReportRepository reportRepository;
     private final BoardRepository boardRepository;
     private final RecipeRepository recipeRepository;
+    private final BoardCommentRepository boardCommentRepository;
+    private final RecipeReviewRepository recipeReviewRepository;
 
     @Override
     public void createReport(ReportCreateServiceRequestDto serviceRequestDto, User user){
@@ -101,7 +109,10 @@ public class ReportServiceImpl implements ReportService {
                     .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
             case R_RECIPE -> recipeRepository.findById(id)
                     .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+            case R_BOARD_COMMENT -> boardCommentRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
+            case R_RECIPE_REVIEW -> recipeReviewRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundRecipeReviewException(RecipeReviewErrorCode.NOT_FOUND_RECIPE_REVIEW));
         }
     }
-
 }
