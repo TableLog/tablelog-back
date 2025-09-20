@@ -24,7 +24,7 @@ public class PointTransactionController {
 
     @Operation(summary = "내 포인트 전체 조회")
     @GetMapping("/users/me/point")
-    public ResponseEntity<?> getAllPointTransactionByUser(
+    public ResponseEntity<?> readAllPointTransactionByUser(
             @RequestParam(required = false) PointType pointType,
             @RequestParam int pageNumber,
             @AuthenticationPrincipal UserDetailsImpl userDetails

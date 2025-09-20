@@ -120,7 +120,7 @@ public class RecipeController {
 
     @Operation(summary = "내 레시피 전체 조회 최신순")
     @GetMapping("/users/me/recipes/latest")
-    public ResponseEntity<?> getMyAllRecipesLatest (
+    public ResponseEntity<?> readMyAllRecipesLatest (
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
@@ -131,7 +131,7 @@ public class RecipeController {
 
     @Operation(summary = "내 레시피 전체 조회 인기순")
     @GetMapping("/users/me/recipes/popular")
-    public ResponseEntity<?> getMyAllRecipesPopular (
+    public ResponseEntity<?> readMyAllRecipesPopular (
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber

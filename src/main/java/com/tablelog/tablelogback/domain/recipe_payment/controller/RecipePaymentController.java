@@ -36,4 +36,6 @@ public class RecipePaymentController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipePaymentService.getAllMyRecipePayments(userDetails.user(), pageNumber));
     }
+
+    // 내 레시피 판매 내역 전체 조회
 }

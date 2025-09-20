@@ -93,7 +93,7 @@ public class RecipeReviewController {
 
     @Operation(summary = "내 레시피 댓글 전체 조회")
     @GetMapping("/users/me/recipe-reviews")
-    public ResponseEntity<?> getMyAllRecipeReviews (
+    public ResponseEntity<?> readMyAllRecipeReviews (
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){

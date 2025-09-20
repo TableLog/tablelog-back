@@ -22,7 +22,6 @@ import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import java.util.ArrayList;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -31,10 +30,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
-
 import java.io.IOException;
 import java.util.List;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value.Str;
 
 @RequiredArgsConstructor
 @Service

@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.board.controller;
 
-
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
@@ -9,10 +8,7 @@ import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
-import com.tablelog.tablelogback.domain.user.entity.User;
-import com.tablelog.tablelogback.global.enums.BoardCategory;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
-import com.tablelog.tablelogback.sample.dto.service.TestReadResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jdk.jfr.Description;
@@ -25,11 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 @RequiredArgsConstructor
 @RestController
@@ -65,6 +57,7 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @DeleteMapping("/boards/{board_id}")
+    @Operation(summary = "피드 삭제")
     public ResponseEntity<?> deleteBoard(
         @PathVariable Long board_id,
         @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -79,7 +72,8 @@ public class BoardController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam("page") Integer pageNumber
     ) {
-        if(userDetails==null){
+        // 비로그인
+        if(userDetails == null){
             BoardListResponseDto responseDto = boardService.getAll(pageNumber);
             return ResponseEntity.ok(responseDto);
         }
@@ -93,7 +87,8 @@ public class BoardController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam("page") Integer pageNumber
     ) {
-        if (userDetails==null){
+        // 비로그인
+        if (userDetails == null){
             BoardListResponseDto responseDto = boardService.getAllByDesc(pageNumber);
             return ResponseEntity.ok(responseDto);
         }
@@ -107,7 +102,8 @@ public class BoardController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam("page") Integer pageNumber
     ) {
-        if (userDetails==null){
+        // 비로그인
+        if (userDetails == null){
             BoardListResponseDto responseDto = boardService.getAllByAsc(pageNumber);
             return ResponseEntity.ok(responseDto);
         }
@@ -121,7 +117,8 @@ public class BoardController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable Long board_id
     ){
-        if (userDetails==null){
+        // 비로그인
+        if (userDetails == null){
             BoardReadResponseDto responseDto = boardService.getOnce(board_id);
             return ResponseEntity.ok(responseDto);
         }
@@ -168,6 +165,7 @@ public class BoardController {
 //    }
 
     @GetMapping("/boards/me")
+    @Operation(summary = "유저 닉네임 조회")
     public String ReadUser(
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ){

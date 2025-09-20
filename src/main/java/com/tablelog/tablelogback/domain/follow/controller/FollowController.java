@@ -52,7 +52,7 @@ public class FollowController {
 
     @Operation(summary = "팔로워 수 전체 조회 By 유저")
     @GetMapping("/users/{userId}/follower/count")
-    public ResponseEntity<Long> getFollowerCount(
+    public ResponseEntity<Long> readFollowerCount(
             @PathVariable Long userId
     ){
         return ResponseEntity.status(HttpStatus.OK).
@@ -61,7 +61,7 @@ public class FollowController {
 
     @Operation(summary = "팔로잉 수 전체 조회 By 유저")
     @GetMapping("/users/{userId}/following/count")
-    public ResponseEntity<Long> getFollowingCount(
+    public ResponseEntity<Long> readFollowingCount(
             @PathVariable Long userId
     ){
         return ResponseEntity.status(HttpStatus.OK).
@@ -70,7 +70,7 @@ public class FollowController {
 
     @Operation(summary = "팔로워 전체 조회")
     @GetMapping("/users/{userId}/follower")
-    public ResponseEntity<FollowUserListDto> getFollowers(
+    public ResponseEntity<FollowUserListDto> readFollowers(
             @PathVariable Long userId,
             @RequestParam int pageNumber
     ){
@@ -81,7 +81,7 @@ public class FollowController {
 
     @Operation(summary = "팔로잉 전체 조회")
     @GetMapping("/users/{userId}/following")
-    public ResponseEntity<FollowUserListDto> getFollowings(
+    public ResponseEntity<FollowUserListDto> readFollowings(
             @PathVariable Long userId,
             @RequestParam int pageNumber
     ){
@@ -90,6 +90,7 @@ public class FollowController {
                 body(followService.getFollowings(userId, pageNumber, userDetails));
     }
 
+    // 로그인 여부 및 사용자 확인
     private UserDetailsImpl getUserDetails(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = null;

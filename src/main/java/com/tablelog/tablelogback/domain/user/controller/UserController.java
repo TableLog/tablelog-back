@@ -46,8 +46,6 @@ public class UserController {
     private final KakaoService kakaoService;
     private final GoogleService googleService;
     private final UserRepository userRepository;
-    private final OAuthAccountService oAuthAccountService;
-    private final OAuthAccountRepository oAuthAccountRepository;
 
     @Operation(summary = "회원가입")
     @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -81,7 +79,7 @@ public class UserController {
 
     @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
     @GetMapping("/users")
-    public ResponseEntity<UserLoginResponseDto> getUser(
+    public ResponseEntity<UserLoginResponseDto> readUser(
             @CookieValue("accessToken") String token
     ){
         UserLoginResponseDto responseDto = userService.getUser(token);
@@ -90,7 +88,7 @@ public class UserController {
 
     @Operation(summary = "사용자 프로필 정보")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserProfileDto> getUserProfile(
+    public ResponseEntity<UserProfileDto> readUserProfile(
             @PathVariable Long userId
     ){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

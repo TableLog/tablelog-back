@@ -45,7 +45,7 @@ public class UserLicenseController {
 
     @Operation(summary = "전문가 인증 라이센스 전체 조회 By User", description = "licenseType null이면 전체 조회")
     @GetMapping("/users/license")
-    public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicensesByUser(
+    public ResponseEntity<UserLicenseSliceResponseDto> readAllUserLicensesByUser(
             @RequestParam(required = false) LicenseType licenseType,
             @RequestParam("page") Integer pageNumber,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -61,7 +61,7 @@ public class UserLicenseController {
 
     @Operation(summary = "라이센스 개수 조회 By User")
     @GetMapping("/users/license/count")
-    public ResponseEntity<UserLicenseCountResponseDto> getUserLicenseCountByUser(
+    public ResponseEntity<UserLicenseCountResponseDto> readUserLicenseCountByUser(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         UserLicenseCountResponseDto responseDto = userLicenseService.getCountByUser(userDetails.user());
@@ -71,7 +71,7 @@ public class UserLicenseController {
     @Operation(summary = "관리자가 전문가 승인 위해 유저의 라이센스 전체 조회")
     @GetMapping("/admin/users/{userId}/licenses")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicenseByUserId(
+    public ResponseEntity<UserLicenseSliceResponseDto> readAllUserLicenseByUserId(
             @PathVariable Long userId,
             @RequestParam("page") Integer pageNumber,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -83,7 +83,7 @@ public class UserLicenseController {
     @Operation(summary = "관리자가 전문가 승인 위해 라이센스 단건 조회")
     @GetMapping("/admin/licenses/{licenseId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserLicenseReadResponseDto> getUserLicense(
+    public ResponseEntity<UserLicenseReadResponseDto> readUserLicense(
             @PathVariable Long licenseId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {

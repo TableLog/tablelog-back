@@ -54,6 +54,7 @@ public class FoodController {
             @RequestParam(required = false) String search,
             @RequestParam(name = "page", required = false) Integer page
     ){
+        // 전체 조회
         if(search != null && !search.isEmpty()) {
             return ResponseEntity.status(HttpStatus.OK).body(foodService.searchFoods(search, page));
         } else {
