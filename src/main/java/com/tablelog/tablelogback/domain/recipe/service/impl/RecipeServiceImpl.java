@@ -31,6 +31,8 @@ import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveReposit
 import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
 import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
@@ -390,6 +392,20 @@ public class RecipeServiceImpl implements RecipeService {
         recipeRepository.delete(recipe);
         s3Provider.delete(recipe.getFolderName());
         user.updateRecipeCount(user.getRecipeCount() - 1);
+    }
+
+    @Transactional
+    public void deleteRecipeByAdmin(Long id, User user) {
+        Recipe recipe = validateRecipe(id, user);
+        recipeFoodRepository.deleteAllByRecipeId(id);
+        recipeProcessRepository.deleteAllByRecipeId(id);
+        recipeMemoRepository.deleteAllByRecipeId(id);
+        recipeRepository.delete(recipe);
+        s3Provider.delete(recipe.getFolderName());
+        Long writerId = recipe.getUserId();
+        User writer = userRepository.findById(writerId)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        writer.updateRecipeCount(writer.getRecipeCount() - 1);
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

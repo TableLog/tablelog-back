@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -194,6 +195,17 @@ public class RecipeController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         recipeService.deleteRecipe(recipeId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "관리자가 레시피 삭제")
+    @DeleteMapping("/admin/recipes/{recipeId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteRecipeByAdmin(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeService.deleteRecipeByAdmin(recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
