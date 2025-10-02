@@ -37,3 +37,4 @@ out/
 .vscode/
 **/src/main/resources/my-ssl.jks
 **/src/main/resources/application-dev.yml
+**/logs/
