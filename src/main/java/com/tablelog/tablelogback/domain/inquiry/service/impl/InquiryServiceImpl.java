@@ -11,6 +11,9 @@ import com.tablelog.tablelogback.domain.inquiry.exception.NotFoundInquiryExcepti
 import com.tablelog.tablelogback.domain.inquiry.mapper.entity.InquiryEntityMapper;
 import com.tablelog.tablelogback.domain.inquiry.repository.InquiryRepository;
 import com.tablelog.tablelogback.domain.inquiry.service.InquiryService;
+import com.tablelog.tablelogback.domain.report.entity.Report;
+import com.tablelog.tablelogback.domain.report.exception.NotFoundReportException;
+import com.tablelog.tablelogback.domain.report.exception.ReportErrorCode;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.enums.InquiryType;
@@ -76,6 +79,29 @@ public class InquiryServiceImpl implements InquiryService {
         Slice<Inquiry> slice = inquiryRepository.findAllByAdminWithOptionalFilters(applyStatus, inquiryType, pageRequest);
         List<InquiryReadResponseDto> inquiries = inquiryEntityMapper.toInquiryReadAllResponseDto(slice.getContent());
         return new InquirySliceReadResponseDto(inquiries, slice.hasNext());
+    }
+
+    @Override
+    public void processingInquiry(Long inquiryId){
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new NotFoundInquiryException(InquiryErrorCode.NOT_FOUND_INQUIRY));
+        inquiry.processing();
+        inquiryRepository.save(inquiry);
+    }
+
+    @Override
+    public void rejectInquiry(Long inquiryId){
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new NotFoundInquiryException(InquiryErrorCode.NOT_FOUND_INQUIRY));
+        inquiry.reject();
+        inquiryRepository.save(inquiry);
+    }
+
+    public void approveInquiry(Long inquiryId){
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new NotFoundInquiryException(InquiryErrorCode.NOT_FOUND_INQUIRY));
+        inquiry.approve();
+        inquiryRepository.save(inquiry);
     }
 
     @Override

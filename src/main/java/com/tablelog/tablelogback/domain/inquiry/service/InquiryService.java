@@ -15,5 +15,8 @@ public interface InquiryService {
             ApplyStatus applyStatus, InquiryType inquiryType, int pageNum, User user);
     InquirySliceReadResponseDto readAllInquiriesByAdmin(
             ApplyStatus applyStatus, InquiryType inquiryType, int pageNum);
+    void processingInquiry(Long inquiryId);
+    void rejectInquiry(Long inquiryId);
+    void approveInquiry(Long inquiryId);
     void deleteInquiry(Long inquiryId, User user);
 }

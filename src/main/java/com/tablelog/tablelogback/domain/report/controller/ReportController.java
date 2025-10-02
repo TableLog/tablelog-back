@@ -71,7 +71,7 @@ public class ReportController {
     }
 
     @Operation(summary = "관리자가 신고 거절")
-    @PostMapping("/admin/reports/{reportId}/reject")
+    @PostMapping("/admin/reports/{reportId}/rejection")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> rejectReport(
             @PathVariable Long reportId,

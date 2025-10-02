@@ -84,6 +84,19 @@ public class InquiryController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "관리자가 문의 처리중")
+    @PostMapping("/admin/inquiries/{inquiryId}/processing")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> processInquiry(
+            @PathVariable Long inquiryId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        inquiryService.processingInquiry(inquiryId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    // todo 승인, 거절
+
     @Operation(summary = "문의 삭제")
     @DeleteMapping("/inquiries/{inquiryId}")
     public ResponseEntity<?> deleteInquiry(
