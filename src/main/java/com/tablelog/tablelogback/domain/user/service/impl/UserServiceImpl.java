@@ -136,6 +136,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(userLoginServiceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
+            log.info("userId {} 로그인 실패", user.getId());
             throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
         }
         jwtUtil.addTokenToCookie(user, httpServletResponse, "accessToken");
@@ -150,6 +151,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
             recovered = true;
         }
+        log.info("userId {} 로그인 성공", user.getId());
         return recovered;
     }
 
