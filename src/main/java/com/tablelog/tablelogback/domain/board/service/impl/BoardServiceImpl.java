@@ -265,4 +265,23 @@ public class BoardServiceImpl implements BoardService {
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
+
+    @DeleteMapping
+    public void deleteBoardByAdmin(Long boardId){
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        String nickname = board.getUser();
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        if (board.getImage_urls() == null){
+            boardRepository.delete(board);
+        } else {
+            for (String imageUrl : board.getImage_urls()) {
+                String image_name = imageUrl.replace(url,"");
+                image_name = image_name.substring(image_name.lastIndexOf("/"));
+                s3Provider.delete(user.getFolderName()+image_name);
+            }
+            boardRepository.delete(board);
+        }
+    }
 }

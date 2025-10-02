@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -172,5 +173,16 @@ public class BoardController {
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         return userDetails.user().getNickname();
+    }
+
+    @Operation(summary = "관리자 - 보드 강제 삭제")
+    @DeleteMapping("/admin/boards/{boardId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteBoardByAdmin(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        boardService.deleteBoardByAdmin(boardId);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

@@ -41,4 +41,5 @@ public interface BoardService {
     BoardListResponseDto getAllByDescAndUser(int pageNumber,User user);
     BoardReadResponseDto getOnceLogin(Long id,User user);
     BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id);
+    void deleteBoardByAdmin(Long id);
 }
