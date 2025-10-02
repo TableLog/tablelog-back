@@ -44,12 +44,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RecipeServiceImpl implements RecipeService {
@@ -196,6 +198,7 @@ public class RecipeServiceImpl implements RecipeService {
         Boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
         Boolean hasPurchased = userDetails != null
                 && recipePaymentRepository.existsByUserIdAndRecipeId(userDetails.user().getId(), recipe.getId());
+        log.info("userId {} 이 레시피 {} 조회", userDetails != null ? userDetails.user().getId() : null, recipe.getId());
         return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
                 isSaved, writerName, isExpertWriter, isWriter, hasPurchased);
     }
