@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.global.config;
 
-import com.tablelog.tablelogback.domain.board.controller.CustomHandshakeInterceptor;
 import com.tablelog.tablelogback.global.handler.StompHandler;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;

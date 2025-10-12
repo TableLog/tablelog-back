@@ -1,4 +1,4 @@
-package com.tablelog.tablelogback.domain.board.controller;
+package com.tablelog.tablelogback.global.config;
 
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
