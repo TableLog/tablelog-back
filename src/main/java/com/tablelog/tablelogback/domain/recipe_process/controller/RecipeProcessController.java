@@ -2,10 +2,7 @@ package com.tablelog.tablelogback.domain.recipe_process.controller;
 
 import com.tablelog.tablelogback.domain.recipe_process.dto.controller.RecipeProcessCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.controller.RecipeProcessUpdateControllerRequestDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessReadAllServiceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessSliceResponseDto;
-import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe_process.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.dto.RecipeProcessDtoMapper;
 import com.tablelog.tablelogback.domain.recipe_process.service.impl.RecipeProcessServiceImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -55,9 +52,19 @@ public class RecipeProcessController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "레시피 조리과정 단건 조회 With Sequence")
+    @GetMapping("/recipes/{recipeId}/recipe-process/sequence/{sequence}")
+    public ResponseEntity<RecipeProcessSliceResponseDto> readRecipeProcessWithSequence(
+            @PathVariable Long recipeId,
+            @PathVariable Long sequence
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeProcessService.readRecipeProcessWithSequence(recipeId, sequence));
+    }
+
     @Operation(summary = "레시피 조리과정 전체 조회 By 레시피")
     @GetMapping("/recipes/{recipeId}/recipe-process")
-    public ResponseEntity<RecipeProcessSliceResponseDto> readAllRecipeProcessByRecipeId(
+    public ResponseEntity<RecipeProcessReadAllSliceResponseDto> readAllRecipeProcessByRecipeId(
             @PathVariable Long recipeId,
             @RequestParam int page
     ){

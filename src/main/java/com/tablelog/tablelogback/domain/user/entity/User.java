@@ -65,10 +65,13 @@ public class User extends BaseEntity {
     private Long boardCount;
 
     @Column(nullable = false)
-    private Long followerCount;;
+    private Long followerCount;
 
     @Column(nullable = false)
-    private Long followingCount;;
+    private Long followingCount;
+
+    @Column
+    private Boolean isDeleted;
 
     @Builder
     public User(
@@ -98,6 +101,7 @@ public class User extends BaseEntity {
         this.boardCount = 0L;
         this.followerCount = 0L;
         this.followingCount = 0L;
+        this.isDeleted = false;
     }
 
     public void changeRole(UserRole newUserRole) {
@@ -122,10 +126,6 @@ public class User extends BaseEntity {
 
     public void updatePointBalance(Integer point){
         this.pointBalance = this.pointBalance + point;
-    }
-
-    public void updateProvider(UserProvider provider){
-        this.provider = provider;
     }
 
     public void updateMarketingOptIn(Boolean marketingOptIn){
@@ -154,5 +154,9 @@ public class User extends BaseEntity {
 
     public void addPointBalance(Integer point){
         this.pointBalance = this.pointBalance + point;
+    }
+
+    public void updateIsDeleted(Boolean isDeleted){
+        this.isDeleted = isDeleted;
     }
 }

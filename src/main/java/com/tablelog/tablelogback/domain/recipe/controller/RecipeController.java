@@ -2,10 +2,7 @@ package com.tablelog.tablelogback.domain.recipe.controller;
 
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe.dto.controller.RecipeUpdateControllerRequestDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFilterConditionDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeFoodPreviewDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe.mapper.dto.RecipeDtoMapper;
 import com.tablelog.tablelogback.domain.recipe.service.impl.RecipeServiceImpl;
 import com.tablelog.tablelogback.domain.recipe_food.dto.controller.RecipeFoodCreateControllerRequestDto;
@@ -70,11 +67,13 @@ public class RecipeController {
 
     @Operation(summary = "레시피 단건 조회 레시피 식재료 보기")
     @GetMapping("/recipes/{recipeId}/foods")
-    public ResponseEntity<RecipeFoodPreviewDto> readRecipeWithRecipeFood(
-            @PathVariable Long recipeId
+    public ResponseEntity<RecipeFoodPreviewSliceResponseDto> readRecipeWithRecipeFood(
+            @PathVariable Long recipeId,
+            @RequestParam int pageNumber
     ){
+        UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.readRecipeWithRecipeFood(recipeId));
+                .body(recipeService.readRecipeWithRecipeFood(recipeId, pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 전체 조회 최신순 10개씩", description = "false면 전체 조회")
@@ -87,13 +86,25 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK).body(recipeService.readAllRecipes(pageNumber, userDetails, isPaid));
     }
 
-    @Operation(summary = "레시피 전체 조회 인기순", description = "최신 일주일")
-    @GetMapping("/recipes/popular")
-    public ResponseEntity<?> readPopularRecipes(
+    @Operation(summary = "레시피 전체 조회 인기순 최신 일주일")
+    @GetMapping("/recipes/popular/recent")
+    public ResponseEntity<?> readPopularRecipesLastWeek(
             @RequestParam int pageNumber
     ) {
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).body(recipeService.readPopularRecipes(pageNumber, userDetails));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readPopularRecipesLastWeek(pageNumber, userDetails));
+    }
+
+    @Operation(summary = "레시피 전체 조회 인기순")
+    @GetMapping("/recipes/popular")
+    public ResponseEntity<?> readPopularRecipes(
+            @RequestParam(required = false) Boolean isPaid,
+            @RequestParam int pageNumber
+    ) {
+        UserDetailsImpl userDetails = getUserDetails();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readPopularRecipes(pageNumber, userDetails, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 사용자")
@@ -107,15 +118,26 @@ public class RecipeController {
                 .body(recipeService.readAllRecipeByUser(userId, pageNumber, userDetails));
     }
 
-    @Operation(summary = "내 레시피 전체 조회")
-    @GetMapping("/users/me/recipes")
-    public ResponseEntity<?> getMyAllRecipes (
+    @Operation(summary = "내 레시피 전체 조회 최신순")
+    @GetMapping("/users/me/recipes/latest")
+    public ResponseEntity<?> getMyAllRecipesLatest (
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeService.getAllMyRecipes(userDetails, pageNumber, isPaid));
+                .body(recipeService.getAllMyRecipesLatest(userDetails, pageNumber, isPaid));
+    }
+
+    @Operation(summary = "내 레시피 전체 조회 인기순")
+    @GetMapping("/users/me/recipes/popular")
+    public ResponseEntity<?> getMyAllRecipesPopular (
+            @RequestParam(required = false) Boolean isPaid,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam int pageNumber
+    ){
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.getAllMyRecipesPopular(userDetails, pageNumber, isPaid));
     }
 
     @Operation(summary = "레시피 전체 조회 By 식재료")
@@ -127,6 +149,17 @@ public class RecipeController {
         UserDetailsImpl userDetails = getUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
                 .body(recipeService.readAllRecipeByFoodName(keyword, pageNumber, userDetails));
+    }
+
+    @Operation(summary = "레시피 전체 조회 검색(레시피제목+유저닉네임)")
+    @GetMapping("/recipes/filter/search")
+    public ResponseEntity<?> readAllRecipesByTitleOrNickname(
+            @RequestParam String keyword,
+            @RequestParam int pageNumber
+    ) {
+        UserDetailsImpl userDetails = getUserDetails();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(recipeService.readAllRecipeByTitleOrNickname(keyword, pageNumber, userDetails));
     }
 
     @Operation(summary = "레시피 필터링")

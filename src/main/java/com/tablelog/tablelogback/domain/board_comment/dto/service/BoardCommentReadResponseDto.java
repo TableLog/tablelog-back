@@ -9,7 +9,10 @@ public record BoardCommentReadResponseDto(
         String content,
         String user,
         String profileImgUrl,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long id,
+        Long commentId,
+        String comment_count
 ) {
 
 }

@@ -15,8 +15,8 @@ public record RecipeUpdateControllerRequestDto(
         List<RecipeCategory> recipeCategoryList,
         RecipePrice price,
         CookingTime cookingTime,
-        String memo,
         Boolean isPaid,
-        Integer recipePoint
+        Integer recipePoint,
+        String imageUrl
 ) {
 }

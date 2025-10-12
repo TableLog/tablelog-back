@@ -1,7 +1,16 @@
 package com.tablelog.tablelogback.domain.user.service.impl;
 
-import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.admin_user.entity.AdminUser;
+import com.tablelog.tablelogback.domain.admin_user.repository.AdminUserRepository;
+import com.tablelog.tablelogback.domain.board.entity.Board;
+import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
+import com.tablelog.tablelogback.domain.board_comment.entity.BoardComment;
+import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserDto;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
@@ -14,8 +23,7 @@ import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
-import com.tablelog.tablelogback.global.enums.UserProvider;
-import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.global.enums.*;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
@@ -27,15 +35,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -52,6 +61,10 @@ public class UserServiceImpl implements UserService {
     private final OAuthAccountService oAuthAccountService;
     private final OAuthAccountRepository oAuthAccountRepository;
     private final FollowRepository followRepository;
+    private final BoardRepository boardRepository;
+    private final BoardCommentRepository boardCommentRepository;
+    private final AdminUserRepository adminUserRepository;
+    private final PointTransactionRepository pointTransactionRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     @Value("${spring.cloud.aws.s3.bucket}")
     public String bucket;
@@ -106,13 +119,20 @@ public class UserServiceImpl implements UserService {
             fileUrl = serviceRequestDto.imgUrl();
             user = userEntityMapper.toSocialUser(serviceRequestDto, encodedPassword, UserRole.NORMAL, fileUrl, folderName);
         }
-        user.updatePointBalance(1000);
+        user.addPointBalance(1000);
         userRepository.save(user);
+        PointTransaction pointTransaction = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(1000)
+                .pointReason(PointReason.회원가입)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction);
         return user;
     }
 
     @Override
-    public UserLoginResponseDto login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
+    public Boolean login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
         User user = userRepository.findByEmail(userLoginServiceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
@@ -123,7 +143,14 @@ public class UserServiceImpl implements UserService {
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
-        return userEntityMapper.toUserLoginResponseDto(user, dtos);
+        // 탈퇴 요청 중 유저가 재로그인하면
+        boolean recovered = false;
+        if (user.getIsDeleted()) {
+            user.updateIsDeleted(false);
+            userRepository.save(user);
+            recovered = true;
+        }
+        return recovered;
     }
 
     @Override
@@ -145,6 +172,43 @@ public class UserServiceImpl implements UserService {
         Boolean isFollowed = userDetails != null
                 && followRepository.existsByFollowerIdAndFollowingId(userDetails.user().getId(), userId);
         return userEntityMapper.toUserProfileDto(user, isFollowed);
+    }
+
+    @Override
+    public FollowUserListDto findUsers(String keyword, int pageNumber, UserDetailsImpl userDetails){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+
+        Slice<User> slice;
+        if(keyword != null && !keyword.isBlank()){
+            // keyword 검색 시 전체 유저 검색
+            slice = userRepository.findByNicknameContaining(keyword, pageRequest);
+        } else {
+            // 기본: 내가 팔로우한 유저들 조회
+            slice = userRepository.findAll(pageRequest);
+        }
+
+        List<User> users = slice.getContent();
+        List<Long> targetIds = users.stream()
+                .map(User::getId)
+                .toList();
+        Long userId = (userDetails != null) ? userDetails.user().getId() : null;
+        Set<Long> idsIsFollow;
+        if(userDetails != null) {
+            idsIsFollow = new HashSet<>(
+                    followRepository.findAllFollowingIdsByFollowerId(userId, targetIds)
+            );
+        } else {
+            idsIsFollow = Collections.emptySet();;
+        }
+        List<FollowUserDto> dtos = users.stream()
+                .map(user -> new FollowUserDto(
+                        user.getId(),
+                        user.getNickname(),
+                        user.getProfileImgUrl(),
+                        idsIsFollow.contains(user.getId())
+                ))
+                .toList();
+        return new FollowUserListDto(dtos, slice.hasNext());
     }
 
     @Transactional
@@ -184,7 +248,23 @@ public class UserServiceImpl implements UserService {
             if(userRepository.existsByNickname(serviceRequestDto.nickname())){
                 throw new DuplicateNicknameException(UserErrorCode.DUPLICATE_NICKNAME);
             }
-            user.updateNickname(serviceRequestDto.nickname());
+            String oldNickname = user.getNickname();
+            String newNickname = serviceRequestDto.nickname();
+            user.updateNickname(newNickname);
+
+            // 보드
+            List<Board> boards = boardRepository.findAllByUser(oldNickname);
+            for(Board board : boards){
+                board.updateUser(newNickname);
+            }
+            boardRepository.saveAll(boards);
+
+            // 보드 댓글
+            List<BoardComment> comments = boardCommentRepository.findAllByUser(oldNickname);
+            for(BoardComment comment : comments){
+                comment.updateUser(newNickname);
+            }
+            boardRepository.saveAll(boards);
         }
 
         // 프로필 이미지
@@ -230,21 +310,24 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(final User user,
                            final HttpServletResponse response
-    ) throws JacksonException {
+    ) {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        // isDeleted true로 변경
+        user.updateIsDeleted(true);
+        userRepository.save(user);
+        // 로그아웃 처리
         jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
-        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
-
-        if (user.getProfileImgUrl() == null){
-            userRepository.deleteById(user.getId());
-        } else {
-            String image_name = user.getProfileImgUrl().replace(url,"");
-            image_name = image_name.substring(image_name.lastIndexOf("/"));
-            userRepository.deleteById(user.getId());
-            s3Provider.delete(user.getFolderName() + image_name);
+        if(user.getProvider() == UserProvider.kakao){
+            jwtUtil.deleteCookie("Kakao-Access-Token", response);
+            jwtUtil.deleteCookie("Kakao-Refresh-Token", response);
+            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+        } else if(user.getProvider() == UserProvider.google){
+            jwtUtil.deleteCookie("Google-Access-Token", response);
+            jwtUtil.deleteCookie("Google-Refresh-Token", response);
         }
+        refreshTokenRepository.deleteById(String.valueOf(user.getId()));
     }
 
     @Override
@@ -302,5 +385,15 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUserNameAndBirthday(serviceRequestDto.userName(), serviceRequestDto.birthday())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         return userEntityMapper.toFindEmailResponseDto(user);
+    }
+
+    @Override
+    public void requestExpertVerification(User user){
+        AdminUser adminUser = AdminUser.builder()
+                .userId(user.getId())
+                .status(ApplyStatus.APPLIED)
+                .requestType(AdminRequestType.EXPERT_VERIFY)
+                .build();
+        adminUserRepository.save(adminUser);
     }
 }

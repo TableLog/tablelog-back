@@ -62,13 +62,13 @@ public class BoardLikeServiceImpl implements BoardLikeService {
     }
 
     @Override
-    public Long getBoardLikeCountByBoard(Long boardId) {
+    public Long readBoardLikeCountByBoard(Long boardId) {
         Board board = findBoard(boardId);
         return boardLikeRepository.countByBoard(boardId);
     }
 
     @Override
-    public BoardListResponseDto getMyLikedBoards(Long userId, int pageNumber) {
+    public BoardListResponseDto readMyLikedBoards(Long userId, int pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
@@ -81,7 +81,7 @@ public class BoardLikeServiceImpl implements BoardLikeService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isLiked = hasBoardLiked(board.getId(), userId);
             boolean isMine = user.getId().equals(userId);
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMine,isLiked));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user.getProfileImgUrl(), comment_count, like_count,isMine,isLiked,user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }

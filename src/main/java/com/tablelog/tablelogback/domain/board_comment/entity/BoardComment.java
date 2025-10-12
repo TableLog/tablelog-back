@@ -23,17 +23,21 @@ public class BoardComment extends BaseEntity {
     @Column
     private String content;
     @Column
-    private Long comment_id;
+    private Long commentId;
 
     @Builder
-    public BoardComment(final String boardId, final String user, final String content,final Long comment_id) {
+    public BoardComment(final String boardId, final String user, final String content,final Long commentId) {
         this.boardId = boardId;
         this.user = user;
         this.content = content;
-        this.comment_id = comment_id;
+        this.commentId = commentId;
     }
 
     public void update(String content){
         this.content = content;
+    }
+
+    public void updateUser(String user){
+        this.user = user;
     }
 }

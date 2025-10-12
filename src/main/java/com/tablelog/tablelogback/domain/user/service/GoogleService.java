@@ -30,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -65,7 +64,6 @@ public class GoogleService {
     private final UserRepository userRepository;
     private final UserEntityMapper userEntityMapper;
     private final JwtUtil jwtUtil;
-    private final PasswordEncoder passwordEncoder;
     private final HttpServletResponse httpServletResponse;
     private final RefreshTokenRepository refreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
@@ -219,51 +217,21 @@ public class GoogleService {
     }
 
     public void refresh(User user) throws JacksonException {
-        GoogleRefreshToken googleRefresh = googleRefreshTokenRepository.findById(user.getId().toString())
-                .orElseThrow(() -> new NotFoundSocialRefreshTokenException(JwtErrorCode.NOT_FOUND_SOCIAL_REFRESH_TOKEN));
-        String googleRefreshToken = googleRefresh.getGoogleRefreshToken();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", "application/x-www-form-urlencoded");
-
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "refresh_token");
-        body.add("client_id", clientId);
-        body.add("client_secret", clientSecret);
-        body.add("refresh_token", googleRefreshToken);
-
-        HttpEntity<MultiValueMap<String, String>> googleTokenRequest = new HttpEntity<>(body, headers);
-
-        RestTemplate rt = new RestTemplate();
-        try {
-            ResponseEntity<String> response = rt.exchange(
-                    "https://oauth2.googleapis.com/token",
-                    HttpMethod.POST,
-                    googleTokenRequest,
-                    String.class
-            );
-
-            String responseBody = response.getBody();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(responseBody);
-
-            httpServletResponse.addCookie(
-                    jwtUtil.createCookie("Google-Access-Token", jsonNode.get("access_token").asText()));
-            if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
-                String newGoogleRefreshToken = jsonNode.get("refresh_token").asText();
-                googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
-                jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
-                GoogleRefreshToken newGoogleRefresh = new GoogleRefreshToken(
-                        user.getId(), newGoogleRefreshToken, timeToLive);
-                googleRefreshTokenRepository.save(newGoogleRefresh);
-                httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", newGoogleRefreshToken));
-            }
-        } catch (HttpClientErrorException e){
-            throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
+        JsonNode jsonNode = reissueToken(user);
+        httpServletResponse.addCookie(
+                jwtUtil.createCookie("Google-Access-Token", jsonNode.get("access_token").asText()));
+        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
+            String newGoogleRefreshToken = jsonNode.get("refresh_token").asText();
+            googleRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+            jwtUtil.deleteCookie("Google-Refresh-Token", httpServletResponse);
+            GoogleRefreshToken newGoogleRefresh = new GoogleRefreshToken(
+                    user.getId(), newGoogleRefreshToken, timeToLive);
+            googleRefreshTokenRepository.save(newGoogleRefresh);
+            httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", newGoogleRefreshToken));
         }
     }
 
-    public void unlinkGoogle(String googleAccessToken, HttpServletResponse httpServletResponse) throws JacksonException {
+    public void unlinkGoogle(String googleAccessToken) throws JacksonException {
         SocialUserInfoDto socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
 
         User user = userRepository.findByEmail(socialUserInfoDto.email())
@@ -334,5 +302,42 @@ public class GoogleService {
         }
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
+    }
+
+    public JsonNode reissueToken(User user) throws JacksonException {
+        GoogleRefreshToken googleRefresh = googleRefreshTokenRepository.findById(user.getId().toString())
+                .orElseThrow(() -> new NotFoundSocialRefreshTokenException(JwtErrorCode.NOT_FOUND_SOCIAL_REFRESH_TOKEN));
+        String googleRefreshToken = googleRefresh.getGoogleRefreshToken();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/x-www-form-urlencoded");
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "refresh_token");
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("refresh_token", googleRefreshToken);
+
+        HttpEntity<MultiValueMap<String, String>> googleTokenRequest = new HttpEntity<>(body, headers);
+
+        RestTemplate rt = new RestTemplate();
+        try {
+            ResponseEntity<String> response = rt.exchange(
+                    "https://oauth2.googleapis.com/token",
+                    HttpMethod.POST,
+                    googleTokenRequest,
+                    String.class
+            );
+
+            String responseBody = response.getBody();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            return jsonNode;
+
+        } catch (HttpClientErrorException e){
+            System.out.println(e.getResponseBodyAsString());
+            throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
+        }
     }
 }

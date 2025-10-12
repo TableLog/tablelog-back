@@ -25,7 +25,7 @@ public class BoardLikeController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         boardLikeService.createBoardLike(boardId, userDetails.user().getId());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "좋아요 삭제")
@@ -50,20 +50,20 @@ public class BoardLikeController {
 
     @Operation(summary = "좋아요 수 전체 조회 By 게시판")
     @GetMapping("/boards/{boardId}/likes/count")
-    public ResponseEntity<Long> getBoardLikeCount(
+    public ResponseEntity<Long> readBoardLikeCountByBoard(
             @PathVariable Long boardId
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(boardLikeService.getBoardLikeCountByBoard(boardId));
+                body(boardLikeService.readBoardLikeCountByBoard(boardId));
     }
 
     @Operation(summary = "내 좋아요 게시판 전체 조회")
     @GetMapping("/users/me/board-likes")
-    public ResponseEntity<BoardListResponseDto> getMyLikedBoards(
+    public ResponseEntity<BoardListResponseDto> readMyLikedBoards(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam int pageNumber
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(boardLikeService.getMyLikedBoards(userDetails.user().getId(), pageNumber));
+                body(boardLikeService.readMyLikedBoards(userDetails.user().getId(), pageNumber));
     }
 }

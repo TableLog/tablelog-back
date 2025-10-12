@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
+    Long countByUserId(Long userId);
     Slice<Recipe> findAllByUserId(Long id, Pageable pageable);
 
     Slice<Recipe> findAllByIsPaidTrue(Pageable pageable);
@@ -37,10 +38,67 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Slice<Recipe> searchRecipesByFoodName(@Param("keyword") String keyword, Pageable pageable);
 
     @Query(value = """
+        SELECT * FROM tb_recipe r
+        WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR r.user_id IN (
+                SELECT u.id FROM tb_user u
+                WHERE LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           )
+        """,
+            countQuery = """
+        SELECT COUNT(*) FROM tb_recipe r
+        WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR r.user_id IN (
+                SELECT u.id FROM tb_user u
+                WHERE LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           )
+        """,
+            nativeQuery = true)
+    Slice<Recipe> searchRecipesByTitleOrNickname(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query(value = """
         SELECT r.*
         FROM tb_recipe r
         WHERE r.created_at >= :oneWeekAgo
-        ORDER BY r.star DESC, r.comment_count DESC, r.created_at DESC
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Pageable pageable);
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipes(Pageable pageable);
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.is_paid = true
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesByIsPaidTrue(Pageable pageable);
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.user_id = :userId
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    @Query(value = """
+        SELECT r.*
+        FROM tb_recipe r
+        WHERE r.is_paid = true 
+          AND r.user_id = :userId
+        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+    """, nativeQuery = true)
+    Slice<Recipe> findPopularRecipesByUserIdAndIsPaidTrue(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
 }

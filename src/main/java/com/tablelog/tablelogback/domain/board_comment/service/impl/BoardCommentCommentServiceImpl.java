@@ -94,7 +94,8 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
         String name = boardComment.getUser();
         User user = userRepository.findByNickname(name)
             .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        return boardCommentEntityMapper.toBoardCommentReadResponseDto(boardComment,user);
+        String comment_count = boardCommentRepository.countByCommentId(boardComment_id).toString();
+        return boardCommentEntityMapper.toBoardCommentReadResponseDto(boardComment,user,comment_count);
     }
 
     @Override
@@ -109,7 +110,8 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
             String name = comment.getUser();
             User user = userRepository.findByNickname(name)
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user);
+            String comment_count = boardCommentRepository.countByCommentId(comment.getId()).toString();
+            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user,comment_count);
             content.add(boardCommentReadResponseDto);
         }
         return new BoardCommentListResponseDto(content, commentSlice.hasNext());
@@ -125,7 +127,8 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
             String name = comment.getUser();
             User user = userRepository.findByNickname(name)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user);
+            String comment_count = boardCommentRepository.countByCommentId(comment.getId()).toString();
+            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user,comment_count);
             content.add(boardCommentReadResponseDto);
         }
         return new BoardCommentListResponseDto(content, commentSlice.hasNext());

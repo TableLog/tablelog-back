@@ -1,12 +1,14 @@
 package com.tablelog.tablelogback.domain.recipe.dto.service;
 
-import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAllServiceResponseDto;
-
-import java.util.List;
+import com.tablelog.tablelogback.global.enums.FoodUnit;
 
 public record RecipeFoodPreviewDto(
-        String title,
-        String imageUrl,
-        List<RecipeFoodReadAllServiceResponseDto> recipeFoods
+        Long id,
+        Integer amount,
+        FoodUnit recipeFoodUnit,
+        Long foodId,
+        String foodName,
+        Integer cal,
+        Boolean isChecked
 ) {
 }

@@ -1,6 +1,6 @@
 package com.tablelog.tablelogback.domain.user.service;
 
-import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
@@ -15,16 +15,18 @@ import java.io.IOException;
 public interface UserService {
     void checkDuplicate(UserSignUpServiceRequestDto serviceRequestDto);
     User signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
-    UserLoginResponseDto login(UserLoginServiceRequestDto userLoginServiceRequestDto);
+    Boolean login(UserLoginServiceRequestDto userLoginServiceRequestDto);
     UserLoginResponseDto getUser(String token);
     UserProfileDto getUserProfile(Long userId, UserDetailsImpl userDetails);
+    FollowUserListDto findUsers(String keyword, int pageNum, UserDetailsImpl userDetails);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile, HttpServletResponse httpServletResponse)throws IOException;
     void logout(String token, HttpServletResponse httpServletResponse);
-    void deleteUser(User user, HttpServletResponse httpServletResponse) throws JacksonException;
+    void deleteUser(User user, HttpServletResponse httpServletResponse);
     UserLoginResponseDto refreshAccessToken(String refreshToken, String socialRefresh, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
     void isNotDupUserNick(isNotDupUserNickServiceRequestDto serviceRequestDto);
     void updatePassword(UpdatePasswordServiceRequestDto serviceRequestDto);
     FindEmailResponseDto findEmail(findEmailServiceRequestDto serviceRequestDto);
+    void requestExpertVerification(User user);
 }

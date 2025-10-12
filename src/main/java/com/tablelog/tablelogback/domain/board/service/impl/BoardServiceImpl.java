@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.board.service.impl;
 
-
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
@@ -13,10 +12,14 @@ import com.tablelog.tablelogback.domain.board.repository.BoardRepository;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRepository;
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.enums.PointReason;
+import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -41,6 +44,7 @@ public class BoardServiceImpl implements BoardService {
     private final BoardEntityMapper boardEntityMapper;
     private final BoardLikeRepository boardLikeRepository;
     private final BoardCommentRepository boardCommentRepository;
+    private final PointTransactionRepository pointTransactionRepository;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     private final UserRepository userRepository;
@@ -66,6 +70,13 @@ public class BoardServiceImpl implements BoardService {
         boardRepository.save(board);
         user.addPointBalance(300);
         userRepository.save(user);
+        PointTransaction pointTransaction = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(300)
+                .pointReason(PointReason.피드등록)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction);
     }
     @Override
     public void update(final BoardUpdateServiceRequestDto boardRequestDto
@@ -134,17 +145,16 @@ public class BoardServiceImpl implements BoardService {
 //    // List<Test> -> List<TestCreateServiceRequestDto>
     @Override
     public BoardListResponseDto getAll(int pageNumber) {
-
         Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
-
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();
         for (Board board : boardList) {
-            User user = userRepository.findByNickname(board.getUser()
+            User writer = userRepository.findByNickname(board.getUser()
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board,writer.getProfileImgUrl() , comment_count, like_count,false,false,
+                writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -154,14 +164,14 @@ public class BoardServiceImpl implements BoardService {
 
         Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
-
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();
         for (Board board : boardList) {
-            User user = userRepository.findByNickname(board.getUser()
+            User writer = userRepository.findByNickname(board.getUser()
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,true));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board,writer.getProfileImgUrl() , comment_count, like_count,false,false,
+                    writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -169,14 +179,14 @@ public class BoardServiceImpl implements BoardService {
     public BoardListResponseDto getAllByAsc(int pageNumber) {
         Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
-
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();
         for (Board board : boardList) {
-            User user = userRepository.findByNickname(board.getUser()
+            User writer = userRepository.findByNickname(board.getUser()
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,false,false));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board,writer.getProfileImgUrl() ,comment_count, like_count,false,false,
+                writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -184,21 +194,23 @@ public class BoardServiceImpl implements BoardService {
     public  BoardReadResponseDto getOnce(Long id){
         Board board = boardRepository.findById(id)
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        User user = userRepository.findByNickname(board.getUser()
+        User writer = userRepository.findByNickname(board.getUser()
         ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,false,false);
+        return boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(),comment_count,like_count,false,false,writer.getId());
     }
     @Override
     public  BoardReadResponseDto getOnceLogin(Long id,User user){
         Board board = boardRepository.findById(id)
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        User writer = userRepository.findByNickname(board.getUser()
+        ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Boolean isMe = board.getUser().equals(user.getNickname());
         Boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board,user,comment_count,like_count,isMe,isLike);
+        return boardEntityMapper.toReadResponseDto(board,writer.getProfileImgUrl(),comment_count,like_count,isMe,isLike,writer.getId());
     }
 
     @Override
@@ -206,12 +218,15 @@ public class BoardServiceImpl implements BoardService {
         Slice<Board> boards = boardRepository.findAllByOrderByIdDesc(PageRequest.of(pageNumber, 5));
         List<Board> boardList = boards.getContent();
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+
         for (Board board : boardList) {
+            User writer = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -221,11 +236,32 @@ public class BoardServiceImpl implements BoardService {
         List<Board> boardList = boards.getContent();
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();
         for (Board board : boardList) {
+            User writer = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             Long like_count = boardLikeRepository.countByBoard(board.getId());
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user, comment_count, like_count,isMe,isLike));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
+        }
+        return new BoardListResponseDto(responseDtos, boards.hasNext());
+    }
+
+    @Override
+    public BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id) {
+        User user = userRepository.findById(user_id).
+            orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        Slice<Board> boards = boardRepository.findAllByUserOrderByUserAsc(user.getNickname(),PageRequest.of(pageNumber, 9));
+        List<Board> boardList = boards.getContent();
+        List<BoardReadResponseDto> responseDtos = new ArrayList<>();
+        for (Board board : boardList) {
+            User writer = userRepository.findByNickname(board.getUser()
+            ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            Long like_count = boardLikeRepository.countByBoard(board.getId());
+            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            boolean isMe = board.getUser().equals(user.getNickname());
+            boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }

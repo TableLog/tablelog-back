@@ -4,6 +4,8 @@ import com.tablelog.tablelogback.domain.food.entity.Food;
 import com.tablelog.tablelogback.domain.food.exception.FoodErrorCode;
 import com.tablelog.tablelogback.domain.food.exception.NotFoundFoodException;
 import com.tablelog.tablelogback.domain.food.repository.FoodRepository;
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.recipe.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.ForbiddenAccessRecipeException;
@@ -18,6 +20,7 @@ import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
 import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
 import com.tablelog.tablelogback.domain.recipe_like.repository.RecipeLikeRepository;
+import com.tablelog.tablelogback.domain.recipe_memo.repository.RecipeMemoRepository;
 import com.tablelog.tablelogback.domain.recipe_payment.repository.RecipePaymentRepository;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessCreateRequestDto;
 import com.tablelog.tablelogback.domain.recipe_process.dto.service.RecipeProcessDto;
@@ -25,15 +28,16 @@ import com.tablelog.tablelogback.domain.recipe_process.entity.RecipeProcess;
 import com.tablelog.tablelogback.domain.recipe_process.mapper.entity.RecipeProcessEntityMapper;
 import com.tablelog.tablelogback.domain.recipe_process.repository.RecipeProcessRepository;
 import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveRepository;
+import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
+import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
-import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
-import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.enums.PointReason;
+import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -62,9 +66,10 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
     private final RecipePaymentRepository recipePaymentRepository;
+    private final ShoppingListRepository shoppingListRepository;
+    private final RecipeMemoRepository recipeMemoRepository;
+    private final PointTransactionRepository pointTransactionRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
     private final String SEPARATOR = "/";
 
     @Override
@@ -77,11 +82,15 @@ public class RecipeServiceImpl implements RecipeService {
     ) throws IOException {
         String recipeFolderName = requestDto.title() + UUID.randomUUID();
         String recipeImageName = null;
-        if (recipeImage != null) {
+        Recipe recipe;
+        if (recipeImage != null && !recipeImage.isEmpty()) {
             recipeImageName = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
+            recipe = recipeEntityMapper.toRecipe(
+                    requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
+        } else {
+            recipe = recipeEntityMapper.toRecipe(
+                    requestDto, recipeFolderName, null, user, 500);
         }
-        Recipe recipe = recipeEntityMapper.toRecipe(
-                requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user);
 
         // 전문가 & 유료 확인
         if (user.getUserRole() != UserRole.EXPERT || !requestDto.isPaid()) {
@@ -120,13 +129,12 @@ public class RecipeServiceImpl implements RecipeService {
 
         for (RecipeProcessDto rpDto : rpRequestDtos.dtos()) {
             List<String> imageUrls = new ArrayList<>();
-
             List<MultipartFile> files = rpDto.files();
             // 사이즈 3개로 제한
             int s = 0;
-            if (files != null && s <= 2) {
+            if (files != null) {
                 for (MultipartFile image : files) {
-                    if (image != null && !image.isEmpty()) {
+                    if (image != null && !image.isEmpty() && s < 3) {
                         String fileName = s3Provider.originalFileName(image);
                         String filePath = recipeFolderName + S3Provider.SEPARATOR + fileName;
                         String fileUrl = url + filePath;
@@ -134,24 +142,25 @@ public class RecipeServiceImpl implements RecipeService {
                         imageUrls.add(fileUrl);
                         rpImageNames.add(fileName);
                         recipeProcessImages.add(image);
-
                         s++;
                     }
                 }
             }
-
             RecipeProcess process = recipeProcessEntityMapper.toRecipeProcess(recipe.getId(), rpDto, imageUrls);
             recipeProcesses.add(process);
         }
         recipeProcessRepository.saveAll(recipeProcesses);
+        saveImage(recipeFolderName, recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
 
-        saveImage(recipe.getFolderName(), recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
-
-        if(user.getRecipeCount() >= 50 && user.getUserRole() == UserRole.NORMAL){
-            user.changeRole(UserRole.EXPERT);
-        }
         user.addPointBalance(3000);
         userRepository.save(user);
+        PointTransaction pointTransaction = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(3000)
+                .pointReason(PointReason.레시피등록)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction);
     }
 
     private void saveImage(
@@ -165,11 +174,12 @@ public class RecipeServiceImpl implements RecipeService {
         if(recipeImage != null && !recipeImage.isEmpty()) {
             s3Provider.saveFile(recipeImage, recipeImageName);
         }
-        if(rpImage != null) {
+        if (rpImage != null && rpImageName != null && rpImage.size() == rpImageName.size()) {
             for (int i = 0; i < rpImage.size(); i++) {
                 MultipartFile image = rpImage.get(i);
+                String filePath = recipeFolderName + S3Provider.SEPARATOR + rpImageName.get(i);
                 if (!image.isEmpty()) {
-                    s3Provider.saveFile(image, recipeFolderName + S3Provider.SEPARATOR + rpImageName.get(i));
+                    s3Provider.saveFile(image, filePath);
                 }
             }
         }
@@ -180,22 +190,59 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = findRecipe(id);
         Long likeCount = recipeLikeRepository.countByRecipe(id);
         Boolean isSaved = isSaved(userDetails, id);
-        User user = userRepository.findById(recipe.getUserId())
-                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        Boolean isWriter = user.getId().equals(recipe.getUserId());
+        User writer = userRepository.findById(recipe.getUserId()).orElse(null);
+        String writerName = (writer != null) ? writer.getNickname() : "Unknown";
+        Boolean isExpertWriter = writer != null && writer.getUserRole() == UserRole.EXPERT;
+        Boolean isWriter = userDetails != null && userDetails.user().getId().equals(recipe.getUserId());
         Boolean hasPurchased = userDetails != null
-                && recipePaymentRepository.existsByUserIdAndRecipeId(user.getId(), recipe.getId());
+                && recipePaymentRepository.existsByUserIdAndRecipeId(userDetails.user().getId(), recipe.getId());
         return recipeEntityMapper.toRecipeReadDetailResponseDto(recipe, likeCount,
-                isSaved, user.getNickname(), isWriter, hasPurchased);
+                isSaved, writerName, isExpertWriter, isWriter, hasPurchased);
     }
 
     @Override
-    public RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id){
+    public RecipeFoodPreviewSliceResponseDto readRecipeWithRecipeFood(Long id, int pageNum, UserDetailsImpl userDetails){
         Recipe recipe = findRecipe(id);
-        List<RecipeFood> recipeFoods = recipeFoodRepository
-                .findAllByRecipeId(id, PageRequest.of(0, 5))
-                .getContent();
-        return recipeEntityMapper.toRecipeFoodPreviewReadResponseDto(recipe, recipeFoods);
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(id, pageRequest);
+
+        List<Long> foodIds = slice.stream()
+                .map(RecipeFood::getFoodId)
+                .distinct()
+                .toList();
+
+        Map<Long, Food> foodMap = foodRepository.findAllById(foodIds).stream()
+                .collect(Collectors.toMap(Food::getId, food -> food));
+
+        List<Long> existingFoodIds;
+        if(userDetails != null){
+            existingFoodIds = shoppingListRepository
+                    .findAllByUserIdAndFoodIdIn(userDetails.user().getId(), foodIds).stream()
+                    .map(ShoppingList::getFoodId)
+                    .toList();
+        } else {
+            existingFoodIds = Collections.emptyList();
+        }
+
+        List<RecipeFoodPreviewDto> previewDtos = slice.stream()
+                .map(rf -> {
+                    Food food = foodMap.get(rf.getFoodId());
+                    String foodName = food.getFoodName();
+                    int calorie = rf.getAmount() * food.getCal();
+                    boolean isChecked = existingFoodIds.contains(rf.getFoodId());
+
+                    return new RecipeFoodPreviewDto(
+                            rf.getId(),
+                            rf.getAmount(),
+                            rf.getRecipeFoodUnit(),
+                            rf.getFoodId(),
+                            foodName,
+                            calorie,
+                            isChecked
+                    );
+                })
+                .toList();
+        return new RecipeFoodPreviewSliceResponseDto(recipe.getTitle(), recipe.getImageUrl(), previewDtos, slice.hasNext());
     }
 
     @Override
@@ -214,10 +261,27 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user) {
+    public RecipeSliceResponseDto readPopularRecipesLastWeek(int pageNumber, UserDetailsImpl user) {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
+        if(recipes.size() == 0){
+            slice = recipeRepository.findPopularRecipes(pageRequest);
+            recipes = mappingRecipes(slice, user);
+        }
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findPopularRecipes(pageRequest);
+        } else {
+            slice = recipeRepository.findPopularRecipesByIsPaidTrue(pageRequest);
+        }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
@@ -231,7 +295,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
+    public RecipeSliceResponseDto getAllMyRecipesLatest(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
@@ -244,9 +308,30 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public RecipeSliceResponseDto getAllMyRecipesPopular(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice;
+        if(isPaid == null || !isPaid) {
+            slice = recipeRepository.findPopularRecipesByUserId(userDetails.user().getId(), pageRequest);
+        } else {
+            slice = recipeRepository.findPopularRecipesByUserIdAndIsPaidTrue(userDetails.user().getId(), pageRequest);
+        }
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
     public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByFoodName(keyword, pageRequest);
+        List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
+        return new RecipeSliceResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice =recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
@@ -267,10 +352,19 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = validateRecipe(id, user);
 
         String folderName = recipe.getFolderName();
-        String fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
+        String fileUrl = requestDto.imageUrl();
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            if (recipe.getImageUrl() != null && requestDto.imageUrl() == null) {
+                s3Provider.delete(recipe.getImageUrl());
+                fileUrl = null;
+                folderName = null;
+            }
+        } else {
+            fileUrl = s3Provider.updateImage(recipe.getImageUrl(), folderName, multipartFile);
+        }
 
         recipe.updateRecipe(requestDto.title(), requestDto.intro(), folderName, fileUrl,
-                requestDto.recipeCategoryList(), requestDto.price(), requestDto.memo(), requestDto.cookingTime(),
+                requestDto.recipeCategoryList(), requestDto.price(), requestDto.cookingTime(),
                 requestDto.isPaid(), requestDto.recipePoint()
         );
 
@@ -292,6 +386,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
         recipeFoodRepository.deleteAllByRecipeId(id);
         recipeProcessRepository.deleteAllByRecipeId(id);
+        recipeMemoRepository.deleteAllByRecipeId(id);
         recipeRepository.delete(recipe);
         s3Provider.delete(recipe.getFolderName());
         user.updateRecipeCount(user.getRecipeCount() - 1);
@@ -322,6 +417,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .toList();
 
         // 작성자 이름 조회
+        // 탈퇴한 사람이면 Unknown
         Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
                 .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
 

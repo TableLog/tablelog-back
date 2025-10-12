@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.user.controller;
 
 import com.fasterxml.jackson.core.JacksonException;
+import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
@@ -8,7 +9,6 @@ import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
 import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
-import com.tablelog.tablelogback.domain.user.entity.OAuthAccount;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -76,8 +75,8 @@ public class UserController {
     ) {
         UserLoginServiceRequestDto serviceRequestDto = userDtoMapper
                 .toUserLoginServiceRequestDto(controllerRequestDto);
-        userService.login(serviceRequestDto);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        Boolean recovered = userService.login(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(recovered);
     }
 
     @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
@@ -102,6 +101,22 @@ public class UserController {
         }
         UserProfileDto responseDto = userService.getUserProfile(userId, userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "사용자 전체 조회 + 검색")
+    @GetMapping("/users/search")
+    public ResponseEntity<FollowUserListDto> findUsers(
+            @RequestParam String keyword,
+            @RequestParam int pageNumber
+    ){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = null;
+        if(authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())){
+            userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        }
+        return ResponseEntity.status(HttpStatus.OK).
+                body(userService.findUsers(keyword, pageNumber, userDetails));
     }
 
     @Operation(summary = "사용자 정보 수정", description = "바꾸는 것만 작성, 안 바꾸면 빈 칸")
@@ -129,22 +144,11 @@ public class UserController {
     }
 
     @Operation(summary = "회원탈퇴")
-    @DeleteMapping("/users")
+    @PostMapping("/users")
     public ResponseEntity<?> deleteUser(
             @AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @CookieValue(value = "Kakao-Access-Token", required = false) String kakaoAccessToken,
-            @CookieValue(value = "Google-Access-Token", required = false) String googleAccessToken,
             HttpServletResponse httpServletResponse
-    ) throws JacksonException {
-        List<OAuthAccount> accounts = oAuthAccountService.getAllOAuthAccounts(userDetailsImpl.user().getId());
-        for(OAuthAccount oAuthAccount : accounts){
-            if(oAuthAccount.getProvider() == UserProvider.kakao){
-                kakaoService.unlinkKakao(kakaoAccessToken, httpServletResponse);
-            } else if(oAuthAccount.getProvider() == UserProvider.google){
-                googleService.unlinkGoogle(googleAccessToken, httpServletResponse);
-            }
-        }
-        oAuthAccountRepository.deleteAllByUserId(userDetailsImpl.user().getId());
+    ) {
         userService.deleteUser(userDetailsImpl.user(), httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -202,5 +206,14 @@ public class UserController {
     ){
         FindEmailResponseDto responseDto = userService.findEmail(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "전문가 인증 요청")
+    @PostMapping("/users/request/expert-verification")
+    public ResponseEntity<?> requestExpertVerification(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        userService.requestExpertVerification(userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

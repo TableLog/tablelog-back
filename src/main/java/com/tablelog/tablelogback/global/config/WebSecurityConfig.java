@@ -36,12 +36,12 @@ public class WebSecurityConfig {
                 );
 
         http
-                .authorizeHttpRequests((authorizeHttpRequests) ->
-                                authorizeHttpRequests
-                                    .requestMatchers("/ws/**").permitAll()
-                                    .requestMatchers("/api/v1/**").permitAll() // 초기 개발 진행 위해
-                                    .requestMatchers( "/","/swagger-ui/**", "/v3/api-docs/**").permitAll()
-//                                .anyRequest().authenticated()
+                .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/v1/**").permitAll() // 초기 개발 진행 위해
+                        .requestMatchers( "/","/swagger-ui/**", "/v3/api-docs/**").permitAll()
+//                        .anyRequest().authenticated()
                 );
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -64,6 +64,8 @@ public class WebSecurityConfig {
             config.setAllowedMethods(Collections.singletonList("*"));
 //            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
             config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080","http://localhost:5500",
+            "http://localhost:5173",
+            "http://localhost:4173",
             "https://jiangxy.github.io/"));
             config.setMaxAge(3600L);
             config.setAllowCredentials(true);

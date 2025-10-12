@@ -1,5 +1,7 @@
 package com.tablelog.tablelogback.domain.recipe_payment.service.impl;
 
+import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
+import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.InsufficientPointBalanceException;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
@@ -19,6 +21,8 @@ import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PaymentMethod;
 import com.tablelog.tablelogback.global.enums.PaymentStatus;
+import com.tablelog.tablelogback.global.enums.PointReason;
+import com.tablelog.tablelogback.global.enums.PointType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -35,6 +39,7 @@ public class RecipePaymentServiceImpl implements RecipePaymentService {
     private final RecipeRepository recipeRepository;
     private final RecipePaymentRepository recipePaymentRepository;
     private final UserRepository userRepository;
+    private final PointTransactionRepository pointTransactionRepository;
 
     @Transactional
     public void createRecipePayment(Long id, User user){
@@ -71,6 +76,20 @@ public class RecipePaymentServiceImpl implements RecipePaymentService {
                         .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         writer.updatePointBalance(writer.getPointBalance() + recipe.getRecipePoint());
         recipePayment.updatePaymentStatus(PaymentStatus.결제완료);
+        PointTransaction pointTransaction1 = PointTransaction.builder()
+                .userId(user.getId())
+                .amount(recipe.getRecipePoint())
+                .pointReason(PointReason.레시피구매)
+                .pointType(PointType.USE)
+                .build();
+        pointTransactionRepository.save(pointTransaction1);
+        PointTransaction pointTransaction2 = PointTransaction.builder()
+                .userId(writer.getId())
+                .amount(recipe.getRecipePoint())
+                .pointReason(PointReason.레시피판매)
+                .pointType(PointType.EARN)
+                .build();
+        pointTransactionRepository.save(pointTransaction2);
     }
 
     @Override

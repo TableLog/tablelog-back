@@ -21,6 +21,7 @@ import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import com.tablelog.tablelogback.global.jwt.exception.NotFoundSocialRefreshTokenException;
+import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshToken;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshToken;
 import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -181,7 +182,7 @@ public class KakaoService {
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
-    public void unlinkKakao(String kakaoAccessToken, HttpServletResponse httpServletResponse) throws JacksonException {
+    public void unlinkKakao(String kakaoAccessToken) throws JacksonException {
         SocialUserInfoDto socialUserInfoDto = getKakaoUserWithAccessToken(kakaoAccessToken);
         User user = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
@@ -251,43 +252,17 @@ public class KakaoService {
     }
 
     public void refresh(String kakaoRefreshToken, User user) throws JacksonException {
-        kakaoRefreshTokenRepository.findByKakaoRefreshToken(kakaoRefreshToken)
-                .orElseThrow(() -> new NotFoundSocialRefreshTokenException(JwtErrorCode.NOT_FOUND_SOCIAL_REFRESH_TOKEN));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
-
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "refresh_token");
-        body.add("client_id", clientId);
-        body.add("refresh_token", kakaoRefreshToken);
-
-        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
-        RestTemplate rt = new RestTemplate();
-        try {
-            ResponseEntity<String> response = rt.exchange(
-                    "https://kauth.kakao.com/oauth/token",
-                    HttpMethod.POST,
-                    kakaoTokenRequest,
-                    String.class
-            );
-
-            String responseBody = response.getBody();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(responseBody);
-            httpServletResponse.addCookie(
-                    jwtUtil.createCookie("Kakao-Access-Token", jsonNode.get("access_token").asText()));
-            if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
-                String newKakaoRefreshToken = jsonNode.get("refresh_token").asText();
-                kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
-                jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
-                KakaoRefreshToken kakaoRefresh =
-                        new KakaoRefreshToken(user.getId(), newKakaoRefreshToken, refreshTimeToLive);
-                kakaoRefreshTokenRepository.save(kakaoRefresh);
-                httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", newKakaoRefreshToken));
-            }
-        } catch (HttpClientErrorException e){
-            throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+        JsonNode jsonNode = reissueToken(user);
+        httpServletResponse.addCookie(
+                jwtUtil.createCookie("Kakao-Access-Token", jsonNode.get("access_token").asText()));
+        if (jsonNode.get("refresh_token") != null && !jsonNode.get("refresh_token").asText().isEmpty()) {
+            String newKakaoRefreshToken = jsonNode.get("refresh_token").asText();
+            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
+            jwtUtil.deleteCookie("Kakao-Refresh-Token", httpServletResponse);
+            KakaoRefreshToken kakaoRefresh =
+                    new KakaoRefreshToken(user.getId(), newKakaoRefreshToken, refreshTimeToLive);
+            kakaoRefreshTokenRepository.save(kakaoRefresh);
+            httpServletResponse.addCookie(jwtUtil.createCookie("Kakao-Refresh-Token", newKakaoRefreshToken));
         }
     }
 
@@ -323,5 +298,37 @@ public class KakaoService {
         }
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
+    }
+
+    public JsonNode reissueToken(User user) throws JacksonException {
+        KakaoRefreshToken kakaoRefresh = kakaoRefreshTokenRepository.findById(user.getId().toString())
+                .orElseThrow(() -> new NotFoundSocialRefreshTokenException(JwtErrorCode.NOT_FOUND_SOCIAL_REFRESH_TOKEN));
+        String kakaoRefreshToken = kakaoRefresh.getKakaoRefreshToken();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "refresh_token");
+        body.add("client_id", clientId);
+        body.add("refresh_token", kakaoRefreshToken);
+
+        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
+        RestTemplate rt = new RestTemplate();
+        try {
+            ResponseEntity<String> response = rt.exchange(
+                    "https://kauth.kakao.com/oauth/token",
+                    HttpMethod.POST,
+                    kakaoTokenRequest,
+                    String.class
+            );
+
+            String responseBody = response.getBody();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+            return jsonNode;
+        } catch (HttpClientErrorException e){
+            throw new FailedRefreshKakaoException(UserErrorCode.FAILED_REFRESH_KAKAO);
+        }
     }
 }

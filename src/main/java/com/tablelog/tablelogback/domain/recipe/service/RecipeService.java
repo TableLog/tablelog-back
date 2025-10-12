@@ -17,12 +17,15 @@ public interface RecipeService {
                       User user
     ) throws IOException;
     RecipeReadResponseDto readRecipe(Long id, UserDetailsImpl user);
-    RecipeFoodPreviewDto readRecipeWithRecipeFood(Long id);
+    RecipeFoodPreviewSliceResponseDto readRecipeWithRecipeFood(Long id, int pageNum, UserDetailsImpl userDetails);
     RecipeSliceResponseDto readAllRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid);
-    RecipeSliceResponseDto readPopularRecipes(int pageNum, UserDetailsImpl user);
+    RecipeSliceResponseDto readPopularRecipesLastWeek(int pageNum, UserDetailsImpl user);
+    RecipeSliceResponseDto readPopularRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid);
     RecipeSliceResponseDto readAllRecipeByUser(Long userId, int pageNum, UserDetailsImpl user);
-    RecipeSliceResponseDto getAllMyRecipes(UserDetailsImpl user, int pageNum, Boolean isPaid);
+    RecipeSliceResponseDto getAllMyRecipesLatest(UserDetailsImpl user, int pageNum, Boolean isPaid);
+    RecipeSliceResponseDto getAllMyRecipesPopular(UserDetailsImpl user, int pageNum, Boolean isPaid);
     RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNum, UserDetailsImpl user);
+    RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user);
     RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum, UserDetailsImpl user);
     void updateRecipe(Long id, RecipeUpdateServiceRequestDto requestDto, User user,
                       MultipartFile multipartFile) throws IOException;

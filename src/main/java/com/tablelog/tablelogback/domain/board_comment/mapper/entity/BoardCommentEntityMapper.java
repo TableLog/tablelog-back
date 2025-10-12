@@ -21,15 +21,18 @@ public interface BoardCommentEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "BoardCommentRequestDto.content",target = "content")
     @Mapping(source = "board.id",target = "boardId")
-    @Mapping(source = "comment_id",target =  "comment_id")
+    @Mapping(source = "commentId",target =  "commentId")
     BoardComment toBoardComment(BoardCommentCreateServiceRequestDto BoardCommentRequestDto,
         Board board ,
         User user,
-        Long comment_id
+        Long commentId
     );
     @Mapping(source = "user.nickname", target = "user")
     @Mapping(source = "user.profileImgUrl", target = "profileImgUrl")
     @Mapping(source = "boardComment.createdAt", target = "createdAt")
-    BoardCommentReadResponseDto toBoardCommentReadResponseDto(BoardComment boardComment,User user);
+    @Mapping(source = "boardComment.id",target = "id")
+    @Mapping(source = "boardComment.commentId",target = "commentId")
+    @Mapping(source = "comment_count",target = "comment_count")
+    BoardCommentReadResponseDto toBoardCommentReadResponseDto(BoardComment boardComment,User user,String comment_count);
     List<BoardCommentReadResponseDto> toBoardCommentReadResponseDtos(List<BoardComment> boardComment);
 }

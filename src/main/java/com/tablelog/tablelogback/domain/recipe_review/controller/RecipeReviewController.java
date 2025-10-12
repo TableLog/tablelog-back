@@ -1,9 +1,11 @@
 package com.tablelog.tablelogback.domain.recipe_review.controller;
 
 import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewCreateControllerRequestDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewReplyCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.controller.RecipeReviewUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReadResponseDto;
+import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewReplyCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.RecipeReviewUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_review.mapper.dto.RecipeReviewDtoMapper;
 import com.tablelog.tablelogback.domain.recipe_review.service.impl.RecipeReviewServiceImpl;
@@ -28,28 +30,42 @@ public class RecipeReviewController {
     private final RecipeReviewDtoMapper recipeReviewDtoMapper;
     private final RecipeReviewServiceImpl recipeReviewService;
 
-    @Operation(summary = "레시피 댓글 생성", description = "상위 댓글이면 prrId는 0, 하위 댓글은 댓글 id")
+    @Operation(summary = "레시피 댓글 생성", description = "prrId는 무조건 0")
     @PostMapping("/recipes/{recipeId}/recipe-reviews")
     public ResponseEntity<?> createRecipeReview(
             @PathVariable Long recipeId,
-            RecipeReviewCreateControllerRequestDto requestDto,
+            @RequestBody RecipeReviewCreateControllerRequestDto requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
         RecipeReviewCreateServiceRequestDto serviceRequestDto =
                 recipeReviewDtoMapper.toRecipeReviewServiceRequestDto(requestDto);
         recipeReviewService.createRecipeReview(serviceRequestDto, recipeId, userDetails.user());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "레시피 답글 생성", description = "prrId는 댓글 id")
+    @PostMapping("/recipes/{recipeId}/recipe-reply")
+    public ResponseEntity<?> createRecipeReply(
+            @PathVariable Long recipeId,
+            @RequestBody RecipeReviewReplyCreateControllerRequestDto requestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException {
+        RecipeReviewReplyCreateServiceRequestDto serviceRequestDto =
+                recipeReviewDtoMapper.toRecipeReviewReplyServiceRequestDto(requestDto);
+        recipeReviewService.createRecipeReply(serviceRequestDto, recipeId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "레시피 댓글 단건 조회")
     @GetMapping("/recipes/{recipeId}/recipe-reviews/{recipeReviewId}")
     public ResponseEntity<RecipeReviewReadResponseDto> readRecipeReview(
             @PathVariable Long recipeId,
-            @PathVariable Long recipeReviewId
+            @PathVariable Long recipeReviewId,
+            @RequestParam Boolean includeReplies
     ){
         UserDetailsImpl userDetails = findUserDetails();
         RecipeReviewReadResponseDto responseDto =
-                recipeReviewService.readRecipeReview(recipeId, recipeReviewId, userDetails);
+                recipeReviewService.readRecipeReview(recipeId, recipeReviewId, includeReplies, userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 

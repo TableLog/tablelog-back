@@ -40,4 +40,5 @@ public interface BoardService {
     BoardListResponseDto getAllByUser(int pageNumber,User user);
     BoardListResponseDto getAllByDescAndUser(int pageNumber,User user);
     BoardReadResponseDto getOnceLogin(Long id,User user);
+    BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id);
 }

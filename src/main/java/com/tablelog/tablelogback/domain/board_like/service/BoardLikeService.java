@@ -6,6 +6,6 @@ public interface BoardLikeService {
     void createBoardLike (Long boardId, Long userId);
     void deleteBoardLike(Long boardId, Long userId);
     Boolean hasBoardLiked(Long boardId, Long userId);
-    Long getBoardLikeCountByBoard(Long boardId);
-    BoardListResponseDto getMyLikedBoards(Long userId, int pageNum);
+    Long readBoardLikeCountByBoard(Long boardId);
+    BoardListResponseDto readMyLikedBoards(Long userId, int pageNum);
 }
