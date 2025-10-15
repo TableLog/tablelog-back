@@ -116,7 +116,7 @@ public class RecipeServiceImpl implements RecipeService {
             int cal = (int) (userAmountInBase * caloriePerBaseUnit);
             totalCal += cal;
 
-            RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(rfRequestDtos.get(i), recipe.getId(), food);
+            RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(rfRequestDtos.get(i), recipe, food.getId());
             recipeFoods.add(recipeFood);
         }
         recipe.updateTotalCal(totalCal);
