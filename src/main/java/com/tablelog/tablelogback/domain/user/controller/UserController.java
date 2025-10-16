@@ -225,4 +225,26 @@ public class UserController {
         UserAllStatisticTypeDto responseDto = userService.readUserStatistics();
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @Operation(summary = "관리자가 사용자 목록 조회")
+    @GetMapping("/admin/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserProfileByAdminSliceDto> readAllUserProfileByAdmin(
+            @RequestParam int pageNumber,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserProfileByAdminSliceDto responseDto = userService.readAllUserProfileByAdmin(pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+//    @Operation(summary = "관리자가 사용자 상세 정보 조회")
+//    @GetMapping("/admin/users/{userId}")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<UserDetailProfileByAdminDto> readUserProfileByAdmin(
+//            @PathVariable Long userId,
+//            @AuthenticationPrincipal UserDetailsImpl userDetails
+//    ){
+//        UserDetailProfileByAdminDto responseDto = userService.readUserProfileByAdmin(userId);
+//        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+//    }
 }

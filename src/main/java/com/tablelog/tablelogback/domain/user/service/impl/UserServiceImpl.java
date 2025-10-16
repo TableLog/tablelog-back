@@ -413,4 +413,32 @@ public class UserServiceImpl implements UserService {
         UserAllStatisticDto userAllStatisticDto = new UserAllStatisticDto(totalCount, dailyCounts);
         return new UserAllStatisticTypeDto(userAllStatisticDto);
     }
+
+    @Override
+    public UserProfileByAdminSliceDto readAllUserProfileByAdmin(int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<User> slice = userRepository.findAll(pageRequest);
+        List<User> users = slice.getContent();
+        List<UserProfileByAdminDto> dtos = users.stream()
+                .map(user -> new UserProfileByAdminDto(
+                        user.getId(),
+                        user.getUserName(),
+                        user.getUserRole(),
+                        user.getEmail(),
+                        user.getNickname(),
+                        user.getCreatedAt(),
+                        user.getProvider(),
+                        oAuthAccountService.getAllOAuthAccountDtos(user.getId())
+                ))
+                .toList();
+        return new UserProfileByAdminSliceDto(dtos, slice.hasNext());
+    }
+
+//    @Override
+//    public UserProfileByAdminDto readUserProfileByAdmin(Long id){
+//        User user = userRepository.findById(id)
+//                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+//        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+//        return userEntityMapper.toUserProfileByAdminDto(user, dtos);
+//    }
 }
