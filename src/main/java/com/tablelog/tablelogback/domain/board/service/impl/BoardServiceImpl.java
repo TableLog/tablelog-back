@@ -1,9 +1,6 @@
 package com.tablelog.tablelogback.domain.board.service.impl;
 
-import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
+import com.tablelog.tablelogback.domain.board.dto.service.*;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
@@ -14,6 +11,9 @@ import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRep
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
 import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
 import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeAllStatisticDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeAllStatisticTypeDto;
+import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeStatisticDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -21,6 +21,9 @@ import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -283,5 +286,20 @@ public class BoardServiceImpl implements BoardService {
             }
             boardRepository.delete(board);
         }
+    }
+
+    @Override
+    public BoardAllStatisticTypeDto readBoardStatistics(){
+        Long totalCount = boardRepository.count();
+        LocalDateTime startDate = LocalDate.now().minusDays(6).atStartOfDay();
+        List<Object[]> results = boardRepository.findDailyCreatedCount(startDate);
+        List<BoardStatisticDto> dailyCounts = results.stream()
+                .map(row -> new BoardStatisticDto(
+                        ((java.sql.Date) row[0]).toLocalDate().toString(),
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
+        BoardAllStatisticDto boardAllStatisticDto = new BoardAllStatisticDto(totalCount, dailyCounts);
+        return new BoardAllStatisticTypeDto(boardAllStatisticDto);
     }
 }

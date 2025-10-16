@@ -3,10 +3,7 @@ package com.tablelog.tablelogback.domain.board.controller;
 
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardUpdateControllerRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.*;
 import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -184,5 +181,15 @@ public class BoardController {
     ){
         boardService.deleteBoardByAdmin(boardId);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "보드 통계 조회")
+    @GetMapping("/admin/boards/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BoardAllStatisticTypeDto> readBoardStatistics(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        BoardAllStatisticTypeDto responseDto = boardService.readBoardStatistics();
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

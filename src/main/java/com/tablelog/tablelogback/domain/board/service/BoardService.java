@@ -3,10 +3,7 @@ package com.tablelog.tablelogback.domain.board.service;
 
 
 
-import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Io;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,4 +39,5 @@ public interface BoardService {
     BoardReadResponseDto getOnceLogin(Long id,User user);
     BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id);
     void deleteBoardByAdmin(Long id);
+    BoardAllStatisticTypeDto readBoardStatistics();
 }
