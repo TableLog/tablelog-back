@@ -434,11 +434,11 @@ public class UserServiceImpl implements UserService {
         return new UserProfileByAdminSliceDto(dtos, slice.hasNext());
     }
 
-//    @Override
-//    public UserProfileByAdminDto readUserProfileByAdmin(Long id){
-//        User user = userRepository.findById(id)
-//                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-//        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
-//        return userEntityMapper.toUserProfileByAdminDto(user, dtos);
-//    }
+    @Override
+    public UserDetailProfileByAdminDto readUserProfileByAdmin(Long id){
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserDetailProfileByAdminDto(user, dtos);
+    }
 }

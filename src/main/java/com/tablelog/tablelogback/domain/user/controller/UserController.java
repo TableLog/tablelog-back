@@ -237,14 +237,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-//    @Operation(summary = "관리자가 사용자 상세 정보 조회")
-//    @GetMapping("/admin/users/{userId}")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public ResponseEntity<UserDetailProfileByAdminDto> readUserProfileByAdmin(
-//            @PathVariable Long userId,
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
-//    ){
-//        UserDetailProfileByAdminDto responseDto = userService.readUserProfileByAdmin(userId);
-//        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
-//    }
+    @Operation(summary = "관리자가 사용자 상세 정보 조회")
+    @GetMapping("/admin/users/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDetailProfileByAdminDto> readUserProfileByAdmin(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserDetailProfileByAdminDto responseDto = userService.readUserProfileByAdmin(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }

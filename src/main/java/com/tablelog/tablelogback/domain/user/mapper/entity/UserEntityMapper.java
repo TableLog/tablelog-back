@@ -34,5 +34,5 @@ public interface UserEntityMapper {
 
     FindEmailResponseDto toFindEmailResponseDto(User user);
 
-    UserProfileByAdminDto toUserProfileByAdminDto(User user, List<OAuthAccountResponseDto> oAuthAccounts);
+    UserDetailProfileByAdminDto toUserDetailProfileByAdminDto(User user, List<OAuthAccountResponseDto> oAuthAccounts);
 }

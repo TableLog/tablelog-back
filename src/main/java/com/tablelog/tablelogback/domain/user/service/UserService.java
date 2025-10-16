@@ -29,5 +29,5 @@ public interface UserService {
     void requestExpertVerification(User user);
     UserAllStatisticTypeDto readUserStatistics();
     UserProfileByAdminSliceDto readAllUserProfileByAdmin(int pageNumber);
-//    UserProfileByAdminDto readUserProfileByAdmin(Long id);
+    UserDetailProfileByAdminDto readUserProfileByAdmin(Long id);
 }
