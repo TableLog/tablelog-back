@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -406,6 +407,21 @@ public class RecipeServiceImpl implements RecipeService {
         User writer = userRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         writer.updateRecipeCount(writer.getRecipeCount() - 1);
+    }
+
+    @Override
+    public RecipeAllStatisticTypeDto readRecipeStatistics(){
+        Long totalCount = recipeRepository.count();
+        LocalDateTime startDate = LocalDate.now().minusDays(6).atStartOfDay();
+        List<Object[]> results = recipeRepository.findDailyCreatedCount(startDate);
+        List<RecipeStatisticDto> dailyCounts = results.stream()
+                .map(row -> new RecipeStatisticDto(
+                        ((java.sql.Date) row[0]).toLocalDate().toString(),
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
+        RecipeAllStatisticDto recipeAllStatisticDto = new RecipeAllStatisticDto(totalCount, dailyCounts);
+        return new RecipeAllStatisticTypeDto(recipeAllStatisticDto);
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

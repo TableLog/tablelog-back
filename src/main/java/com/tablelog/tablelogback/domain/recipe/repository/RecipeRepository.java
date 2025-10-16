@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Long countByUserId(Long userId);
@@ -101,4 +102,13 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             @Param("userId") Long userId,
             Pageable pageable
     );
+
+    @Query(value = """
+        SELECT DATE(created_at) AS date, COUNT(*) AS count
+          FROM tb_recipe
+         WHERE created_at >= :startDate
+         GROUP BY DATE(created_at)
+         ORDER BY DATE(created_at)
+    """, nativeQuery = true)
+    List<Object[]> findDailyCreatedCount(@Param("startDate") LocalDateTime startDate);
 }

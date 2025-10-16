@@ -31,4 +31,5 @@ public interface RecipeService {
                       MultipartFile multipartFile) throws IOException;
     void deleteRecipe(Long id, User user);
     void deleteRecipeByAdmin(Long id, User user);
+    RecipeAllStatisticTypeDto readRecipeStatistics();
 }

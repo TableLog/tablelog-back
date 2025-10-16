@@ -209,6 +209,16 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "레시피 통계 조회")
+    @GetMapping("/admin/recipes/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeAllStatisticTypeDto> readRecipeStatistics(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeAllStatisticTypeDto responseDto = recipeService.readRecipeStatistics();
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
     private UserDetailsImpl getUserDetails(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = null;
