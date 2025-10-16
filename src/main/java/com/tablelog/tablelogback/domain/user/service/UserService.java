@@ -2,9 +2,7 @@ package com.tablelog.tablelogback.domain.user.service;
 
 import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
-import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,4 +27,5 @@ public interface UserService {
     void updatePassword(UpdatePasswordServiceRequestDto serviceRequestDto);
     FindEmailResponseDto findEmail(findEmailServiceRequestDto serviceRequestDto);
     void requestExpertVerification(User user);
+    UserAllStatisticTypeDto readUserStatistics();
 }

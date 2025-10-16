@@ -12,10 +12,7 @@ import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
 import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
 import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
-import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
@@ -44,6 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -395,5 +394,23 @@ public class UserServiceImpl implements UserService {
                 .requestType(AdminRequestType.EXPERT_VERIFY)
                 .build();
         adminUserRepository.save(adminUser);
+    }
+
+    @Override
+    public UserAllStatisticTypeDto readUserStatistics(){
+        Long totalCount = userRepository.count();
+        LocalDateTime startDate = LocalDate.now().minusDays(6).atStartOfDay();
+
+        List<Object[]> results = userRepository.findDailySignUpCount(startDate);
+
+        List<UserStatisticDto> dailyCounts = results.stream()
+                .map(row -> new UserStatisticDto(
+                        ((java.sql.Date) row[0]).toLocalDate().toString(),
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
+
+        UserAllStatisticDto userAllStatisticDto = new UserAllStatisticDto(totalCount, dailyCounts);
+        return new UserAllStatisticTypeDto(userAllStatisticDto);
     }
 }

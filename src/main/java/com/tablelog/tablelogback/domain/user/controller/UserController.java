@@ -6,9 +6,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserController
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
-import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -28,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -215,5 +214,15 @@ public class UserController {
     ){
         userService.requestExpertVerification(userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "유저 통계 조회")
+    @GetMapping("/admin/users/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserAllStatisticTypeDto> readUserStatistics(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserAllStatisticTypeDto responseDto = userService.readUserStatistics();
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

@@ -37,4 +37,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByNickname(String nickname);
 
     boolean existsByUserNameAndBirthday(String userName, String birthday);
+
+    @Query(value = """
+    SELECT DATE(created_at) AS date, COUNT(*) AS count
+      FROM tb_user
+     WHERE created_at >= :startDate
+     GROUP BY DATE(created_at)
+     ORDER BY DATE(created_at)
+    """, nativeQuery = true)
+    List<Object[]> findDailySignUpCount(@Param("startDate") LocalDateTime startDate);
+
 }
