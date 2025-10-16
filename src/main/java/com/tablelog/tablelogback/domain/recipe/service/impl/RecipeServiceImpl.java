@@ -146,7 +146,7 @@ public class RecipeServiceImpl implements RecipeService {
                     }
                 }
             }
-            RecipeProcess process = recipeProcessEntityMapper.toRecipeProcess(recipe.getId(), rpDto, imageUrls);
+            RecipeProcess process = recipeProcessEntityMapper.toRecipeProcess(recipe, rpDto, imageUrls);
             recipeProcesses.add(process);
         }
         recipeProcessRepository.saveAll(recipeProcesses);
