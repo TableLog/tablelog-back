@@ -353,7 +353,6 @@ public class RecipeServiceImpl implements RecipeService {
             User user, MultipartFile multipartFile
     ) throws  IOException{
         Recipe recipe = validateRecipe(id, user);
-
         String folderName = recipe.getFolderName();
         String fileUrl = requestDto.imageUrl();
         if (multipartFile == null || multipartFile.isEmpty()) {
@@ -422,6 +421,24 @@ public class RecipeServiceImpl implements RecipeService {
                 .toList();
         RecipeAllStatisticDto recipeAllStatisticDto = new RecipeAllStatisticDto(totalCount, dailyCounts);
         return new RecipeAllStatisticTypeDto(recipeAllStatisticDto);
+    }
+
+    @Override
+    public RecipeSliceByAdminResponseDto readAllRecipeByAdmin(int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
+        List<RecipeReadByAdminResponseDto> recipes = slice.getContent().stream()
+                .map(recipe -> {
+                    String userName = userRepository.findById(recipe.getUserId())
+                            .map(User::getUserName)
+                            .orElse("Unknown");
+                    String nickname = userRepository.findById(recipe.getUserId())
+                            .map(User::getNickname)
+                            .orElse("Unknown");
+                    return recipeEntityMapper.toRecipeReadByAdminResponseDto(recipe, userName, nickname);
+                })
+                .toList();
+        return new RecipeSliceByAdminResponseDto(recipes, slice.hasNext());
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

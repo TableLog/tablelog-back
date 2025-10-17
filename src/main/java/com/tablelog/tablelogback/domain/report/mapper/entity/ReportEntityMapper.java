@@ -18,6 +18,4 @@ public interface ReportEntityMapper {
     @Mapping(source = "reporterNickname",target = "reporterNickname")
     @Mapping(source = "reportedNickname",target = "reportedNickname")
     ReportReadResponseDto toReportReadResponseDto(Report report, String reporterNickname, String reportedNickname);
-
-    List<ReportReadResponseDto> toReportReadAllResponseDto(List<Report> reports);
 }

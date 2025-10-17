@@ -32,4 +32,5 @@ public interface RecipeService {
     void deleteRecipe(Long id, User user);
     void deleteRecipeByAdmin(Long id, User user);
     RecipeAllStatisticTypeDto readRecipeStatistics();
+    RecipeSliceByAdminResponseDto readAllRecipeByAdmin(int pageNum);
 }

@@ -219,6 +219,17 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "관리자가 레시피 목록 조회")
+    @GetMapping("/admin/recipes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeSliceByAdminResponseDto> readAllRecipesByAdmin(
+            @RequestParam int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeSliceByAdminResponseDto responseDto = recipeService.readAllRecipeByAdmin(pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
     private UserDetailsImpl getUserDetails(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = null;
