@@ -2,7 +2,7 @@ package com.tablelog.tablelogback.domain.report.entity;
 
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.ReportType;
+import com.tablelog.tablelogback.global.enums.ReportTargetType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,7 +28,7 @@ public class Report extends BaseEntity {
     private String reportContent;
 
     @Column
-    private ReportType reportType;
+    private ReportTargetType reportTargetType;
 
     @Column
     private ApplyStatus status;
@@ -38,13 +38,13 @@ public class Report extends BaseEntity {
 
     @Builder
     public Report(final Long reporterId, final Long reportedUserId,
-                  final String reportContent, final ReportType reportType,
+                  final String reportContent, final ReportTargetType reportTargetType,
                   final Long targetId
     ) {
         this.reporterId = reporterId;
         this.reportedUserId = reportedUserId;
         this.reportContent = reportContent;
-        this.reportType = reportType;
+        this.reportTargetType = reportTargetType;
         this.status = ApplyStatus.APPLIED;
         this.targetId = targetId;
     }

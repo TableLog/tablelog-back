@@ -20,7 +20,7 @@ import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.ReportType;
+import com.tablelog.tablelogback.global.enums.ReportTargetType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -43,7 +43,7 @@ public class ReportServiceImpl implements ReportService {
         if(!userRepository.existsById(serviceRequestDto.reportedUserId())){
             throw new NotFoundUserException(UserErrorCode.NOT_FOUND_USER);
         }
-        validateTargetExists(serviceRequestDto.reportType(), serviceRequestDto.targetId());
+        validateTargetExists(serviceRequestDto.reportTargetType(), serviceRequestDto.targetId());
         Report report = reportEntityMapper.toReport(serviceRequestDto, user.getId());
         reportRepository.save(report);
     }
@@ -93,7 +93,7 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.save(report);
     }
 
-    private void validateTargetExists(ReportType type, Long id) {
+    private void validateTargetExists(ReportTargetType type, Long id) {
         switch (type) {
             case R_USER -> userRepository.findById(id)
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
