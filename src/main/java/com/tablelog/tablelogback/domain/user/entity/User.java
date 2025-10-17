@@ -163,4 +163,8 @@ public class User extends BaseEntity {
     public void updateIsDeleted(Boolean isDeleted){
         this.isDeleted = isDeleted;
     }
+
+    public void updateExpertAt(LocalDateTime expertAt){
+        this.expertAt = expertAt;
+    }
 }
