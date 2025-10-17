@@ -52,7 +52,13 @@ public class ReportServiceImpl implements ReportService {
     public ReportReadResponseDto readReport(Long id){
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
-        return reportEntityMapper.toReportReadResponseDto(report);
+        String reporterNickname = userRepository.findById(report.getReporterId())
+                .map(User::getNickname)
+                .orElse("Unknown");
+        String reportedNickname = userRepository.findById(report.getReporterId())
+                .map(User::getNickname)
+                .orElse("Unknown");
+        return reportEntityMapper.toReportReadResponseDto(report, reporterNickname, reportedNickname);
     }
 
     @Override
@@ -64,7 +70,19 @@ public class ReportServiceImpl implements ReportService {
         } else {
             slice = reportRepository.findAllByStatus(status, pageRequest);
         }
-        List<ReportReadResponseDto> reports = reportEntityMapper.toReportReadAllResponseDto(slice.getContent());
+        List<ReportReadResponseDto> reports = slice.getContent().stream()
+                .map(report -> {
+                    String reporterNickname = userRepository.findById(report.getReporterId())
+                            .map(User::getNickname)
+                            .orElse("Unknown");
+
+                    String reportedNickname = userRepository.findById(report.getReportedUserId())
+                            .map(User::getNickname)
+                            .orElse("Unknown");
+
+                    return reportEntityMapper.toReportReadResponseDto(report, reporterNickname, reportedNickname);
+                })
+                .toList();
         return new ReportSliceResponseDto(reports, slice.hasNext());
     }
 
@@ -88,7 +106,7 @@ public class ReportServiceImpl implements ReportService {
     public void processingReport(Long id){
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
-        validateTargetExists(report.getReportType(), report.getTargetId());
+        validateTargetExists(report.getReportTargetType(), report.getTargetId());
         report.processing();
         reportRepository.save(report);
     }
