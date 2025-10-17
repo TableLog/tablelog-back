@@ -43,7 +43,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
       FROM tb_user
      WHERE created_at >= :startDate
      GROUP BY DATE(created_at)
-     ORDER BY DATE(created_at)
+     ORDER BY DATE(created_at) DESC
     """, nativeQuery = true)
     List<Object[]> findDailySignUpCount(@Param("startDate") LocalDateTime startDate);
 

@@ -27,7 +27,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
           FROM tb_board
          WHERE created_at >= :startDate
          GROUP BY DATE(created_at)
-         ORDER BY DATE(created_at)
+         ORDER BY DATE(created_at) DESC
     """, nativeQuery = true)
     List<Object[]> findDailyCreatedCount(@Param("startDate") LocalDateTime startDate);
 }

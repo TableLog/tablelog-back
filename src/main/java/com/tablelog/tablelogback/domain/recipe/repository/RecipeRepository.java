@@ -108,7 +108,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
           FROM tb_recipe
          WHERE created_at >= :startDate
          GROUP BY DATE(created_at)
-         ORDER BY DATE(created_at)
+         ORDER BY DATE(created_at) DESC
     """, nativeQuery = true)
     List<Object[]> findDailyCreatedCount(@Param("startDate") LocalDateTime startDate);
 }
