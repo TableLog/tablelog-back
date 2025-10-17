@@ -28,6 +28,6 @@ public interface UserService {
     FindEmailResponseDto findEmail(findEmailServiceRequestDto serviceRequestDto);
     void requestExpertVerification(User user);
     UserAllStatisticTypeDto readUserStatistics();
-    UserProfileByAdminSliceDto readAllUserProfileByAdmin(int pageNumber);
+    UserProfileByAdminSliceDto readAllUserProfileByAdmin(String keyword, int pageNum);
     UserDetailProfileByAdminDto readUserProfileByAdmin(Long id);
 }

@@ -226,14 +226,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @Operation(summary = "관리자가 사용자 목록 조회")
+    @Operation(summary = "관리자가 사용자 목록 조회 + 검색", description = "이름 / 이메일 / 닉네임")
     @GetMapping("/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserProfileByAdminSliceDto> readAllUserProfileByAdmin(
-            @RequestParam int pageNumber,
+    public ResponseEntity<UserProfileByAdminSliceDto> findAllUserProfileByAdmin(
+            @RequestParam(required = false) String keyword,
+            @RequestParam int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        UserProfileByAdminSliceDto responseDto = userService.readAllUserProfileByAdmin(pageNumber);
+        UserProfileByAdminSliceDto responseDto = userService.readAllUserProfileByAdmin(keyword, pageNum);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 

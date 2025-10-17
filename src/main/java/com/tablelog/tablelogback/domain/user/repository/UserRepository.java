@@ -47,4 +47,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     """, nativeQuery = true)
     List<Object[]> findDailySignUpCount(@Param("startDate") LocalDateTime startDate);
 
+    @Query("""
+    SELECT u
+     FROM User u
+    WHERE u.nickname LIKE CONCAT('%', :keyword, '%')
+       OR u.email LIKE CONCAT('%', :keyword, '%')
+       OR u.userName LIKE CONCAT('%', :keyword, '%')
+""")
+    Slice<User> searchUsersByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

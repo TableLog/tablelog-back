@@ -415,9 +415,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserProfileByAdminSliceDto readAllUserProfileByAdmin(int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<User> slice = userRepository.findAll(pageRequest);
+    public UserProfileByAdminSliceDto readAllUserProfileByAdmin(String keyword, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
+
+        Slice<User> slice;
+        if(keyword != null && !keyword.isBlank()){
+            // keyword 검색 시 유저 검색
+            slice = userRepository.searchUsersByKeyword(keyword, pageRequest);
+        } else {
+            // 기본: 전체 유저 조회
+            slice = userRepository.findAll(pageRequest);
+        }
+//        Slice<User> slice = userRepository.findAll(pageRequest);
         List<User> users = slice.getContent();
         List<UserProfileByAdminDto> dtos = users.stream()
                 .map(user -> new UserProfileByAdminDto(
