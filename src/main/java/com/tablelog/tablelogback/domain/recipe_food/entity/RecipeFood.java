@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_food.entity;
 
+import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import com.tablelog.tablelogback.global.enums.FoodUnit;
 import jakarta.persistence.*;
@@ -23,17 +24,18 @@ public class RecipeFood extends BaseEntity {
     @Column(nullable = false)
     private FoodUnit recipeFoodUnit;
 
-    @Column(nullable = false)
-    private Long recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
 
     @Column(nullable = false)
     private Long foodId;
 
     @Builder
-    public RecipeFood(final Integer amount, final FoodUnit recipeFoodUnit, final Long recipeId, final Long foodId){
+    public RecipeFood(final Integer amount, final FoodUnit recipeFoodUnit, final Recipe recipe, final Long foodId){
         this.amount = amount;
         this.recipeFoodUnit = recipeFoodUnit;
-        this.recipeId = recipeId;
+        this.recipe = recipe;
         this.foodId = foodId;
     }
 
