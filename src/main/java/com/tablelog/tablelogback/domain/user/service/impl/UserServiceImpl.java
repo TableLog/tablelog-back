@@ -131,7 +131,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
+    public UserLoginDto login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
         User user = userRepository.findByEmail(userLoginServiceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
@@ -143,13 +143,13 @@ public class UserServiceImpl implements UserService {
         refreshTokenRepository.save(refreshToken);
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
         // 탈퇴 요청 중 유저가 재로그인하면
-        boolean recovered = false;
+        boolean isRecovered = false;
         if (user.getIsDeleted()) {
             user.updateIsDeleted(false);
             userRepository.save(user);
-            recovered = true;
+            isRecovered = true;
         }
-        return recovered;
+        return new UserLoginDto(isRecovered, user.getUserRole());
     }
 
     @Override

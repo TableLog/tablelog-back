@@ -13,7 +13,7 @@ import java.io.IOException;
 public interface UserService {
     void checkDuplicate(UserSignUpServiceRequestDto serviceRequestDto);
     User signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
-    Boolean login(UserLoginServiceRequestDto userLoginServiceRequestDto);
+    UserLoginDto login(UserLoginServiceRequestDto userLoginServiceRequestDto);
     UserLoginResponseDto getUser(String token);
     UserProfileDto getUserProfile(Long userId, UserDetailsImpl userDetails);
     FollowUserListDto findUsers(String keyword, int pageNum, UserDetailsImpl userDetails);

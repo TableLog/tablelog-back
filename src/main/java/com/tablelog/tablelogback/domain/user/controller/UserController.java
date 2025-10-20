@@ -74,8 +74,8 @@ public class UserController {
     ) {
         UserLoginServiceRequestDto serviceRequestDto = userDtoMapper
                 .toUserLoginServiceRequestDto(controllerRequestDto);
-        Boolean recovered = userService.login(serviceRequestDto);
-        return ResponseEntity.status(HttpStatus.OK).body(recovered);
+        UserLoginDto userLoginDto = userService.login(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginDto);
     }
 
     @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
