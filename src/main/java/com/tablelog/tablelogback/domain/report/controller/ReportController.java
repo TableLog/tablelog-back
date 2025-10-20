@@ -59,36 +59,21 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @Operation(summary = "관리자가 신고 승인")
-    @PostMapping("/admin/reports/{reportId}/approve")
+    @Operation(summary = "관리자가 신고 처리")
+    @PutMapping("/admin/reports/{reportId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> approveReport(
+    public ResponseEntity<?> updateReport(
             @PathVariable Long reportId,
+            @RequestParam ApplyStatus applyStatus,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        reportService.approveReport(reportId);
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    @Operation(summary = "관리자가 신고 거절")
-    @PostMapping("/admin/reports/{reportId}/rejection")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> rejectReport(
-            @PathVariable Long reportId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
-        reportService.rejectReport(reportId);
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    @Operation(summary = "관리자가 신고 처리 중")
-    @PostMapping("/admin/reports/{reportId}/processing")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> processingReport(
-            @PathVariable Long reportId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ){
-        reportService.processingReport(reportId);
+        if(applyStatus == ApplyStatus.APPROVED) {
+            reportService.approveReport(reportId);
+        } else if(applyStatus == ApplyStatus.REJECTED){
+            reportService.rejectReport(reportId);
+        } else if(applyStatus == ApplyStatus.PROCESSING){
+            reportService.processingReport(reportId);
+        }
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

@@ -111,8 +111,8 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.save(report);
     }
 
-    private void validateTargetExists(ReportTargetType type, Long id) {
-        switch (type) {
+    private void validateTargetExists(ReportTargetType reportTargetType, Long id) {
+        switch (reportTargetType) {
             case R_USER -> userRepository.findById(id)
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             case R_BOARD -> boardRepository.findById(id)
