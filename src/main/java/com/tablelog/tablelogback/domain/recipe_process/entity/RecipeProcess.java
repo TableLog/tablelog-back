@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.domain.recipe_process.entity;
 
+import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -33,19 +34,20 @@ public class RecipeProcess extends BaseEntity {
     @Column(name = "image_url")
     private List<String> recipeProcessImageUrls = new ArrayList<>();
 
-    @Column(name = "recipe_id", nullable = false)
-    private Long recipeId;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id", nullable = false)
+    private Recipe recipe;
 
     @Builder
     public RecipeProcess(
             final short sequence, final String rpTitle,
-            final String description, final Long recipeId,
+            final String description, final Recipe recipe,
             List<String> recipeProcessImageUrls
     ){
         this.sequence = sequence;
         this.rpTitle = rpTitle;
         this.description = description;
-        this.recipeId = recipeId;
+        this.recipe = recipe;
         this.recipeProcessImageUrls = recipeProcessImageUrls;
     }
 

@@ -42,17 +42,23 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
 
     @Override
     public void createRecipeFood(Long recipeId, final RecipeFoodCreateServiceRequestDto serviceRequestDto, User user) {
-        validateRecipeFood(recipeId, user);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        validateRecipeFood(recipe, user);
         Food food = foodRepository.findById(serviceRequestDto.foodId())
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
-        RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipeId, food);
+        RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipe, food.getId());
         recipeFoodRepository.save(recipeFood);
     }
 
     @Override
     public RecipeFoodReadAllServiceResponseDto readRecipeFood(Long recipeId, Long recipeFoodId){
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
-        return recipeFoodEntityMapper.toRecipeFoodReadResponseDto(recipeFood);
+        Food food = foodRepository.findById(recipeFood.getFoodId())
+                .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        return recipeFoodEntityMapper.toRecipeFoodReadResponseDto(recipeFood, food);
     }
 
     @Override
@@ -61,8 +67,15 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<RecipeFood> slice = recipeFoodRepository.findAllByRecipeId(recipe.getId(), pageRequest);
-        List<RecipeFoodReadAllServiceResponseDto> recipeFoods =
-                recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(slice.getContent());
+        List<RecipeFoodReadAllServiceResponseDto> recipeFoods = slice.getContent().stream()
+                .map(recipeFood -> {
+                    Food food = foodRepository.findById(recipeFood.getFoodId())
+                            .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+                    return recipeFoodEntityMapper.toRecipeFoodReadResponseDto(recipeFood, food);
+                })
+                .toList();
+//        List<RecipeFoodReadAllServiceResponseDto> recipeFoods =
+//                recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(slice.getContent());
         return new RecipeFoodSliceResponseDto(recipeFoods, slice.hasNext());
     }
 
@@ -71,7 +84,9 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
             Long recipeId, Long recipeFoodId,
             RecipeFoodUpdateServiceRequestDto requestDto, User user
     ) throws IOException {
-        validateRecipeFood(recipeId, user);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        validateRecipeFood(recipe, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
         recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit(), requestDto.foodId());
         recipeFoodRepository.save(recipeFood);
@@ -79,14 +94,16 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
 
     @Override
     public void deleteRecipeFood(Long recipeId, Long recipeFoodId, User user) {
-        validateRecipeFood(recipeId, user);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        validateRecipeFood(recipe, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
         recipeFoodRepository.delete(recipeFood);
     }
 
-    private void validateRecipeFood(Long recipeId, User user){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+    private void validateRecipeFood(Recipe recipe, User user){
+//        Recipe recipe = recipeRepository.findById(recipeId)
+//                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {
             throw new ForbiddenAccessRecipeFoodException(RecipeFoodErrorCode.FORBIDDEN_ACCESS_RECIPE_FOOD);
         }

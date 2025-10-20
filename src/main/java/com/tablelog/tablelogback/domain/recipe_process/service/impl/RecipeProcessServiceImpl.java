@@ -38,16 +38,15 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     private final RecipeRepository recipeRepository;
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
-    private final String SEPARATOR = "/";
 
     @Override
     public void createRecipeProcess(
             final Long recipeId, final RecipeProcessCreateServiceRequestDto serviceRequestDto,
             final List<MultipartFile> recipeProcessImages, User user
     ) throws IOException {
-        validateRecipeProcess(recipeId, user);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        validateRecipeProcess(recipe, user);
 
         List<String> recipeProcessImageUrls = new ArrayList<>();
         String folderName = user.getFolderName();
@@ -67,7 +66,7 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         }
 
         RecipeProcess recipeProcess = recipeProcessEntityMapper.toRecipeProcess(
-                recipeId, serviceRequestDto, recipeProcessImageUrls);
+                recipe, serviceRequestDto, recipeProcessImageUrls);
         recipeProcessRepository.save(recipeProcess);
     }
 
@@ -114,7 +113,9 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
             Long recipeId, Long recipeProcessId, RecipeProcessUpdateServiceRequestDto requestDto,
             List<MultipartFile> recipeProcessImages, User user
     ) throws IOException {
-        validateRecipeProcess(recipeId, user);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        validateRecipeProcess(recipe, user);
         RecipeProcess recipeProcess = findRecipeProcess(recipeProcessId);
 
         List<String> recipeProcessImageUrls = new ArrayList<>();
@@ -141,7 +142,9 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
 
     @Override
     public void deleteRecipeProcess(Long recipeId, Long recipeProcessId, User user) {
-        validateRecipeProcess(recipeId, user);
+        Recipe recipe = recipeRepository.findById(recipeId)
+                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        validateRecipeProcess(recipe, user);
         RecipeProcess recipeProcess = findRecipeProcess(recipeProcessId);
 
         if (recipeProcess.getRecipeProcessImageUrls() != null){
@@ -154,9 +157,7 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         recipeProcessRepository.delete(recipeProcess);
     }
 
-    private void validateRecipeProcess(Long recipeId, User user){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+    private void validateRecipeProcess(Recipe recipe, User user){
         if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {
             throw new ForbiddenAccessRecipeProcessException(RecipeProcessErrorCode.FORBIDDEN_ACCESS_RECIPE_PROCESS);
         }
