@@ -6,9 +6,7 @@ import com.tablelog.tablelogback.domain.user.dto.controller.UpdateUserController
 import com.tablelog.tablelogback.domain.user.dto.controller.UserLoginControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.controller.UserSignUpControllerRequestDto;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
-import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -28,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -75,8 +74,8 @@ public class UserController {
     ) {
         UserLoginServiceRequestDto serviceRequestDto = userDtoMapper
                 .toUserLoginServiceRequestDto(controllerRequestDto);
-        Boolean recovered = userService.login(serviceRequestDto);
-        return ResponseEntity.status(HttpStatus.OK).body(recovered);
+        UserLoginDto userLoginDto = userService.login(serviceRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginDto);
     }
 
     @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
@@ -215,5 +214,38 @@ public class UserController {
     ){
         userService.requestExpertVerification(userDetails.user());
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "유저 통계 조회")
+    @GetMapping("/admin/users/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserAllStatisticTypeDto> readUserStatistics(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserAllStatisticTypeDto responseDto = userService.readUserStatistics();
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 사용자 목록 조회 + 검색", description = "이름 / 이메일 / 닉네임")
+    @GetMapping("/admin/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserProfileByAdminSliceDto> findAllUserProfileByAdmin(
+            @RequestParam(required = false) String keyword,
+            @RequestParam("page") int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserProfileByAdminSliceDto responseDto = userService.readAllUserProfileByAdmin(keyword, pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 사용자 상세 정보 조회")
+    @GetMapping("/admin/users/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDetailProfileByAdminDto> readUserProfileByAdmin(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        UserDetailProfileByAdminDto responseDto = userService.readUserProfileByAdmin(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

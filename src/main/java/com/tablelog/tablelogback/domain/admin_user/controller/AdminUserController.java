@@ -41,7 +41,7 @@ public class AdminUserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AdminUserSliceReadResponseDto> getAllAdminUser(
             @RequestParam(required = false) ApplyStatus status,
-            @RequestParam int pageNum,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws JacksonException {
         return ResponseEntity.status(HttpStatus.OK).body(
@@ -73,5 +73,5 @@ public class AdminUserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    // 중복 사용자 확인
+    // TODO 중복 사용자 확인
 }

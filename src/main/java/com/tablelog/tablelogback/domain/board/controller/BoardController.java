@@ -3,10 +3,7 @@ package com.tablelog.tablelogback.domain.board.controller;
 
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardUpdateControllerRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.*;
 import com.tablelog.tablelogback.domain.board.mapper.dto.BoardDtoMapper;
 import com.tablelog.tablelogback.domain.board.service.BoardService;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -20,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -172,5 +170,49 @@ public class BoardController {
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         return userDetails.user().getNickname();
+    }
+
+    @Operation(summary = "관리자 - 보드 강제 삭제")
+    @DeleteMapping("/admin/boards/{boardId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteBoardByAdmin(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        boardService.deleteBoardByAdmin(boardId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "보드 통계 조회")
+    @GetMapping("/admin/boards/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BoardAllStatisticTypeDto> readBoardStatistics(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        BoardAllStatisticTypeDto responseDto = boardService.readBoardStatistics();
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 보드 전체 조회")
+    @GetMapping("/admin/boards")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BoardReadSliceByAdminDto> readAllBoardByAdmin(
+            @RequestParam("page") Integer pageNumber,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        BoardReadSliceByAdminDto responseDto = boardService.readAllBoardByAdmin(pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 보드 검색", description = "작성자(유저네임) / 닉네임")
+    @GetMapping("/admin/boards/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BoardReadSliceByAdminDto> searchBoardByAdmin(
+            @RequestParam String keyword,
+            @RequestParam("page") Integer pageNumber,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        BoardReadSliceByAdminDto responseDto = boardService.searchBoardByAdmin(keyword, pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -72,6 +73,9 @@ public class User extends BaseEntity {
 
     @Column
     private Boolean isDeleted;
+
+    @Column
+    private LocalDateTime expertAt;
 
     @Builder
     public User(
@@ -158,5 +162,9 @@ public class User extends BaseEntity {
 
     public void updateIsDeleted(Boolean isDeleted){
         this.isDeleted = isDeleted;
+    }
+
+    public void updateExpertAt(LocalDateTime expertAt){
+        this.expertAt = expertAt;
     }
 }

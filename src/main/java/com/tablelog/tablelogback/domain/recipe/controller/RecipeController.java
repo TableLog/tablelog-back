@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -195,6 +196,50 @@ public class RecipeController {
     ){
         recipeService.deleteRecipe(recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "관리자가 레시피 삭제")
+    @DeleteMapping("/admin/recipes/{recipeId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteRecipeByAdmin(
+            @PathVariable Long recipeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        recipeService.deleteRecipeByAdmin(recipeId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "레시피 통계 조회")
+    @GetMapping("/admin/recipes/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeAllStatisticTypeDto> readRecipeStatistics(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeAllStatisticTypeDto responseDto = recipeService.readRecipeStatistics();
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 레시피 목록 조회")
+    @GetMapping("/admin/recipes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeSliceByAdminResponseDto> readAllRecipesByAdmin(
+            @RequestParam("page") int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeSliceByAdminResponseDto responseDto = recipeService.readAllRecipeByAdmin(pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 레시피 검색", description = "제목 / 닉네임")
+    @GetMapping("/admin/recipes/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeSliceByAdminResponseDto> searchRecipesByAdmin(
+            @RequestParam String keyword,
+            @RequestParam("page") int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeSliceByAdminResponseDto responseDto = recipeService.searchRecipeByAdmin(keyword, pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     private UserDetailsImpl getUserDetails(){

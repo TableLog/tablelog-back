@@ -1,15 +1,22 @@
 package com.tablelog.tablelogback.domain.report.dto.service;
 
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.ReportType;
+import com.tablelog.tablelogback.global.enums.ReportTargetType;
+
+import java.time.LocalDateTime;
 
 public record ReportReadResponseDto(
         Long id,
         Long reporterId,
         Long reportedUserId,
+        String reporterNickname,
+        String reportedNickname,
         String reportContent,
-        ReportType reportType,
+        ReportTargetType reportTargetType,
+        Long targetId,
         ApplyStatus status,
-        Long targetId
+        LocalDateTime createdAt,
+        LocalDateTime modifiedAt,
+        String modifiedBy
 ) {
 }

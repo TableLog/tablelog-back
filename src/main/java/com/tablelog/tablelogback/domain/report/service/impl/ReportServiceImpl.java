@@ -20,7 +20,7 @@ import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
-import com.tablelog.tablelogback.global.enums.ReportType;
+import com.tablelog.tablelogback.global.enums.ReportTargetType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -43,7 +43,7 @@ public class ReportServiceImpl implements ReportService {
         if(!userRepository.existsById(serviceRequestDto.reportedUserId())){
             throw new NotFoundUserException(UserErrorCode.NOT_FOUND_USER);
         }
-        validateTargetExists(serviceRequestDto.reportType(), serviceRequestDto.targetId());
+        validateTargetExists(serviceRequestDto.reportTargetType(), serviceRequestDto.targetId());
         Report report = reportEntityMapper.toReport(serviceRequestDto, user.getId());
         reportRepository.save(report);
     }
@@ -52,7 +52,13 @@ public class ReportServiceImpl implements ReportService {
     public ReportReadResponseDto readReport(Long id){
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
-        return reportEntityMapper.toReportReadResponseDto(report);
+        String reporterNickname = userRepository.findById(report.getReporterId())
+                .map(User::getNickname)
+                .orElse("Unknown");
+        String reportedNickname = userRepository.findById(report.getReporterId())
+                .map(User::getNickname)
+                .orElse("Unknown");
+        return reportEntityMapper.toReportReadResponseDto(report, reporterNickname, reportedNickname);
     }
 
     @Override
@@ -64,7 +70,19 @@ public class ReportServiceImpl implements ReportService {
         } else {
             slice = reportRepository.findAllByStatus(status, pageRequest);
         }
-        List<ReportReadResponseDto> reports = reportEntityMapper.toReportReadAllResponseDto(slice.getContent());
+        List<ReportReadResponseDto> reports = slice.getContent().stream()
+                .map(report -> {
+                    String reporterNickname = userRepository.findById(report.getReporterId())
+                            .map(User::getNickname)
+                            .orElse("Unknown");
+
+                    String reportedNickname = userRepository.findById(report.getReportedUserId())
+                            .map(User::getNickname)
+                            .orElse("Unknown");
+
+                    return reportEntityMapper.toReportReadResponseDto(report, reporterNickname, reportedNickname);
+                })
+                .toList();
         return new ReportSliceResponseDto(reports, slice.hasNext());
     }
 
@@ -88,13 +106,13 @@ public class ReportServiceImpl implements ReportService {
     public void processingReport(Long id){
         Report report = reportRepository.findById(id)
                 .orElseThrow(() -> new NotFoundReportException(ReportErrorCode.NOT_FOUND_REPORT));
-        validateTargetExists(report.getReportType(), report.getTargetId());
+        validateTargetExists(report.getReportTargetType(), report.getTargetId());
         report.processing();
         reportRepository.save(report);
     }
 
-    private void validateTargetExists(ReportType type, Long id) {
-        switch (type) {
+    private void validateTargetExists(ReportTargetType reportTargetType, Long id) {
+        switch (reportTargetType) {
             case R_USER -> userRepository.findById(id)
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             case R_BOARD -> boardRepository.findById(id)

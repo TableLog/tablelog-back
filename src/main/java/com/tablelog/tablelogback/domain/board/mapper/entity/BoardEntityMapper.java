@@ -1,8 +1,7 @@
 package com.tablelog.tablelogback.domain.board.mapper.entity;
 
-
-
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
+import com.tablelog.tablelogback.domain.board.dto.service.BoardReadByAdminResponseDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -12,8 +11,6 @@ import org.mapstruct.MappingConstants;
 
 import java.util.List;
 
-
-
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface BoardEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
@@ -21,9 +18,7 @@ public interface BoardEntityMapper {
     @Mapping(source = "BoardRequestDto.content",target = "content")
     @Mapping(source = "BoardRequestDto.category",target = "category")
     @Mapping(source = "fileUrl",target = "image_urls")
-    Board toBoard(BoardCreateServiceRequestDto BoardRequestDto, List<String> fileUrl
-, User user
-    );
+    Board toBoard(BoardCreateServiceRequestDto BoardRequestDto, List<String> fileUrl , User user);
     @Mapping(source = "board.id", target = "id")
     @Mapping(source = "profileImgUrl", target = "profileImgUrl")
     @Mapping(source = "comment_count" ,target= "comment_count")
@@ -38,4 +33,7 @@ public interface BoardEntityMapper {
 //        List<Integer> comment_counts,
 //        List<Long> like_counts
 //    );
+
+    @Mapping(source = "userName", target = "writer")
+    BoardReadByAdminResponseDto toRecipeReadByAdminResponseDto(Board board, String userName);
 }

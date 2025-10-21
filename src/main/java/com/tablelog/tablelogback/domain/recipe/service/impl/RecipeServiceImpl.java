@@ -31,6 +31,8 @@ import com.tablelog.tablelogback.domain.recipe_save.repository.RecipeSaveReposit
 import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
 import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
+import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
@@ -46,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -331,7 +334,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice =recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
+        Slice<Recipe> slice = recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
@@ -350,7 +353,6 @@ public class RecipeServiceImpl implements RecipeService {
             User user, MultipartFile multipartFile
     ) throws  IOException{
         Recipe recipe = validateRecipe(id, user);
-
         String folderName = recipe.getFolderName();
         String fileUrl = requestDto.imageUrl();
         if (multipartFile == null || multipartFile.isEmpty()) {
@@ -390,6 +392,88 @@ public class RecipeServiceImpl implements RecipeService {
         recipeRepository.delete(recipe);
         s3Provider.delete(recipe.getFolderName());
         user.updateRecipeCount(user.getRecipeCount() - 1);
+    }
+
+    @Transactional
+    public void deleteRecipeByAdmin(Long id, User user) {
+        Recipe recipe = validateRecipe(id, user);
+        recipeFoodRepository.deleteAllByRecipeId(id);
+        recipeProcessRepository.deleteAllByRecipeId(id);
+        recipeMemoRepository.deleteAllByRecipeId(id);
+        recipeRepository.delete(recipe);
+        s3Provider.delete(recipe.getFolderName());
+        Long writerId = recipe.getUserId();
+        User writer = userRepository.findById(writerId)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        writer.updateRecipeCount(writer.getRecipeCount() - 1);
+    }
+
+    @Override
+    public RecipeAllStatisticTypeDto readRecipeStatistics(){
+        Long totalCount = recipeRepository.count();
+        LocalDateTime startDate = LocalDate.now().minusDays(6).atStartOfDay();
+        List<Object[]> results = recipeRepository.findDailyCreatedCount(startDate);
+        List<RecipeStatisticDto> dailyCounts = results.stream()
+                .map(row -> new RecipeStatisticDto(
+                        ((java.sql.Date) row[0]).toLocalDate().toString(),
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
+        RecipeAllStatisticDto recipeAllStatisticDto = new RecipeAllStatisticDto(totalCount, dailyCounts);
+        return new RecipeAllStatisticTypeDto(recipeAllStatisticDto);
+    }
+
+    @Override
+    public RecipeSliceByAdminResponseDto readAllRecipeByAdmin(int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.findAll(pageRequest);
+        List<RecipeReadByAdminResponseDto> recipes = slice.getContent().stream()
+                .map(recipe -> {
+                    String userName = userRepository.findById(recipe.getUserId())
+                            .map(User::getUserName)
+                            .orElse("Unknown");
+                    String nickname = userRepository.findById(recipe.getUserId())
+                            .map(User::getNickname)
+                            .orElse("Unknown");
+                    return recipeEntityMapper.toRecipeReadByAdminResponseDto(recipe, userName, nickname);
+                })
+                .toList();
+        return new RecipeSliceByAdminResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceByAdminResponseDto searchRecipeByAdmin(String keyword, int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
+
+        List<Long> recipeIds = slice.getContent().stream()
+                .map(Recipe::getId)
+                .collect(Collectors.toList());
+
+        // 작성자 id
+        List<Long> userIds = slice.getContent().stream()
+                .map(Recipe::getUserId)
+                .distinct()
+                .toList();
+
+        // 작성자 조회
+        Map<Long, String> userIdToUserName = userRepository.findUserNamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNameDto::userId, RecipeUserNameDto::userName));
+
+        // 작성자 닉네임 조회
+        // 탈퇴한 사람이면 Unknown
+        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
+
+        List<RecipeReadByAdminResponseDto> recipes = slice.getContent().stream()
+                .map(recipe -> {
+                    String userName = userIdToUserName.getOrDefault(recipe.getUserId(), "Unknown");
+                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
+                    return recipeEntityMapper.toRecipeReadByAdminResponseDto(recipe, userName, nickname);
+                })
+                .collect(Collectors.toList());
+
+        return new RecipeSliceByAdminResponseDto(recipes, slice.hasNext());
     }
 
     private Recipe validateRecipe(Long recipeId, User user){

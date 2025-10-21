@@ -12,10 +12,7 @@ import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
 import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
 import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
-import com.tablelog.tablelogback.domain.user.dto.service.response.FindEmailResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.OAuthAccountResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserLoginResponseDto;
-import com.tablelog.tablelogback.domain.user.dto.service.response.UserProfileDto;
+import com.tablelog.tablelogback.domain.user.dto.service.response.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.*;
 import com.tablelog.tablelogback.domain.user.mapper.entity.UserEntityMapper;
@@ -44,6 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -132,7 +131,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
+    public UserLoginDto login(final UserLoginServiceRequestDto userLoginServiceRequestDto) {
         User user = userRepository.findByEmail(userLoginServiceRequestDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
@@ -144,13 +143,13 @@ public class UserServiceImpl implements UserService {
         refreshTokenRepository.save(refreshToken);
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
         // 탈퇴 요청 중 유저가 재로그인하면
-        boolean recovered = false;
+        boolean isRecovered = false;
         if (user.getIsDeleted()) {
             user.updateIsDeleted(false);
             userRepository.save(user);
-            recovered = true;
+            isRecovered = true;
         }
-        return recovered;
+        return new UserLoginDto(isRecovered, user.getUserRole());
     }
 
     @Override
@@ -395,5 +394,60 @@ public class UserServiceImpl implements UserService {
                 .requestType(AdminRequestType.EXPERT_VERIFY)
                 .build();
         adminUserRepository.save(adminUser);
+    }
+
+    @Override
+    public UserAllStatisticTypeDto readUserStatistics(){
+        Long totalCount = userRepository.count();
+        LocalDateTime startDate = LocalDate.now().minusDays(6).atStartOfDay();
+
+        List<Object[]> results = userRepository.findDailySignUpCount(startDate);
+
+        List<UserStatisticDto> dailyCounts = results.stream()
+                .map(row -> new UserStatisticDto(
+                        ((java.sql.Date) row[0]).toLocalDate().toString(),
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
+
+        UserAllStatisticDto userAllStatisticDto = new UserAllStatisticDto(totalCount, dailyCounts);
+        return new UserAllStatisticTypeDto(userAllStatisticDto);
+    }
+
+    @Override
+    public UserProfileByAdminSliceDto readAllUserProfileByAdmin(String keyword, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
+
+        Slice<User> slice;
+        if(keyword != null && !keyword.isBlank()){
+            // keyword 검색 시 유저 검색
+            slice = userRepository.searchUsersByKeyword(keyword, pageRequest);
+        } else {
+            // 기본: 전체 유저 조회
+            slice = userRepository.findAll(pageRequest);
+        }
+//        Slice<User> slice = userRepository.findAll(pageRequest);
+        List<User> users = slice.getContent();
+        List<UserProfileByAdminDto> dtos = users.stream()
+                .map(user -> new UserProfileByAdminDto(
+                        user.getId(),
+                        user.getUserName(),
+                        user.getUserRole(),
+                        user.getEmail(),
+                        user.getNickname(),
+                        user.getCreatedAt(),
+                        user.getProvider(),
+                        oAuthAccountService.getAllOAuthAccountDtos(user.getId())
+                ))
+                .toList();
+        return new UserProfileByAdminSliceDto(dtos, slice.hasNext());
+    }
+
+    @Override
+    public UserDetailProfileByAdminDto readUserProfileByAdmin(Long id){
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        return userEntityMapper.toUserDetailProfileByAdminDto(user, dtos);
     }
 }

@@ -84,6 +84,39 @@ public class InquiryController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
+    @Operation(summary = "관리자가 문의 처리중")
+    @PostMapping("/admin/inquiries/{inquiryId}/processing")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> processInquiry(
+            @PathVariable Long inquiryId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        inquiryService.processingInquiry(inquiryId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "관리자가 문의 거절")
+    @PostMapping("/admin/inquiries/{inquiryId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> rejectInquiry(
+            @PathVariable Long inquiryId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        inquiryService.rejectInquiry(inquiryId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Operation(summary = "관리자가 문의 승인")
+    @PostMapping("/admin/inquiries/{inquiryId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> approveInquiry(
+            @PathVariable Long inquiryId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        inquiryService.approveInquiry(inquiryId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
     @Operation(summary = "문의 삭제")
     @DeleteMapping("/inquiries/{inquiryId}")
     public ResponseEntity<?> deleteInquiry(

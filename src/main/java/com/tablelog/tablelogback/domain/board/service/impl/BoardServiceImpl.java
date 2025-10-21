@@ -1,9 +1,6 @@
 package com.tablelog.tablelogback.domain.board.service.impl;
 
-import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardUpdateServiceRequestDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
-import com.tablelog.tablelogback.domain.board.dto.service.BoardListResponseDto;
+import com.tablelog.tablelogback.domain.board.dto.service.*;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
@@ -21,20 +18,21 @@ import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.s3.S3Provider;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
-
 import java.io.IOException;
 import java.util.List;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value.Str;
 
 @RequiredArgsConstructor
 @Service
@@ -264,5 +262,61 @@ public class BoardServiceImpl implements BoardService {
             responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
+    }
+
+    @DeleteMapping
+    public void deleteBoardByAdmin(Long boardId){
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+        String nickname = board.getUser();
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        if (board.getImage_urls() == null){
+            boardRepository.delete(board);
+        } else {
+            for (String imageUrl : board.getImage_urls()) {
+                String image_name = imageUrl.replace(url,"");
+                image_name = image_name.substring(image_name.lastIndexOf("/"));
+                s3Provider.delete(user.getFolderName()+image_name);
+            }
+            boardRepository.delete(board);
+        }
+    }
+
+    @Override
+    public BoardAllStatisticTypeDto readBoardStatistics(){
+        Long totalCount = boardRepository.count();
+        LocalDateTime startDate = LocalDate.now().minusDays(6).atStartOfDay();
+        List<Object[]> results = boardRepository.findDailyCreatedCount(startDate);
+        List<BoardStatisticDto> dailyCounts = results.stream()
+                .map(row -> new BoardStatisticDto(
+                        ((java.sql.Date) row[0]).toLocalDate().toString(),
+                        ((Number) row[1]).longValue()
+                ))
+                .toList();
+        BoardAllStatisticDto boardAllStatisticDto = new BoardAllStatisticDto(totalCount, dailyCounts);
+        return new BoardAllStatisticTypeDto(boardAllStatisticDto);
+    }
+
+    @Override
+    public BoardReadSliceByAdminDto readAllBoardByAdmin(int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Board> slice = boardRepository.findAll(pageRequest);
+        List<BoardReadByAdminResponseDto> boards = slice.getContent().stream()
+                .map(board -> {
+                    String userName = userRepository.findByUserName(board.getUser())
+                            .map(User::getUserName)
+                            .orElse("Unknown");
+                    return boardEntityMapper.toRecipeReadByAdminResponseDto(board, userName);
+                })
+                .toList();
+        return new BoardReadSliceByAdminDto(boards, slice.hasNext());
+    }
+
+    @Override
+    public BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<BoardReadByAdminResponseDto> slice = boardRepository.searchBoardsByUserNameOrNickname(keyword, pageRequest);
+        return new BoardReadSliceByAdminDto(slice.getContent(), slice.hasNext());
     }
 }

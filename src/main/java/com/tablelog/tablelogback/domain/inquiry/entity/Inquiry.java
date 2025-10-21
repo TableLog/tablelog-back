@@ -37,4 +37,16 @@ public class Inquiry extends BaseEntity {
         this.content = content;
         this.applyStatus = ApplyStatus.APPLIED;
     }
+
+    public void processing(){
+        this.applyStatus = ApplyStatus.PROCESSING;
+    }
+
+    public void approve(){
+        this.applyStatus = ApplyStatus.APPROVED;
+    }
+
+    public void reject(){
+        this.applyStatus = ApplyStatus.REJECTED;
+    }
 }

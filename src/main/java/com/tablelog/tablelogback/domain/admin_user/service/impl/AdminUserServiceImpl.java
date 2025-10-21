@@ -160,8 +160,10 @@ public class AdminUserServiceImpl implements AdminUserService {
         boolean hasBusinessLicense = userLicenseRepository
                 .existsByUserIdAndLicenseType(user.getId(), LicenseType.BUSINESS_REGISTRATION);
         boolean hasPatent = userLicenseRepository.existsByUserIdAndLicenseType(user.getId(), LicenseType.PATENT);
+        // TODO 레시피 개수 50개?
         if (recipeCount >= 50 || hasBusinessLicense || hasPatent) {
             user.changeRole(UserRole.EXPERT);
+            user.updateExpertAt(LocalDateTime.now());
             adminUser.updateStatus(ApplyStatus.APPROVED);
             userRepository.save(user);
             adminUserRepository.save(adminUser);

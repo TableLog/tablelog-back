@@ -15,7 +15,7 @@ public interface ReportEntityMapper {
     @Mapping(source = "reporterId",target = "reporterId")
     Report toReport(ReportCreateServiceRequestDto requestDto, Long reporterId);
 
-    ReportReadResponseDto toReportReadResponseDto(Report report);
-
-    List<ReportReadResponseDto> toReportReadAllResponseDto(List<Report> reports);
+    @Mapping(source = "reporterNickname",target = "reporterNickname")
+    @Mapping(source = "reportedNickname",target = "reportedNickname")
+    ReportReadResponseDto toReportReadResponseDto(Report report, String reporterNickname, String reportedNickname);
 }
