@@ -231,7 +231,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserProfileByAdminSliceDto> findAllUserProfileByAdmin(
             @RequestParam(required = false) String keyword,
-            @RequestParam int pageNum,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         UserProfileByAdminSliceDto responseDto = userService.readAllUserProfileByAdmin(keyword, pageNum);

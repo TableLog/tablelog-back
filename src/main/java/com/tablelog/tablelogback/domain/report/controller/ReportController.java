@@ -52,7 +52,7 @@ public class ReportController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ReportSliceResponseDto> readAllReports(
             @RequestParam(required = false) ApplyStatus status,
-            @RequestParam int pageNum,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         ReportSliceResponseDto responseDto = reportService.readAllReports(status, pageNum);
