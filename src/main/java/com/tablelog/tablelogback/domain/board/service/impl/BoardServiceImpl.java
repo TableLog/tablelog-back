@@ -313,10 +313,10 @@ public class BoardServiceImpl implements BoardService {
         return new BoardReadSliceByAdminDto(boards, slice.hasNext());
     }
 
-//    @Override
-//    public BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber){
-//        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-//        Slice<BoardReadByAdminResponseDto> slice = boardRepository.searchBoardsByUserNameOrNickname(keyword, pageRequest);
-//        return new BoardReadSliceByAdminDto(slice.getContent(), slice.hasNext());
-//    }
+    @Override
+    public BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<BoardReadByAdminResponseDto> slice = boardRepository.searchBoardsByUserNameOrNickname(keyword, pageRequest);
+        return new BoardReadSliceByAdminDto(slice.getContent(), slice.hasNext());
+    }
 }

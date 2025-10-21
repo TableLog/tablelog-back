@@ -41,5 +41,5 @@ public interface BoardService {
     void deleteBoardByAdmin(Long id);
     BoardAllStatisticTypeDto readBoardStatistics();
     BoardReadSliceByAdminDto readAllBoardByAdmin(int pageNumber);
-//    BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber);
+    BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber);
 }

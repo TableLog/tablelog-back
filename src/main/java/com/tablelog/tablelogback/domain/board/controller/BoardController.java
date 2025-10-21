@@ -204,15 +204,15 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-//    @Operation(summary = "관리자가 보드 검색")
-//    @GetMapping("/admin/boards")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public ResponseEntity<BoardReadSliceByAdminDto> searchBoardByAdmin(
-//            @RequestParam String keyword,
-//            @RequestParam("page") Integer pageNumber,
-//            @AuthenticationPrincipal UserDetailsImpl userDetails
-//    ){
-//        BoardReadSliceByAdminDto responseDto = boardService.searchBoardByAdmin(keyword, pageNumber);
-//        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
-//    }
+    @Operation(summary = "관리자가 보드 검색", description = "작성자(유저네임) / 닉네임")
+    @GetMapping("/admin/boards/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BoardReadSliceByAdminDto> searchBoardByAdmin(
+            @RequestParam String keyword,
+            @RequestParam("page") Integer pageNumber,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        BoardReadSliceByAdminDto responseDto = boardService.searchBoardByAdmin(keyword, pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
 }
