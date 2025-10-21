@@ -21,6 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByNickname(String nickName);
 
+    Optional<User> findByUserName(String userName);
+
     Optional<User> findByUserNameAndBirthday(String userName, String birthday);
 
     @Query("SELECT new com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUserNicknameDto(u.id, u.nickname) " +

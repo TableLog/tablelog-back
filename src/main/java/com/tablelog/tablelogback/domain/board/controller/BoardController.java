@@ -192,4 +192,27 @@ public class BoardController {
         BoardAllStatisticTypeDto responseDto = boardService.readBoardStatistics();
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
+
+    @Operation(summary = "관리자가 보드 전체 조회")
+    @GetMapping("/admin/boards")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BoardReadSliceByAdminDto> readAllBoardByAdmin(
+            @RequestParam("page") Integer pageNumber,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        BoardReadSliceByAdminDto responseDto = boardService.readAllBoardByAdmin(pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+//    @Operation(summary = "관리자가 보드 검색")
+//    @GetMapping("/admin/boards")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<BoardReadSliceByAdminDto> searchBoardByAdmin(
+//            @RequestParam String keyword,
+//            @RequestParam("page") Integer pageNumber,
+//            @AuthenticationPrincipal UserDetailsImpl userDetails
+//    ){
+//        BoardReadSliceByAdminDto responseDto = boardService.searchBoardByAdmin(keyword, pageNumber);
+//        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+//    }
 }

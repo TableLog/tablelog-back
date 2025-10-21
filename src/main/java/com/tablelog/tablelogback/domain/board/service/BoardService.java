@@ -40,4 +40,6 @@ public interface BoardService {
     BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id);
     void deleteBoardByAdmin(Long id);
     BoardAllStatisticTypeDto readBoardStatistics();
+    BoardReadSliceByAdminDto readAllBoardByAdmin(int pageNumber);
+//    BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber);
 }

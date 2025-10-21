@@ -11,9 +11,6 @@ import com.tablelog.tablelogback.domain.board_comment.repository.BoardCommentRep
 import com.tablelog.tablelogback.domain.board_like.repository.BoardLikeRepository;
 import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
 import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeAllStatisticDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeAllStatisticTypeDto;
-import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeStatisticDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
@@ -25,19 +22,17 @@ import com.tablelog.tablelogback.global.s3.S3Provider;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
-
 import java.io.IOException;
 import java.util.List;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value.Str;
 
 @RequiredArgsConstructor
 @Service
@@ -302,4 +297,26 @@ public class BoardServiceImpl implements BoardService {
         BoardAllStatisticDto boardAllStatisticDto = new BoardAllStatisticDto(totalCount, dailyCounts);
         return new BoardAllStatisticTypeDto(boardAllStatisticDto);
     }
+
+    @Override
+    public BoardReadSliceByAdminDto readAllBoardByAdmin(int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Board> slice = boardRepository.findAll(pageRequest);
+        List<BoardReadByAdminResponseDto> boards = slice.getContent().stream()
+                .map(board -> {
+                    String userName = userRepository.findByUserName(board.getUser())
+                            .map(User::getUserName)
+                            .orElse("Unknown");
+                    return boardEntityMapper.toRecipeReadByAdminResponseDto(board, userName);
+                })
+                .toList();
+        return new BoardReadSliceByAdminDto(boards, slice.hasNext());
+    }
+
+//    @Override
+//    public BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber){
+//        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+//        Slice<BoardReadByAdminResponseDto> slice = boardRepository.searchBoardsByUserNameOrNickname(keyword, pageRequest);
+//        return new BoardReadSliceByAdminDto(slice.getContent(), slice.hasNext());
+//    }
 }
