@@ -223,10 +223,22 @@ public class RecipeController {
     @GetMapping("/admin/recipes")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RecipeSliceByAdminResponseDto> readAllRecipesByAdmin(
-            @RequestParam int pageNum,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         RecipeSliceByAdminResponseDto responseDto = recipeService.readAllRecipeByAdmin(pageNum);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
+    }
+
+    @Operation(summary = "관리자가 레시피 검색", description = "제목 / 닉네임")
+    @GetMapping("/admin/recipes/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeSliceByAdminResponseDto> searchRecipesByAdmin(
+            @RequestParam String keyword,
+            @RequestParam("page") int pageNum,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        RecipeSliceByAdminResponseDto responseDto = recipeService.searchRecipeByAdmin(keyword, pageNum);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 

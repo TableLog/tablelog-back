@@ -34,5 +34,5 @@ public interface RecipeEntityMapper {
 
     @Mapping(source = "userName",target = "userName")
     @Mapping(source = "nickname",target = "nickname")
-    RecipeReadByAdminResponseDto toRecipeReadByAdminResponseDto(Recipe recipes, String userName, String nickname);
+    RecipeReadByAdminResponseDto toRecipeReadByAdminResponseDto(Recipe recipe, String userName, String nickname);
 }

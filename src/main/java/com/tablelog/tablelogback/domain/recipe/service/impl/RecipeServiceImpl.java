@@ -334,7 +334,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice =recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
+        Slice<Recipe> slice = recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
@@ -438,6 +438,41 @@ public class RecipeServiceImpl implements RecipeService {
                     return recipeEntityMapper.toRecipeReadByAdminResponseDto(recipe, userName, nickname);
                 })
                 .toList();
+        return new RecipeSliceByAdminResponseDto(recipes, slice.hasNext());
+    }
+
+    @Override
+    public RecipeSliceByAdminResponseDto searchRecipeByAdmin(String keyword, int pageNumber){
+        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Recipe> slice = recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
+
+        List<Long> recipeIds = slice.getContent().stream()
+                .map(Recipe::getId)
+                .collect(Collectors.toList());
+
+        // 작성자 id
+        List<Long> userIds = slice.getContent().stream()
+                .map(Recipe::getUserId)
+                .distinct()
+                .toList();
+
+        // 작성자 조회
+        Map<Long, String> userIdToUserName = userRepository.findUserNamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNameDto::userId, RecipeUserNameDto::userName));
+
+        // 작성자 닉네임 조회
+        // 탈퇴한 사람이면 Unknown
+        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
+                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
+
+        List<RecipeReadByAdminResponseDto> recipes = slice.getContent().stream()
+                .map(recipe -> {
+                    String userName = userIdToUserName.getOrDefault(recipe.getUserId(), "Unknown");
+                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
+                    return recipeEntityMapper.toRecipeReadByAdminResponseDto(recipe, userName, nickname);
+                })
+                .collect(Collectors.toList());
+
         return new RecipeSliceByAdminResponseDto(recipes, slice.hasNext());
     }
 
