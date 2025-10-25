@@ -37,7 +37,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
             b.userName AS writer,
             a.user,
             a.createdAt,
-            a.content
+            a.content,
+            b.id AS writerId
         )
         FROM Board a
         JOIN User b ON a.user = b.nickname

@@ -35,5 +35,6 @@ public interface BoardEntityMapper {
 //    );
 
     @Mapping(source = "userName", target = "writer")
-    BoardReadByAdminResponseDto toRecipeReadByAdminResponseDto(Board board, String userName);
+    @Mapping(source = "writerId", target = "writerId")
+    BoardReadByAdminResponseDto toRecipeReadByAdminResponseDto(Board board, String userName, Long writerId);
 }

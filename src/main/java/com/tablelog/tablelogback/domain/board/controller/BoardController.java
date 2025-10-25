@@ -193,7 +193,7 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @Operation(summary = "관리자가 보드 전체 조회")
+    @Operation(summary = "관리자가 보드 전체 조회", description = "writerId 0은 탈퇴한 유저를 의미")
     @GetMapping("/admin/boards")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BoardReadSliceByAdminDto> readAllBoardByAdmin(

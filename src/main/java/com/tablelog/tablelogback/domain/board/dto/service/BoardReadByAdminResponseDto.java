@@ -7,6 +7,7 @@ public record BoardReadByAdminResponseDto(
         String writer,
         String user,
         LocalDateTime createdAt,
-        String content
+        String content,
+        Long writerId
 ) {
 }
