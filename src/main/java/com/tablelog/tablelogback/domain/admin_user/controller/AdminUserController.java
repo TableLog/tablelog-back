@@ -25,16 +25,16 @@ public class AdminUserController {
     private final AdminUserServiceImpl adminUserService;
     private final AdminUserDtoMapper adminUserDtoMapper;
 
-    @Operation(summary = "회원탈퇴 승인")
-    @DeleteMapping("/admin/withdraw/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> approveDeleteUser(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ) throws JacksonException {
-        adminUserService.approveDeleteUser(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
+//    @Operation(summary = "회원탈퇴 승인")
+//    @DeleteMapping("/admin/withdraw/{id}")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<?> approveDeleteUser(
+//            @PathVariable Long id,
+//            @AuthenticationPrincipal UserDetailsImpl userDetails
+//    ) throws JacksonException {
+//        adminUserService.approveDeleteUser(id);
+//        return ResponseEntity.status(HttpStatus.OK).build();
+//    }
 
     @Operation(summary = "유저 요청 전체 조회")
     @GetMapping("/admin/request")
