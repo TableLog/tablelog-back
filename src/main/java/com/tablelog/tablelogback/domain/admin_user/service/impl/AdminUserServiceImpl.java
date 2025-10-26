@@ -74,7 +74,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     public void processWithdrawals(){
         // zone = "Asia/Seoul"
         // 서버 부하 X 위해 하루 한 번으로 일단 설정
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(0);
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
         List<User> users = userRepository.findByUserRoleAndDeletedAtBefore(UserRole.WITHDRAW, cutoff);
         for(User user : users){
             // 개인정보만 random uuid로 설정
