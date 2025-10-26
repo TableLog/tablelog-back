@@ -304,10 +304,15 @@ public class BoardServiceImpl implements BoardService {
         Slice<Board> slice = boardRepository.findAll(pageRequest);
         List<BoardReadByAdminResponseDto> boards = slice.getContent().stream()
                 .map(board -> {
-                    String userName = userRepository.findByUserName(board.getUser())
-                            .map(User::getUserName)
-                            .orElse("Unknown");
-                    return boardEntityMapper.toRecipeReadByAdminResponseDto(board, userName);
+                    User writer = userRepository.findByUserName(board.getUser())
+                            .orElse(null);
+                    String userName = "Unknown";
+                    Long writerId = 0L;
+                    if(writer != null){
+                        userName = writer.getUserName();
+                        writerId = writer.getId();
+                    }
+                    return boardEntityMapper.toRecipeReadByAdminResponseDto(board, userName, writerId);
                 })
                 .toList();
         return new BoardReadSliceByAdminDto(boards, slice.hasNext());
