@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.domain.chat.controller;
 
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.chat.service.ChatService;
+import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceRequestDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -93,12 +94,43 @@ public class ChatController {
                 message.put("userId", currentUser.getId());
                 message.put("userNickname", currentUser.getNickname());
                 message.put("userEmail", currentUser.getEmail());
+                
+                // 데이터베이스에 채팅 메시지 저장
+                try {
+                    ChatMessageServiceRequestDto chatMessageServiceRequestDto = new ChatMessageServiceRequestDto(
+                        roomId,
+                        currentUser.getNickname(),
+                        message.get("message").toString(),
+                        message.get("messageType") != null ? message.get("messageType").toString() : "TEXT"
+                    );
+                    
+                    chatService.saveChatMessage(chatMessageServiceRequestDto);
+                    LOGGER.info("💾 채팅 메시지가 데이터베이스에 저장되었습니다: {}", message.get("message"));
+                } catch (Exception e) {
+                    LOGGER.error("❌ 채팅 메시지 저장 실패: ", e);
+                }
             } else {
                 LOGGER.warn("⚠️ No authenticated user found");
                 message.put("userId", "anonymous");
                 message.put("userNickname", "anonymous");
+                
+                // 익명 사용자의 경우에도 저장 (선택사항)
+                try {
+                    ChatMessageServiceRequestDto chatMessageServiceRequestDto = new ChatMessageServiceRequestDto(
+                        roomId,
+                        "anonymous",
+                        message.get("message").toString(),
+                        message.get("messageType") != null ? message.get("messageType").toString() : "TEXT"
+                    );
+                    
+                    chatService.saveChatMessage(chatMessageServiceRequestDto);
+                    LOGGER.info("💾 익명 사용자 채팅 메시지가 데이터베이스에 저장되었습니다: {}", message.get("message"));
+                } catch (Exception e) {
+                    LOGGER.error("❌ 익명 사용자 채팅 메시지 저장 실패: ", e);
+                }
             }
 
+            // 메시지를 구독자들에게 전송
             messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
         } catch (Exception e) {
             LOGGER.error("❌ Error processing message: ", e);
