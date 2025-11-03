@@ -13,3 +13,4 @@ public record ChatMessageControllerRequestDto(
     String messageType
 ) {
 }
+

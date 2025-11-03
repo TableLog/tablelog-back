@@ -3,7 +3,9 @@ package com.tablelog.tablelogback.domain.chat.service.impl;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceRequestDto;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceResponseDto;
 import com.tablelog.tablelogback.domain.chat.entity.Chat;
+import com.tablelog.tablelogback.domain.chat.dto.service.ChatRoomSummaryResponseDto;
 import com.tablelog.tablelogback.domain.chat.exception.ChatErrorCode;
+import com.tablelog.tablelogback.global.exception.CustomException;
 import com.tablelog.tablelogback.domain.chat.exception.NotFoundChatException;
 import com.tablelog.tablelogback.domain.chat.mapper.entity.ChatEntityMapper;
 import com.tablelog.tablelogback.domain.chat.repository.ChatRepository;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -129,6 +132,75 @@ public class ChatServiceImpl implements ChatService {
             LOGGER.error("❌ 사용자 채팅 메시지 조회 실패: ", e);
             throw new RuntimeException("사용자 채팅 메시지 조회에 실패했습니다.", e);
         }
+    }
+
+    // 모든 채팅 메시지 전체 조회 (최신순)
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatMessageServiceResponseDto> getAllChatMessages() {
+        try {
+            List<Chat> chatList = chatRepository.findAllByOrderByCreatedAtDesc();
+            LOGGER.info("🗂️ 전체 채팅 메시지 조회: {}개", chatList.size());
+
+            return chatEntityMapper.toChatMessageServiceResponseDtos(chatList);
+
+        } catch (Exception e) {
+            LOGGER.error("❌ 전체 채팅 메시지 조회 실패: ", e);
+            throw new RuntimeException("전체 채팅 메시지 조회에 실패했습니다.", e);
+        }
+    }
+
+    // 특정 채팅방의 메시지 목록 조회 (최신순) - 권한 검증 포함
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatMessageServiceResponseDto> getChatMessagesWithAuth(String roomId, User currentUser) {
+        // roomId가 사용자의 email로 시작하는지 확인 (권한 검증)
+        String userEmail = currentUser.getEmail();
+        if (!roomId.startsWith(userEmail + "-")) {
+            LOGGER.warn("🚫 권한 없음: 사용자 {}가 채팅방 {}에 접근 시도", userEmail, roomId);
+            throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
+        }
+
+        LOGGER.info("✅ 권한 확인 완료: 사용자 {}가 채팅방 {} 조회", userEmail, roomId);
+        
+        // 권한 확인 후 조회
+        return getChatMessages(roomId);
+    }
+
+    // 특정 채팅방의 메시지 목록 조회 (오래된순) - 권한 검증 포함
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatMessageServiceResponseDto> getChatMessagesAscWithAuth(String roomId, User currentUser) {
+        // roomId가 사용자의 email로 시작하는지 확인 (권한 검증)
+        String userEmail = currentUser.getEmail();
+        if (!roomId.startsWith(userEmail + "-")) {
+            LOGGER.warn("🚫 권한 없음: 사용자 {}가 채팅방 {}에 접근 시도", userEmail, roomId);
+            throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
+        }
+
+        LOGGER.info("✅ 권한 확인 완료: 사용자 {}가 채팅방 {} 조회 (오래된순)", userEmail, roomId);
+        
+        // 권한 확인 후 조회
+        return getChatMessagesAsc(roomId);
+    }
+
+    /**
+     * SecurityContext에서 현재 인증된 사용자 정보 가져오기 (HTTP 요청용)
+     * @return User 객체 또는 null
+     */
+    @Override
+    public User getCurrentAuthenticatedUser() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal())) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                return userDetails.user();
+            }
+        } catch (Exception e) {
+            LOGGER.error("❌ 사용자 정보 가져오기 실패: ", e);
+        }
+        return null;
     }
 
     /**
@@ -249,6 +321,14 @@ public class ChatServiceImpl implements ChatService {
                 return authHeader.substring(7); // "Bearer " 제거
             }
             
+            // accessToken 헤더에서 직접 가져오기
+            String accessTokenHeader = accessor.getFirstNativeHeader("accessToken");
+            LOGGER.info("🔍 accessToken header: {}", accessTokenHeader != null ? "found" : "null");
+            if (accessTokenHeader != null) {
+                LOGGER.info("✅ Access token found in accessToken header");
+                return accessTokenHeader;
+            }
+            
             // 커스텀 헤더에서 토큰 가져오기
             String customToken = accessor.getFirstNativeHeader("X-Access-Token");
             LOGGER.info("🔍 X-Access-Token header: {}", customToken != null ? customToken : "null");
@@ -264,5 +344,51 @@ public class ChatServiceImpl implements ChatService {
         }
         
         return null;
+    }
+
+    /**
+     * 채팅방 구독 권한 검증
+     * @param roomId 채팅방 ID
+     * @param accessor STOMP 헤더 접근자
+     * @throws IllegalArgumentException 인증 실패 또는 권한 없음 시
+     */
+    @Override
+    public void validateChatRoomSubscription(String roomId, StompHeaderAccessor accessor) {
+        LOGGER.info("🔍 채팅방 구독 권한 검증 시작: roomId={}", roomId);
+        
+        // 1. 현재 사용자 가져오기
+        User currentUser = getCurrentUser(accessor);
+        if (currentUser == null) {
+            LOGGER.warn("🚫 구독 거부: 인증되지 않은 사용자의 채팅방 구독 시도 - roomId={}", roomId);
+            throw new IllegalArgumentException("인증이 필요합니다.");
+        }
+        
+        String userEmail = currentUser.getEmail();
+        LOGGER.info("👤 구독 시도 사용자: {} (Email: {})", currentUser.getNickname(), userEmail);
+        
+        // 2. 권한 검증: roomId가 사용자의 email로 시작하는지 확인
+        if (!roomId.startsWith(userEmail + "-")) {
+            LOGGER.warn("🚫 구독 거부: 권한 없음 - 사용자 {}가 채팅방 {} 구독 시도", userEmail, roomId);
+            throw new IllegalArgumentException("해당 채팅방에 접근할 수 있는 권한이 없습니다.");
+        }
+        
+        LOGGER.info("✅ 구독 권한 검증 완료: 사용자 {}가 채팅방 {} 구독 허용", userEmail, roomId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatRoomSummaryResponseDto> getOwnedChatRooms(User currentUser) {
+        if (currentUser == null) {
+            throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
+        }
+        String prefix = currentUser.getEmail() + "-%";
+        List<ChatRepository.ChatRoomSummary> rooms = chatRepository.findOwnedRooms(prefix);
+        return rooms.stream()
+            .map(r -> ChatRoomSummaryResponseDto.builder()
+                .roomId(r.getRoomId())
+                .lastCreatedAt(r.getLastCreatedAt())
+                .messageCount(r.getMessageCount())
+                .build())
+            .collect(Collectors.toList());
     }
 }

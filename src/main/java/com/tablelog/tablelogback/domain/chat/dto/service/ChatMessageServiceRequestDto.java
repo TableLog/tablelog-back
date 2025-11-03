@@ -9,3 +9,4 @@ public record ChatMessageServiceRequestDto(
     String messageType
 ) {
 }
+

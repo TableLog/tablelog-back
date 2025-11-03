@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -32,4 +33,19 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
      * 특정 사용자의 채팅 메시지 조회
      */
     List<Chat> findByUsernameOrderByCreatedAtDesc(String username);
+
+    /**
+     * 전체 채팅 메시지 조회 (최신순)
+     */
+    List<Chat> findAllByOrderByCreatedAtDesc();
+
+    interface ChatRoomSummary {
+        String getRoomId();
+        LocalDateTime getLastCreatedAt();
+        Long getMessageCount();
+    }
+
+    @Query("SELECT c.roomId as roomId, MAX(c.createdAt) as lastCreatedAt, COUNT(c.id) as messageCount " +
+           "FROM Chat c WHERE c.roomId LIKE :prefix GROUP BY c.roomId ORDER BY lastCreatedAt DESC")
+    List<ChatRoomSummary> findOwnedRooms(@Param("prefix") String prefix);
 }
