@@ -3,7 +3,7 @@ package com.tablelog.tablelogback.domain.chat.service;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceRequestDto;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceResponseDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
-import com.tablelog.tablelogback.domain.chat.dto.service.ChatRoomSummaryResponseDto;
+import com.tablelog.tablelogback.domain.chat.dto.service.ChatRoomLastMessageResponseDto;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 
 import java.util.List;
@@ -98,5 +98,25 @@ public interface ChatService {
      * 로그인한 사용자가 소유한 채팅방 목록 조회 (roomId prefix = email-)
      * 최근 대화 순 정렬
      */
-    List<ChatRoomSummaryResponseDto> getOwnedChatRooms(User currentUser);
+    List<ChatRoomLastMessageResponseDto> getOwnedChatRooms(User currentUser);
+
+    /**
+     * 두 이메일로 2인 고정 룸ID 생성 (사전순 정렬하여 안정적 생성)
+     */
+    String buildPairRoomId(String emailA, String emailB);
+
+    /**
+     * 주어진 룸ID가 해당 이메일 사용자가 포함된 방인지 확인
+     */
+    boolean isParticipant(String roomId, String email);
+
+    /**
+     * 방 미열람 개수 조회(현재 사용자 기준)
+     */
+    long getUnreadCount(String roomId, User currentUser);
+
+    /**
+     * 방 읽음 처리(현재 사용자 기준)
+     */
+    int markRoomRead(String roomId, User currentUser);
 }

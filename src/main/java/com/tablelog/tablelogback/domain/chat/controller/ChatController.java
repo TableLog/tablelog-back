@@ -5,7 +5,7 @@ import com.tablelog.tablelogback.domain.chat.service.ChatService;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceRequestDto;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceResponseDto;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
-import com.tablelog.tablelogback.domain.chat.dto.service.ChatRoomSummaryResponseDto;
+import com.tablelog.tablelogback.domain.chat.dto.service.ChatRoomLastMessageResponseDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
@@ -31,6 +34,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@Tag(name = "Chat", description = "채팅 REST API")
 public class ChatController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
@@ -125,7 +129,8 @@ public class ChatController {
                     roomId,
                     currentUser.getNickname(),
                     message.get("message").toString(),
-                    message.get("messageType") != null ? message.get("messageType").toString() : "TEXT"
+                    message.get("messageType") != null ? message.get("messageType").toString() : "TEXT",
+                    currentUser.getEmail()
                 );
                 
                 chatService.saveChatMessage(chatMessageServiceRequestDto);
@@ -142,6 +147,7 @@ public class ChatController {
     }
 
     // 전체 채팅 메시지 조회 (최신순)
+    @Operation(summary = "전체 채팅 메시지 조회", description = "전체 채팅 메시지를 최신순으로 조회합니다.")
     @GetMapping("/chats")
     public ResponseEntity<List<ChatMessageServiceResponseDto>> getAllChats() {
         List<ChatMessageServiceResponseDto> chats = chatService.getAllChatMessages();
@@ -149,10 +155,11 @@ public class ChatController {
     }
 
     // 특정 채팅방 메시지 조회 (order=desc|asc, default=desc)
+    @Operation(summary = "특정 채팅방 메시지 조회", description = "채팅방 메시지를 정렬 옵션과 함께 조회합니다. order=asc|desc (기본 asc)")
     @GetMapping("/chats/rooms/{roomId}")
     public ResponseEntity<List<ChatMessageServiceResponseDto>> getRoomChats(
-        @PathVariable("roomId") String roomId,
-        @RequestParam(name = "order", defaultValue = "desc") String order,
+        @Parameter(description = "채팅방 ID(emailA--emailB)") @PathVariable("roomId") String roomId,
+        @Parameter(description = "정렬(order=asc|desc), 기본 asc") @RequestParam(name = "order", defaultValue = "asc") String order,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         LOGGER.info("📋 채팅방 메시지 조회 요청: roomId={}, order={}, user={}", 
@@ -168,13 +175,26 @@ public class ChatController {
     }
 
     // 로그인한 사용자가 소유한 채팅방 목록 조회
+    @Operation(summary = "내 채팅방 목록(마지막 메시지) 조회", description = "내가 참가자인 채팅방을 최근 대화 순으로 조회하고, 각 방의 마지막 메시지와 미읽음 카운트를 반환합니다.")
     @GetMapping("/chats/rooms")
-    public ResponseEntity<List<ChatRoomSummaryResponseDto>> getOwnedRooms(
+    public ResponseEntity<List<ChatRoomLastMessageResponseDto>> getOwnedRooms(
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         LOGGER.info("📋 소유 채팅방 목록 조회 요청: user={}",
             userDetails != null ? userDetails.user().getEmail() : "null");
-        List<ChatRoomSummaryResponseDto> rooms = chatService.getOwnedChatRooms(userDetails.user());
+        List<ChatRoomLastMessageResponseDto> rooms = chatService.getOwnedChatRooms(userDetails.user());
         return ResponseEntity.ok(rooms);
     }
+
+    // 방 미열람 개수
+    @Operation(summary = "방 미읽음 개수 조회", description = "현재 로그인 사용자가 수신자 기준으로 해당 방의 미읽음 메시지 개수를 반환합니다.")
+    @GetMapping("/chats/rooms/{roomId}/unread/count")
+    public ResponseEntity<Long> getUnreadCount(
+        @Parameter(description = "채팅방 ID(emailA--emailB)") @PathVariable("roomId") String roomId,
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        long count = chatService.getUnreadCount(roomId, userDetails.user());
+        return ResponseEntity.ok(count);
+    }
+
 }

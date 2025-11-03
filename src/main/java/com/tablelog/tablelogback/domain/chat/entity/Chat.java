@@ -36,6 +36,19 @@ public class Chat extends BaseEntity {
     
     @Column(name = "message_type", length = 20)
     private String messageType = "TEXT"; // "TEXT", "IMAGE", "FILE" 등
+
+    // 1:1 채팅 수신/읽음 상태 관리를 위한 필드
+    @Column(name = "sender_email", length = 255, nullable = false)
+    private String senderEmail;
+
+    @Column(name = "receiver_email", length = 255, nullable = false)
+    private String receiverEmail;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
     
     public Chat(String roomId, String username, String message) {
         this.roomId = roomId;
