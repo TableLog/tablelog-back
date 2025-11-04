@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -77,6 +78,9 @@ public class User extends BaseEntity {
     @Column
     private LocalDateTime expertAt;
 
+    @Column
+    private LocalDateTime deletedAt;
+
     @Builder
     public User(
             final String email,
@@ -140,10 +144,6 @@ public class User extends BaseEntity {
         this.recipeCount = recipeCount;
     }
 
-    public void updateBoardCount(Long boardCount){
-        this.boardCount = boardCount;
-    }
-
     public void updateFollowerCount(Long followerCount){
         this.followerCount = followerCount;
     }
@@ -166,5 +166,16 @@ public class User extends BaseEntity {
 
     public void updateExpertAt(LocalDateTime expertAt){
         this.expertAt = expertAt;
+    }
+
+    public void updateDeletedAt(LocalDateTime deletedAt){
+        this.deletedAt = deletedAt;
+    }
+
+    public void changePersonalInfo(){
+        String uuid = UUID.randomUUID().toString();
+        this.email = "email" + uuid;
+        this.userName = "userName" + uuid;
+        this.birthday = "birthday" + uuid;
     }
 }

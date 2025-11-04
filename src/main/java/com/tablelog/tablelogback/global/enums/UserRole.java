@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum UserRole {
     NORMAL(Authority.NORMAL),
     EXPERT(Authority.EXPERT),
-    ADMIN(Authority.ADMIN);
+    ADMIN(Authority.ADMIN),
+    WITHDRAW(Authority.WITHDRAW);
 
     private final String authority;
 
@@ -18,6 +19,7 @@ public enum UserRole {
         public static final String NORMAL = "ROLE_NORMAL";
         public static final String EXPERT = "ROLE_EXPERT";
         public static final String ADMIN = "ROLE_ADMIN";
+        public static final String WITHDRAW = "ROLE_WITHDRAW";
     }
 
 }

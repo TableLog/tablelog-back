@@ -70,21 +70,17 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     @Scheduled(cron = "0 0 0 * * *") // 매일 00시
-    public void processPendingWithdrawals(){
-        // 별도 요청 테이블 -> DB 부하
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
-        List<User> users = userRepository.findByIsDeletedAndModifiedAtBefore(true, cutoff);
+//    @Scheduled(fixedRate = 10000) // 10초마다 실행 -> 테스트 참고
+    public void processWithdrawals(){
+        // zone = "Asia/Seoul"
+        // 서버 부하 X 위해 하루 한 번으로 일단 설정
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        List<User> users = userRepository.findByUserRoleAndDeletedAtBefore(UserRole.WITHDRAW, cutoff);
         for(User user : users){
-            if(!adminUserRepository.existsByUserId(user.getId())){
-                AdminUser adminUser = AdminUser.builder()
-                        .userId(user.getId())
-                        .status(ApplyStatus.APPLIED)
-                        .requestType(AdminRequestType.WITHDRAWAL)
-                .build();
-                adminUserRepository.save(adminUser);
-                System.out.println(adminUser.getUserId());
-            }
+            // 개인정보만 random uuid로 설정
+            user.changePersonalInfo();
         }
+        userRepository.saveAll(users);
     }
 
     @Transactional

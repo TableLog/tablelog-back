@@ -312,7 +312,8 @@ public class UserServiceImpl implements UserService {
     ) {
         userRepository.findById(user.getId())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        // isDeleted true로 변경
+        user.changeRole(UserRole.WITHDRAW);
+        user.updateDeletedAt(LocalDateTime.now());
         user.updateIsDeleted(true);
         userRepository.save(user);
         // 로그아웃 처리

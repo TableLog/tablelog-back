@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.user.repository;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUserNameDto;
 import com.tablelog.tablelogback.domain.recipe.dto.service.RecipeUserNicknameDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.global.enums.UserRole;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -35,7 +36,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Slice<User> findByNicknameContaining(String keyword, Pageable pageable);
 
-    List<User> findByIsDeletedAndModifiedAtBefore(Boolean isDeleted, LocalDateTime now);
+    List<User> findByUserRoleAndDeletedAtBefore(UserRole userRole, LocalDateTime now);
 
     List<User> findAllByNicknameIn(Set<String> nicknames);
 
