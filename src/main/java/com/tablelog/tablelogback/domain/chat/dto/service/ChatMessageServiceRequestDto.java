@@ -6,6 +6,8 @@ public record ChatMessageServiceRequestDto(
     String roomId,
     String username,
     String message,
-    String messageType
+    String messageType,
+    String senderEmail
 ) {
 }
+

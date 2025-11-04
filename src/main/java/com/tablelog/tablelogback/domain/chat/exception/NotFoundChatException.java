@@ -7,3 +7,4 @@ public class NotFoundChatException extends CustomException {
         super(errorCode);
     }
 }
+
