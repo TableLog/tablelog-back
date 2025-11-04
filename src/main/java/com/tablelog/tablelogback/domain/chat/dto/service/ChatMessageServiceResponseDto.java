@@ -11,3 +11,4 @@ public record ChatMessageServiceResponseDto(
     LocalDateTime createdAt
 ) {
 }
+
