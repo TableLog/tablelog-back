@@ -109,14 +109,14 @@ public class ChatController {
             LOGGER.info("👤 Current user: {} (ID: {}, Email: {})", 
                 currentUser.getNickname(), currentUser.getId(), currentUser.getEmail());
 
-            // 권한 검증: roomId가 사용자의 email로 시작하는지 확인
-            String userEmail = currentUser.getEmail();
-            if (!roomId.startsWith(userEmail + "-")) {
-                LOGGER.warn("🚫 권한 없음: 사용자 {}가 채팅방 {}에 메시지 전송 시도", userEmail, roomId);
+            // 권한 검증: roomId가 사용자의 userId를 포함하는지 확인 (2인 룸 규칙)
+            Long userId = currentUser.getId();
+            if (!chatService.isParticipant(roomId, userId)) {
+                LOGGER.warn("🚫 권한 없음: 사용자 ID {}가 채팅방 {}에 메시지 전송 시도", userId, roomId);
                 return; // 권한 없는 채팅방에 메시지 전송 거부
             }
 
-            LOGGER.info("✅ 권한 확인 완료: 사용자 {}가 채팅방 {}에 메시지 전송", userEmail, roomId);
+            LOGGER.info("✅ 권한 확인 완료: 사용자 ID {}가 채팅방 {}에 메시지 전송", userId, roomId);
 
             // 사용자 정보를 메시지에 추가
             message.put("userId", currentUser.getId());

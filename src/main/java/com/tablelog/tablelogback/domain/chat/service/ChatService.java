@@ -63,10 +63,10 @@ public interface ChatService {
 
     /**
      * 특정 사용자의 채팅 메시지 조회
-     * @param username 사용자명
+     * @param sender 발신자명
      * @return 채팅 메시지 목록 DTO
      */
-    List<ChatMessageServiceResponseDto> getChatMessagesByUser(String username);
+    List<ChatMessageServiceResponseDto> getChatMessagesByUser(String sender);
 
     /**
      * 모든 채팅 메시지 전체 조회 (최신순)
@@ -101,14 +101,14 @@ public interface ChatService {
     List<ChatRoomLastMessageResponseDto> getOwnedChatRooms(User currentUser);
 
     /**
-     * 두 이메일로 2인 고정 룸ID 생성 (사전순 정렬하여 안정적 생성)
+     * 두 사용자 ID로 2인 고정 룸ID 생성 (사전순 정렬하여 안정적 생성)
      */
-    String buildPairRoomId(String emailA, String emailB);
+    String buildPairRoomId(Long userIdA, Long userIdB);
 
     /**
-     * 주어진 룸ID가 해당 이메일 사용자가 포함된 방인지 확인
+     * 주어진 룸ID가 해당 사용자 ID가 포함된 방인지 확인
      */
-    boolean isParticipant(String roomId, String email);
+    boolean isParticipant(String roomId, Long userId);
 
     /**
      * 방 미열람 개수 조회(현재 사용자 기준)
