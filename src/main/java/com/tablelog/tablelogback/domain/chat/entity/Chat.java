@@ -29,7 +29,7 @@ public class Chat extends BaseEntity {
     private String roomId;
     
     @Column(name = "username", nullable = false)
-    private String username;
+    private String sender;
     
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
@@ -50,9 +50,9 @@ public class Chat extends BaseEntity {
     @Column(name = "read_at")
     private LocalDateTime readAt;
     
-    public Chat(String roomId, String username, String message) {
+    public Chat(String roomId, String sender, String message) {
         this.roomId = roomId;
-        this.username = username;
+        this.sender = sender;
         this.message = message;
         this.messageType = "TEXT";
     }

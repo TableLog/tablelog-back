@@ -33,7 +33,7 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
     /**
      * 특정 사용자의 채팅 메시지 조회
      */
-    List<Chat> findByUsernameOrderByCreatedAtDesc(String username);
+    List<Chat> findBySenderOrderByCreatedAtDesc(String sender);
 
     /**
      * 전체 채팅 메시지 조회 (최신순)
@@ -65,8 +65,8 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
 
     @Query("SELECT c.roomId as roomId, c.message as lastMessage, c.createdAt as lastCreatedAt " +
            "FROM Chat c " +
-           "WHERE (c.roomId LIKE CONCAT(:email, '--%') OR c.roomId LIKE CONCAT('%--', :email)) " +
+           "WHERE (c.roomId LIKE CONCAT(:userId, '--%') OR c.roomId LIKE CONCAT('%--', :userId)) " +
            "AND c.createdAt = (SELECT MAX(c2.createdAt) FROM Chat c2 WHERE c2.roomId = c.roomId) " +
            "ORDER BY c.createdAt DESC")
-    List<LastMessageProjection> findLastMessagesForParticipant(@Param("email") String email);
+    List<LastMessageProjection> findLastMessagesForParticipant(@Param("userId") Long userId);
 }

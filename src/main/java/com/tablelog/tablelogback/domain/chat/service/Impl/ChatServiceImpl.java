@@ -55,20 +55,38 @@ public class ChatServiceImpl implements ChatService {
             // sender/receiver/deliveredAt 설정
             String senderEmail = chatMessageServiceRequestDto.senderEmail();
             chat.setSenderEmail(senderEmail);
-            // roomId에서 상대 이메일 결정 (emailA--emailB 규칙)
+            // roomId에서 상대 userId 결정 (userIdA--userIdB 규칙)
             String roomId = chatMessageServiceRequestDto.roomId();
             String[] parts = roomId != null ? roomId.split("--", 2) : new String[0];
             if (parts.length == 2) {
-                String p0 = parts[0] != null ? parts[0].trim().toLowerCase() : "";
-                String p1 = parts[1] != null ? parts[1].trim().toLowerCase() : "";
-                String s = senderEmail != null ? senderEmail.trim().toLowerCase() : "";
-                if (s.equals(p0)) {
-                    chat.setReceiverEmail(parts[1]);
-                } else if (s.equals(p1)) {
-                    chat.setReceiverEmail(parts[0]);
-                } else {
-                    // 보정 불가 시 기본적으로 두 번째를 수신자로 설정
-                    chat.setReceiverEmail(parts[1]);
+                try {
+                    Long part0 = Long.parseLong(parts[0]);
+                    Long part1 = Long.parseLong(parts[1]);
+                    // senderEmail로 User를 찾아서 sender의 userId 확인
+                    User senderUser = userRepository.findByEmail(senderEmail)
+                        .orElseThrow(() -> new RuntimeException("발신자 사용자를 찾을 수 없습니다: " + senderEmail));
+                    Long senderUserId = senderUser.getId();
+                    
+                    // 상대방 userId 결정
+                    Long receiverUserId = senderUserId.equals(part0) ? part1 : part0;
+                    
+                    // 상대방 User 조회하여 receiverEmail 설정
+                    User receiverUser = userRepository.findById(receiverUserId)
+                        .orElseThrow(() -> new RuntimeException("수신자 사용자를 찾을 수 없습니다: " + receiverUserId));
+                    chat.setReceiverEmail(receiverUser.getEmail());
+                } catch (NumberFormatException e) {
+                    LOGGER.warn("⚠️ roomId 형식 오류 (userId 기반이 아님): {}", roomId);
+                    // 기존 로직으로 폴백 (email 기반)
+                    String p0 = parts[0] != null ? parts[0].trim().toLowerCase() : "";
+                    String p1 = parts[1] != null ? parts[1].trim().toLowerCase() : "";
+                    String s = senderEmail != null ? senderEmail.trim().toLowerCase() : "";
+                    if (s.equals(p0)) {
+                        chat.setReceiverEmail(parts[1]);
+                    } else if (s.equals(p1)) {
+                        chat.setReceiverEmail(parts[0]);
+                    } else {
+                        chat.setReceiverEmail(parts[1]);
+                    }
                 }
             }
             chat.setDeliveredAt(java.time.LocalDateTime.now());
@@ -140,17 +158,17 @@ public class ChatServiceImpl implements ChatService {
     // 특정 사용자의 채팅 메시지 조회
     @Override
     @Transactional(readOnly = true)
-    public List<ChatMessageServiceResponseDto> getChatMessagesByUser(String username) {
+    public List<ChatMessageServiceResponseDto> getChatMessagesByUser(String sender) {
         try {
-            List<Chat> chatList = chatRepository.findByUsernameOrderByCreatedAtDesc(username);
-            LOGGER.info("👤 사용자 {} 메시지 조회: {}개", username, chatList.size());
+            List<Chat> chatList = chatRepository.findBySenderOrderByCreatedAtDesc(sender);
+            LOGGER.info("👤 발신자 {} 메시지 조회: {}개", sender, chatList.size());
             
             // Entity -> DTO 변환하여 반환
             return chatEntityMapper.toChatMessageServiceResponseDtos(chatList);
 
         } catch (Exception e) {
-            LOGGER.error("❌ 사용자 채팅 메시지 조회 실패: ", e);
-            throw new RuntimeException("사용자 채팅 메시지 조회에 실패했습니다.", e);
+            LOGGER.error("❌ 발신자 채팅 메시지 조회 실패: ", e);
+            throw new RuntimeException("발신자 채팅 메시지 조회에 실패했습니다.", e);
         }
     }
 
@@ -175,13 +193,13 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public List<ChatMessageServiceResponseDto> getChatMessagesWithAuth(String roomId, User currentUser) {
         // 2인 룸 규칙: roomId 참가자 여부로 권한 검증
-        String userEmail = currentUser.getEmail();
-        if (!isParticipant(roomId, userEmail)) {
-            LOGGER.warn("🚫 권한 없음: 사용자 {}가 채팅방 {}에 접근 시도", userEmail, roomId);
+        Long userId = currentUser.getId();
+        if (!isParticipant(roomId, userId)) {
+            LOGGER.warn("🚫 권한 없음: 사용자 ID {}가 채팅방 {}에 접근 시도", userId, roomId);
             throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
         }
 
-        LOGGER.info("✅ 권한 확인 완료: 사용자 {}가 채팅방 {} 조회", userEmail, roomId);
+        LOGGER.info("✅ 권한 확인 완료: 사용자 ID {}가 채팅방 {} 조회", userId, roomId);
 
         // 권한 확인 후 조회
         List<ChatMessageServiceResponseDto> result = getChatMessages(roomId);
@@ -195,13 +213,13 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public List<ChatMessageServiceResponseDto> getChatMessagesAscWithAuth(String roomId, User currentUser) {
         // 2인 룸 규칙: roomId 참가자 여부로 권한 검증
-        String userEmail = currentUser.getEmail();
-        if (!isParticipant(roomId, userEmail)) {
-            LOGGER.warn("🚫 권한 없음: 사용자 {}가 채팅방 {}에 접근 시도", userEmail, roomId);
+        Long userId = currentUser.getId();
+        if (!isParticipant(roomId, userId)) {
+            LOGGER.warn("🚫 권한 없음: 사용자 ID {}가 채팅방 {}에 접근 시도", userId, roomId);
             throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
         }
 
-        LOGGER.info("✅ 권한 확인 완료: 사용자 {}가 채팅방 {} 조회 (오래된순)", userEmail, roomId);
+        LOGGER.info("✅ 권한 확인 완료: 사용자 ID {}가 채팅방 {} 조회 (오래된순)", userId, roomId);
 
         // 권한 확인 후 조회
         List<ChatMessageServiceResponseDto> result = getChatMessagesAsc(roomId);
@@ -389,16 +407,16 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalArgumentException("인증이 필요합니다.");
         }
         
-        String userEmail = currentUser.getEmail();
-        LOGGER.info("👤 구독 시도 사용자: {} (Email: {})", currentUser.getNickname(), userEmail);
+        Long userId = currentUser.getId();
+        LOGGER.info("👤 구독 시도 사용자: {} (ID: {}, Email: {})", currentUser.getNickname(), userId, currentUser.getEmail());
         
         // 2. 권한 검증: 2인 룸 규칙 참가자 여부 확인
-        if (!isParticipant(roomId, userEmail)) {
-            LOGGER.warn("🚫 구독 거부: 권한 없음 - 사용자 {}가 채팅방 {} 구독 시도", userEmail, roomId);
+        if (!isParticipant(roomId, userId)) {
+            LOGGER.warn("🚫 구독 거부: 권한 없음 - 사용자 ID {}가 채팅방 {} 구독 시도", userId, roomId);
             throw new IllegalArgumentException("해당 채팅방에 접근할 수 있는 권한이 없습니다.");
         }
         
-        LOGGER.info("✅ 구독 권한 검증 완료: 사용자 {}가 채팅방 {} 구독 허용", userEmail, roomId);
+        LOGGER.info("✅ 구독 권한 검증 완료: 사용자 ID {}가 채팅방 {} 구독 허용", userId, roomId);
     }
 
     @Override
@@ -407,43 +425,49 @@ public class ChatServiceImpl implements ChatService {
         if (currentUser == null) {
             throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
         }
-        String email = currentUser.getEmail();
-        List<ChatRepository.LastMessageProjection> rows = chatRepository.findLastMessagesForParticipant(email);
+        Long userId = currentUser.getId();
+        List<ChatRepository.LastMessageProjection> rows = chatRepository.findLastMessagesForParticipant(userId);
         return rows.stream()
             .map(r -> chatEntityMapper.toChatRoomLastMessageResponseDto(
                 r,
-                chatRepository.countByRoomIdAndReceiverEmailAndReadAtIsNull(r.getRoomId(), email)
+                chatRepository.countByRoomIdAndReceiverEmailAndReadAtIsNull(r.getRoomId(), currentUser.getEmail())
             ))
             .collect(Collectors.toList());
     }
 
     @Override
-    public String buildPairRoomId(String emailA, String emailB) {
-        String a = emailA == null ? "" : emailA.trim().toLowerCase();
-        String b = emailB == null ? "" : emailB.trim().toLowerCase();
-        if (a.compareTo(b) <= 0) {
-            return a + "--" + b;
+    public String buildPairRoomId(Long userIdA, Long userIdB) {
+        if (userIdA == null || userIdB == null) {
+            throw new IllegalArgumentException("사용자 ID는 null일 수 없습니다.");
         }
-        return b + "--" + a;
+        if (userIdA <= userIdB) {
+            return userIdA + "--" + userIdB;
+        }
+        return userIdB + "--" + userIdA;
     }
 
     @Override
-    public boolean isParticipant(String roomId, String email) {
-        if (roomId == null || email == null) {
+    public boolean isParticipant(String roomId, Long userId) {
+        if (roomId == null || userId == null) {
             return false;
         }
-        String e = email.trim().toLowerCase();
         String[] parts = roomId.split("--", 2);
         if (parts.length != 2) {
             return false;
         }
-        return e.equals(parts[0].toLowerCase()) || e.equals(parts[1].toLowerCase());
+        try {
+            Long part0 = Long.parseLong(parts[0]);
+            Long part1 = Long.parseLong(parts[1]);
+            return userId.equals(part0) || userId.equals(part1);
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getUnreadCount(String roomId, User currentUser) {
-        if (currentUser == null || !isParticipant(roomId, currentUser.getEmail())) {
+        if (currentUser == null || !isParticipant(roomId, currentUser.getId())) {
             throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
         }
         return chatRepository.countByRoomIdAndReceiverEmailAndReadAtIsNull(roomId, currentUser.getEmail());
@@ -451,7 +475,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public int markRoomRead(String roomId, User currentUser) {
-        if (currentUser == null || !isParticipant(roomId, currentUser.getEmail())) {
+        if (currentUser == null || !isParticipant(roomId, currentUser.getId())) {
             throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
         }
         return chatRepository.markRoomRead(roomId, currentUser.getEmail());

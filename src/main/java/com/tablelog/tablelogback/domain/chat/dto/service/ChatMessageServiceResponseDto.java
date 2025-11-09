@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public record ChatMessageServiceResponseDto(
     Long id,
     String roomId,
-    String username,
+    String sender,
     String message,
     String messageType,
     LocalDateTime createdAt
