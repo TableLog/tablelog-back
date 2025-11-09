@@ -32,7 +32,6 @@ import java.util.Set;
 public class FollowServiceImpl implements FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
-    private final UserEntityMapper userEntityMapper;
 
     @Override
     public void createFollow(Long followingId, User user) {
