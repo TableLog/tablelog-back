@@ -1,16 +1,11 @@
 package com.tablelog.tablelogback.domain.board.service;
 
-
-
-
 import com.tablelog.tablelogback.domain.board.dto.service.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
-import org.springframework.boot.autoconfigure.couchbase.CouchbaseProperties.Io;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-
 
 public interface BoardService {
 
@@ -28,8 +23,6 @@ public interface BoardService {
          Long id,
          User user
      ) throws IOException;
-//    TestReadResponseDto get(Long id);
-//
     BoardListResponseDto getAll(int pageNumber);
     BoardListResponseDto getAllByDesc(int pageNumber);
     BoardListResponseDto getAllByAsc(int pageNumber);

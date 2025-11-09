@@ -46,10 +46,6 @@ public class BoardServiceImpl implements BoardService {
     private final S3Provider s3Provider;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     private final UserRepository userRepository;
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
-    private final String SEPARATOR = "/";
-
 
     // TestCreateServiceRequestDto -> Test
     @Override
@@ -196,7 +192,8 @@ public class BoardServiceImpl implements BoardService {
         ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(),comment_count,like_count,false,false,writer.getId());
+        return boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(),comment_count,like_count,
+                false,false,writer.getId());
     }
     @Override
     public  BoardReadResponseDto getOnceLogin(Long id,User user){
@@ -208,7 +205,8 @@ public class BoardServiceImpl implements BoardService {
         Boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
         Long like_count = boardLikeRepository.countByBoard(id);
         Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
-        return boardEntityMapper.toReadResponseDto(board,writer.getProfileImgUrl(),comment_count,like_count,isMe,isLike,writer.getId());
+        return boardEntityMapper.toReadResponseDto(board,writer.getProfileImgUrl(),comment_count,like_count,
+                isMe,isLike,writer.getId());
     }
 
     @Override
@@ -224,7 +222,8 @@ public class BoardServiceImpl implements BoardService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count,
+                    like_count,isMe,isLike,writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -240,7 +239,8 @@ public class BoardServiceImpl implements BoardService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count,
+                    like_count,isMe,isLike,writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
@@ -259,7 +259,8 @@ public class BoardServiceImpl implements BoardService {
             Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isMe = board.getUser().equals(user.getNickname());
             boolean isLike = boardLikeRepository.existsByBoardAndUser(board.getId(),user.getId());
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count, like_count,isMe,isLike,writer.getId()));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, writer.getProfileImgUrl(), comment_count,
+                    like_count,isMe,isLike,writer.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }

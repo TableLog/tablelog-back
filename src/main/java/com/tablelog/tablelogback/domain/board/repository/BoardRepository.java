@@ -17,11 +17,10 @@ import java.util.Optional;
 public interface BoardRepository extends JpaRepository<Board, Long> {
     Optional<Board> findByIdAndUser(Long id, String user);
     List<Board> findAllByUser(String user);
-    Slice<Board> findAllBy(Pageable pageable);
     Slice<Board> findAllByOrderByIdDesc(Pageable pageable);
     Slice<Board> findAllByOrderByIdAsc(Pageable pageable);
     Slice<Board> findAllByUserOrderByUserAsc(String user, Pageable pageable);
-    void deleteAllByUser(String user);
+
     @Query(value = """
         SELECT DATE(created_at) AS date, COUNT(*) AS count
           FROM tb_board
