@@ -10,8 +10,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
-import java.util.List;
-
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface RecipeReviewEntityMapper {
     @Mapping(source = "user.nickname", target = "user")
@@ -109,7 +107,4 @@ public interface RecipeReviewEntityMapper {
                 reply
         );
     }
-
-    @Mapping(source = "modifiedAt", target = "modifiedAt")
-    List<RecipeReviewReadResponseDto> toRecipeReviewReadAllResponseDtoLists(List<RecipeReview> recipeReviewList);
 }
