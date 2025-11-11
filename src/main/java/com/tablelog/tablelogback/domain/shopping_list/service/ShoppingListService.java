@@ -6,8 +6,6 @@ import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListSl
 import com.tablelog.tablelogback.domain.shopping_list.dto.service.ShoppingListUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.user.entity.User;
 
-import java.io.IOException;
-
 public interface ShoppingListService {
     Long createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user);
     ShoppingListReadAllServiceResponseDto readShoppingList(Long id, User user);

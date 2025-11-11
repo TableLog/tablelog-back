@@ -6,8 +6,6 @@ import com.tablelog.tablelogback.domain.shopping_list.entity.ShoppingList;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
-
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @Mapper(componentModel = SPRING)
@@ -17,6 +15,4 @@ public interface ShoppingListEntityMapper {
 
     @Mapping(source = "foodName",target = "foodName")
     ShoppingListReadAllServiceResponseDto toShoppingListReadResponseDto(ShoppingList shoppingList, String foodName);
-
-    List<ShoppingListReadAllServiceResponseDto> toShoppingListReadAllResponseDto(List<ShoppingList> shoppingLists);
 }

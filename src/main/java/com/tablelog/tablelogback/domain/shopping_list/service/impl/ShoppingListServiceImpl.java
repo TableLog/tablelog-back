@@ -16,7 +16,6 @@ import com.tablelog.tablelogback.domain.shopping_list.mapper.entity.ShoppingList
 import com.tablelog.tablelogback.domain.shopping_list.repository.ShoppingListRepository;
 import com.tablelog.tablelogback.domain.shopping_list.service.ShoppingListService;
 import com.tablelog.tablelogback.domain.user.entity.User;
-import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -32,7 +31,6 @@ public class ShoppingListServiceImpl implements ShoppingListService {
     private final ShoppingListRepository shoppingListRepository;
     private final ShoppingListEntityMapper shoppingListEntityMapper;
     private final FoodRepository foodRepository;
-    private final UserRepository userRepository;
 
     @Override
     public Long createShoppingList(ShoppingListCreateServiceRequestDto requestDto, User user){
