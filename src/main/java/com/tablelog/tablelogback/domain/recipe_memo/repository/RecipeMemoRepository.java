@@ -8,6 +8,5 @@ import java.util.Optional;
 public interface RecipeMemoRepository extends JpaRepository<RecipeMemo, Long> {
     boolean existsByRecipeIdAndUserId(Long recipeId, Long userId);
     Optional<RecipeMemo> findByRecipeIdAndUserId(Long recipeId, Long userId);
-    void deleteAllByUserId(Long userId);
     void deleteAllByRecipeId(Long recipeId);
 }
