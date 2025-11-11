@@ -74,8 +74,6 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
                     return recipeFoodEntityMapper.toRecipeFoodReadResponseDto(recipeFood, food);
                 })
                 .toList();
-//        List<RecipeFoodReadAllServiceResponseDto> recipeFoods =
-//                recipeFoodEntityMapper.toRecipeFoodReadAllResponseDto(slice.getContent());
         return new RecipeFoodSliceResponseDto(recipeFoods, slice.hasNext());
     }
 
@@ -102,8 +100,6 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
     }
 
     private void validateRecipeFood(Recipe recipe, User user){
-//        Recipe recipe = recipeRepository.findById(recipeId)
-//                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         if (!Objects.equals(recipe.getUserId(), user.getId()) && user.getUserRole() != UserRole.ADMIN) {
             throw new ForbiddenAccessRecipeFoodException(RecipeFoodErrorCode.FORBIDDEN_ACCESS_RECIPE_FOOD);
         }
