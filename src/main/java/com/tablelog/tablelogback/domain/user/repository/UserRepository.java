@@ -47,20 +47,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUserNameAndBirthday(String userName, String birthday);
 
     @Query(value = """
-    SELECT DATE(created_at) AS date, COUNT(*) AS count
-      FROM tb_user
-     WHERE created_at >= :startDate
-     GROUP BY DATE(created_at)
-     ORDER BY DATE(created_at) DESC
+        SELECT DATE(created_at) AS date, COUNT(*) AS count
+          FROM tb_user
+         WHERE created_at >= :startDate
+         GROUP BY DATE(created_at)
+         ORDER BY DATE(created_at) DESC
     """, nativeQuery = true)
     List<Object[]> findDailySignUpCount(@Param("startDate") LocalDateTime startDate);
 
     @Query("""
-    SELECT u
-     FROM User u
-    WHERE u.nickname LIKE CONCAT('%', :keyword, '%')
-       OR u.email LIKE CONCAT('%', :keyword, '%')
-       OR u.userName LIKE CONCAT('%', :keyword, '%')
-""")
+        SELECT u
+         FROM User u
+        WHERE u.nickname LIKE CONCAT('%', :keyword, '%')
+           OR u.email LIKE CONCAT('%', :keyword, '%')
+           OR u.userName LIKE CONCAT('%', :keyword, '%')
+    """)
     Slice<User> searchUsersByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

@@ -72,10 +72,6 @@ public class GoogleService {
     private final UserServiceImpl userService;
     private final OAuthAccountRepository oAuthAccountRepository;
     private final OAuthAccountService oAuthAccountService;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
-    private final String SEPARATOR = "/";
 
     private JsonNode getGoogleToken(String code, Boolean isLink) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();

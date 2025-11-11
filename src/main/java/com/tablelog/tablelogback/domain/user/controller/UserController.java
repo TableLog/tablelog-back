@@ -11,11 +11,9 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
-import com.tablelog.tablelogback.domain.user.repository.OAuthAccountRepository;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.KakaoService;
-import com.tablelog.tablelogback.domain.user.service.OAuthAccountService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -45,8 +43,6 @@ public class UserController {
     private final KakaoService kakaoService;
     private final GoogleService googleService;
     private final UserRepository userRepository;
-    private final OAuthAccountService oAuthAccountService;
-    private final OAuthAccountRepository oAuthAccountRepository;
 
     @Operation(summary = "회원가입")
     @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

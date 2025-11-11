@@ -65,8 +65,6 @@ public class UserServiceImpl implements UserService {
     private final AdminUserRepository adminUserRepository;
     private final PointTransactionRepository pointTransactionRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
     private final String SEPARATOR = "/";
     @Value("${spring.jwt.refresh.expiration-period}")
     private Long timeToLive;
