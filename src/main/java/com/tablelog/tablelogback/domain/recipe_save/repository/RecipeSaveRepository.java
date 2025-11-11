@@ -9,7 +9,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,6 +48,4 @@ public interface RecipeSaveRepository extends JpaRepository<RecipeSave, Long> {
     """)
     List<RecipeIsSavedDto> findSavesByRecipeAndUser(@Param("recipeIds") List<Long> recipeIds,
                                                     @Param("userId") Long userId);
-
-    void deleteAllByUser(Long userId);
 }
