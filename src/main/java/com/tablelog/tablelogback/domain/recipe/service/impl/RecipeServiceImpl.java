@@ -217,14 +217,14 @@ public class RecipeServiceImpl implements RecipeService {
         Map<Long, Food> foodMap = foodRepository.findAllById(foodIds).stream()
                 .collect(Collectors.toMap(Food::getId, food -> food));
 
-        List<Long> existingFoodIds;
+        Map<Long, Long> existingFoodMap;
         if(userDetails != null){
-            existingFoodIds = shoppingListRepository
-                    .findAllByUserIdAndFoodIdIn(userDetails.user().getId(), foodIds).stream()
-                    .map(ShoppingList::getFoodId)
-                    .toList();
+            existingFoodMap = shoppingListRepository
+                    .findAllByUserIdAndFoodIdIn(userDetails.user().getId(), foodIds)
+                    .stream()
+                    .collect(Collectors.toMap(ShoppingList::getFoodId, ShoppingList::getId));
         } else {
-            existingFoodIds = Collections.emptyList();
+            existingFoodMap = Collections.emptyMap();
         }
 
         List<RecipeFoodPreviewDto> previewDtos = slice.stream()
@@ -232,7 +232,9 @@ public class RecipeServiceImpl implements RecipeService {
                     Food food = foodMap.get(rf.getFoodId());
                     String foodName = food.getFoodName();
                     int calorie = rf.getAmount() * food.getCal();
-                    boolean isChecked = existingFoodIds.contains(rf.getFoodId());
+                    Long foodId = rf.getFoodId();
+                    boolean isChecked = existingFoodMap.containsKey(foodId);
+                    Long shoppingListId = isChecked ? existingFoodMap.get(foodId) : 0L;
 
                     return new RecipeFoodPreviewDto(
                             rf.getId(),
@@ -241,7 +243,8 @@ public class RecipeServiceImpl implements RecipeService {
                             rf.getFoodId(),
                             foodName,
                             calorie,
-                            isChecked
+                            isChecked,
+                            shoppingListId
                     );
                 })
                 .toList();
