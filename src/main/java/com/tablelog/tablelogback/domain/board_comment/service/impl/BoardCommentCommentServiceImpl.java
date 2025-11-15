@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.board_comment.service.impl;
 
-
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board.exception.BoardErrorCode;
 import com.tablelog.tablelogback.domain.board.exception.NotFoundBoardException;
@@ -19,13 +18,10 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
-import com.tablelog.tablelogback.global.s3.S3Provider;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -38,12 +34,6 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     private final BoardCommentRepository boardCommentRepository;
     private final BoardCommentEntityMapper boardCommentEntityMapper;
     private final UserRepository userRepository;
-    private final S3Provider s3Provider;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
-    @Value("${spring.cloud.aws.s3.bucket}")
-    public String bucket;
-    private final String SEPARATOR = "/";
-
 
     // TestCreateServiceRequestDto -> Test
     @Override
@@ -80,13 +70,15 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
         boardComment.update(boardCommentRequestDto.content());
         boardCommentRepository.save(boardComment);
     }
+
     public void delete(Long board_id,Long boardComment_id,User user){
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
             .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
         BoardComment boardComment = boardCommentRepository.findByBoardIdAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
                 .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         boardCommentRepository.delete(boardComment);
-        }
+    }
+
     @Override
     public BoardCommentReadResponseDto getOnce(Long boardComment_id) {
         BoardComment boardComment = boardCommentRepository.findById(boardComment_id)

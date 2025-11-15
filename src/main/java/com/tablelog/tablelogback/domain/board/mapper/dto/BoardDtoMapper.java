@@ -1,7 +1,5 @@
 package com.tablelog.tablelogback.domain.board.mapper.dto;
 
-
-
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardCreateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.controller.BoardUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board.dto.service.BoardCreateServiceRequestDto;

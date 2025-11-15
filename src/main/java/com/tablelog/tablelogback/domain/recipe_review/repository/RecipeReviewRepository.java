@@ -10,7 +10,6 @@ import java.util.List;
 
 @Repository
 public interface RecipeReviewRepository extends JpaRepository<RecipeReview, Long> {
-    Slice<RecipeReview> findAllByRecipeId(Long recipeId, Pageable pageable);
 
     Slice<RecipeReview> findAllByUser(String user, Pageable pageable);
 
@@ -22,6 +21,4 @@ public interface RecipeReviewRepository extends JpaRepository<RecipeReview, Long
     Boolean existsByPrrId(Long prrId);
 
     void deleteByPrrId(Long prrId);
-
-    void deleteAllByUser(String user);
 }

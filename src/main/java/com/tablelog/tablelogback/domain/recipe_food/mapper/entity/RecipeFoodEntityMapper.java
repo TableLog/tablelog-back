@@ -9,8 +9,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
-import java.util.List;
-
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface RecipeFoodEntityMapper {
     @Mapping(source = "recipe", target = "recipe")
@@ -21,5 +19,4 @@ public interface RecipeFoodEntityMapper {
     @Mapping(source = "food.foodName", target = "foodName")
     @Mapping(source = "food.cal", target = "cal")
     RecipeFoodReadAllServiceResponseDto toRecipeFoodReadResponseDto(RecipeFood recipeFood, Food food);
-    List<RecipeFoodReadAllServiceResponseDto> toRecipeFoodReadAllResponseDto(List<RecipeFood> recipeFoods);
 }

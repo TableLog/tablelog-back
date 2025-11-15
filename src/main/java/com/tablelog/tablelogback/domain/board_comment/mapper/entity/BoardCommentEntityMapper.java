@@ -1,8 +1,5 @@
 package com.tablelog.tablelogback.domain.board_comment.mapper.entity;
 
-
-
-import com.tablelog.tablelogback.domain.board.dto.service.BoardReadResponseDto;
 import com.tablelog.tablelogback.domain.board.entity.Board;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
@@ -13,8 +10,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 import java.util.List;
-
-
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface BoardCommentEntityMapper {
@@ -34,5 +29,5 @@ public interface BoardCommentEntityMapper {
     @Mapping(source = "boardComment.commentId",target = "commentId")
     @Mapping(source = "comment_count",target = "comment_count")
     BoardCommentReadResponseDto toBoardCommentReadResponseDto(BoardComment boardComment,User user,String comment_count);
-    List<BoardCommentReadResponseDto> toBoardCommentReadResponseDtos(List<BoardComment> boardComment);
+//    List<BoardCommentReadResponseDto> toBoardCommentReadResponseDtos(List<BoardComment> boardComment);
 }

@@ -11,11 +11,11 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @Query("""
-    SELECT i FROM Inquiry i
-    WHERE i.userId = :userId
-    AND (:applyStatus IS NULL OR i.applyStatus = :applyStatus)
-    AND (:inquiryType IS NULL OR i.inquiryType = :inquiryType)
-""")
+        SELECT i FROM Inquiry i
+        WHERE i.userId = :userId
+        AND (:applyStatus IS NULL OR i.applyStatus = :applyStatus)
+        AND (:inquiryType IS NULL OR i.inquiryType = :inquiryType)
+    """)
     Slice<Inquiry> findAllByUserWithOptionalFilters(
             @Param("userId") Long userId,
             @Param("applyStatus") ApplyStatus applyStatus,
@@ -24,10 +24,10 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     );
 
     @Query("""
-    SELECT i FROM Inquiry i
-    WHERE (:applyStatus IS NULL OR i.applyStatus = :applyStatus)
-    AND (:inquiryType IS NULL OR i.inquiryType = :inquiryType)
-""")
+        SELECT i FROM Inquiry i
+        WHERE (:applyStatus IS NULL OR i.applyStatus = :applyStatus)
+        AND (:inquiryType IS NULL OR i.inquiryType = :inquiryType)
+    """)
     Slice<Inquiry> findAllByAdminWithOptionalFilters(
             @Param("applyStatus") ApplyStatus applyStatus,
             @Param("inquiryType") InquiryType inquiryType,

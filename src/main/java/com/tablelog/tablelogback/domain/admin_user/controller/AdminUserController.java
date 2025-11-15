@@ -72,6 +72,4 @@ public class AdminUserController {
         adminUserService.rejectExpertVerification(id, serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-
-    // TODO 중복 사용자 확인
 }

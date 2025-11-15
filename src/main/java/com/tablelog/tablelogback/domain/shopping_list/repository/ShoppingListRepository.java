@@ -11,5 +11,4 @@ public interface ShoppingListRepository extends JpaRepository<ShoppingList, Long
     List<ShoppingList> findAllByUserIdAndFoodIdIn(Long userId, List<Long> foodIds);
     Slice<ShoppingList> findAllByUserId(Long id, Pageable pageable);
     Long countAllByUserId(Long userId);
-    void deleteAllByUserId(Long userId);
 }

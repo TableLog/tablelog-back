@@ -22,8 +22,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -79,40 +77,6 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
         } else {
             slice = recipeLikeRepository.findAllByUserLatestAndIsPaidTrue(userDetails.user().getId(), pageRequest);
         }
-//        List<Long> recipeIds = slice.getContent().stream()
-//                .map(Recipe::getId)
-//                .collect(Collectors.toList());
-//
-//        List<Long> userIds = slice.getContent().stream()
-//                .map(Recipe::getUserId)
-//                .distinct()
-//                .toList();
-//
-//        Map<Long, String> userIdToNickname = userRepository.findNicknamesByUserIds(userIds).stream()
-//                .collect(Collectors.toMap(RecipeUserNicknameDto::userId, RecipeUserNicknameDto::nickname));
-//
-//        Map<Long, Long> likeCountMap = recipeLikeRepository.countLikesByRecipeIds(recipeIds).stream()
-//                .collect(Collectors.toMap(RecipeLikeCountDto::recipeId, RecipeLikeCountDto::likeCount));
-//
-//        final Map<Long, Boolean> isSavedMap =
-//                recipeSaveRepository.findSavesByRecipeAndUser(recipeIds, userDetails.user().getId())
-//                .stream()
-//                .collect(Collectors.toMap(
-//                        RecipeIsSavedDto::recipeId,
-//                        RecipeIsSavedDto::isSaved
-//                ));
-//
-//        Long userId = userDetails.user().getId();
-//
-//        List<RecipeReadAllServiceResponseDto> recipes = slice.getContent().stream()
-//                .map(recipe -> {
-//                    Long likeCount = likeCountMap.getOrDefault(recipe.getId(), 0L);
-//                    Boolean isSaved = isSavedMap.getOrDefault(recipe.getId(), false);
-//                    String nickname = userIdToNickname.getOrDefault(recipe.getUserId(), "Unknown");
-//                    Boolean isWriter = userId.equals(recipe.getUserId());
-//                    return recipeEntityMapper.toRecipeReadResponseDto(recipe, likeCount, isSaved, nickname, isWriter);
-//                })
-//                .collect(Collectors.toList());
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, userDetails);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }

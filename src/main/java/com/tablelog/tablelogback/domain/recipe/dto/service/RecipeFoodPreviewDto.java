@@ -9,6 +9,7 @@ public record RecipeFoodPreviewDto(
         Long foodId,
         String foodName,
         Integer cal,
-        Boolean isChecked
+        Boolean isChecked,
+        Long shoppingListId
 ) {
 }

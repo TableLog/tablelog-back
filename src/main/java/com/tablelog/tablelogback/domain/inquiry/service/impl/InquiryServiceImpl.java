@@ -11,9 +11,6 @@ import com.tablelog.tablelogback.domain.inquiry.exception.NotFoundInquiryExcepti
 import com.tablelog.tablelogback.domain.inquiry.mapper.entity.InquiryEntityMapper;
 import com.tablelog.tablelogback.domain.inquiry.repository.InquiryRepository;
 import com.tablelog.tablelogback.domain.inquiry.service.InquiryService;
-import com.tablelog.tablelogback.domain.report.entity.Report;
-import com.tablelog.tablelogback.domain.report.exception.NotFoundReportException;
-import com.tablelog.tablelogback.domain.report.exception.ReportErrorCode;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.ApplyStatus;
 import com.tablelog.tablelogback.global.enums.InquiryType;
