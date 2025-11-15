@@ -22,13 +22,36 @@ public interface ChatEntityMapper {
     // 최근 메시지 프로젝션 → DTO 매핑
     ChatRoomLastMessageResponseDto toChatRoomLastMessageResponseDto(ChatRepository.LastMessageProjection projection);
 
-    // unreadCount를 함께 세팅해야 하는 경우를 위한 default 헬퍼
-    default ChatRoomLastMessageResponseDto toChatRoomLastMessageResponseDto(ChatRepository.LastMessageProjection projection, long unreadCount) {
+    // unreadCount와 수신자 정보를 함께 세팅하는 default 헬퍼
+    default ChatRoomLastMessageResponseDto toChatRoomLastMessageResponseDto(
+            ChatRepository.LastMessageProjection projection,
+            long unreadCount,
+            String nickname,
+            String profileImgUrl) {
         return new ChatRoomLastMessageResponseDto(
                 projection.getRoomId(),
                 projection.getLastMessage(),
                 projection.getLastCreatedAt(),
-                unreadCount
+                unreadCount,
+                nickname,
+                profileImgUrl
+        );
+    }
+
+    // 수신자 정보를 포함한 ChatMessageServiceResponseDto 매핑
+    default ChatMessageServiceResponseDto toChatMessageServiceResponseDto(
+            Chat chat,
+            String nickname,
+            String profileImgUrl) {
+        return new ChatMessageServiceResponseDto(
+                chat.getId(),
+                chat.getRoomId(),
+                chat.getSender(),
+                chat.getMessage(),
+                chat.getMessageType(),
+                chat.getCreatedAt(),
+                nickname,
+                profileImgUrl
         );
     }
 }

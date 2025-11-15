@@ -57,6 +57,7 @@ public class ChatServiceImpl implements ChatService {
             chat.setSenderEmail(senderEmail);
             // roomId에서 상대 userId 결정 (userIdA--userIdB 규칙)
             String roomId = chatMessageServiceRequestDto.roomId();
+            User receiverUser = null;
             String[] parts = roomId != null ? roomId.split("--", 2) : new String[0];
             if (parts.length == 2) {
                 try {
@@ -71,7 +72,7 @@ public class ChatServiceImpl implements ChatService {
                     Long receiverUserId = senderUserId.equals(part0) ? part1 : part0;
                     
                     // 상대방 User 조회하여 receiverEmail 설정
-                    User receiverUser = userRepository.findById(receiverUserId)
+                    receiverUser = userRepository.findById(receiverUserId)
                         .orElseThrow(() -> new RuntimeException("수신자 사용자를 찾을 수 없습니다: " + receiverUserId));
                     chat.setReceiverEmail(receiverUser.getEmail());
                 } catch (NumberFormatException e) {
@@ -97,8 +98,12 @@ public class ChatServiceImpl implements ChatService {
             LOGGER.info("💾 채팅 메시지 저장: {} (룸: {}, ID: {})",
                 savedChat.getMessage(), savedChat.getRoomId(), savedChat.getId());
 
-            // Entity -> DTO 변환하여 반환
-            return chatEntityMapper.toChatMessageServiceResponseDto(savedChat);
+            // Entity -> DTO 변환하여 반환 (수신자 정보 포함)
+            return chatEntityMapper.toChatMessageServiceResponseDto(
+                savedChat,
+                receiverUser != null ? receiverUser.getNickname() : null,
+                receiverUser != null ? receiverUser.getProfileImgUrl() : null
+            );
 
         } catch (Exception e) {
             LOGGER.error("❌ 채팅 메시지 저장 실패: ", e);
@@ -111,11 +116,32 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageServiceResponseDto> getChatMessages(String roomId) {
         try {
-            List<Chat> chatList = chatRepository.findByRoomIdOrderByCreatedAtDesc(roomId);
+            String reverseRoomId = getReverseRoomId(roomId);
+            List<Chat> chatList = chatRepository.findByRoomIdOrderByCreatedAtDesc(roomId, reverseRoomId);
             LOGGER.info("📋 채팅방 {} 메시지 조회: {}개", roomId, chatList.size());
             
+            // 상대방 정보 조회 (첫 번째 메시지에서 senderEmail을 통해)
+            final User receiver;
+            if (!chatList.isEmpty()) {
+                String senderEmail = chatList.get(0).getSenderEmail();
+                User senderUser = userRepository.findByEmail(senderEmail).orElse(null);
+                if (senderUser != null) {
+                    receiver = getReceiverFromRoomId(roomId, senderUser.getId());
+                } else {
+                    receiver = null;
+                }
+            } else {
+                receiver = null;
+            }
+            
             // Entity -> DTO 변환하여 반환
-            return chatEntityMapper.toChatMessageServiceResponseDtos(chatList);
+            return chatList.stream()
+                .map(chat -> chatEntityMapper.toChatMessageServiceResponseDto(
+                    chat,
+                    receiver != null ? receiver.getNickname() : null,
+                    receiver != null ? receiver.getProfileImgUrl() : null
+                ))
+                .collect(Collectors.toList());
 
         } catch (Exception e) {
             LOGGER.error("❌ 채팅 메시지 조회 실패: ", e);
@@ -128,11 +154,32 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public List<ChatMessageServiceResponseDto> getChatMessagesAsc(String roomId) {
         try {
-            List<Chat> chatList = chatRepository.findByRoomIdOrderByCreatedAtAsc(roomId);
+            String reverseRoomId = getReverseRoomId(roomId);
+            List<Chat> chatList = chatRepository.findByRoomIdOrderByCreatedAtAsc(roomId, reverseRoomId);
             LOGGER.info("📋 채팅방 {} 메시지 조회 (오래된순): {}개", roomId, chatList.size());
             
+            // 상대방 정보 조회 (첫 번째 메시지에서 senderEmail을 통해)
+            final User receiver;
+            if (!chatList.isEmpty()) {
+                String senderEmail = chatList.get(0).getSenderEmail();
+                User senderUser = userRepository.findByEmail(senderEmail).orElse(null);
+                if (senderUser != null) {
+                    receiver = getReceiverFromRoomId(roomId, senderUser.getId());
+                } else {
+                    receiver = null;
+                }
+            } else {
+                receiver = null;
+            }
+            
             // Entity -> DTO 변환하여 반환
-            return chatEntityMapper.toChatMessageServiceResponseDtos(chatList);
+            return chatList.stream()
+                .map(chat -> chatEntityMapper.toChatMessageServiceResponseDto(
+                    chat,
+                    receiver != null ? receiver.getNickname() : null,
+                    receiver != null ? receiver.getProfileImgUrl() : null
+                ))
+                .collect(Collectors.toList());
 
         } catch (Exception e) {
             LOGGER.error("❌ 채팅 메시지 조회 실패: ", e);
@@ -163,8 +210,22 @@ public class ChatServiceImpl implements ChatService {
             List<Chat> chatList = chatRepository.findBySenderOrderByCreatedAtDesc(sender);
             LOGGER.info("👤 발신자 {} 메시지 조회: {}개", sender, chatList.size());
             
-            // Entity -> DTO 변환하여 반환
-            return chatEntityMapper.toChatMessageServiceResponseDtos(chatList);
+            // sender로 User를 찾아서 receiver 조회
+            User senderUser = userRepository.findByNickname(sender).orElse(null);
+            
+            return chatList.stream()
+                .map(chat -> {
+                    User receiver = null;
+                    if (senderUser != null) {
+                        receiver = getReceiverFromRoomId(chat.getRoomId(), senderUser.getId());
+                    }
+                    return chatEntityMapper.toChatMessageServiceResponseDto(
+                        chat,
+                        receiver != null ? receiver.getNickname() : null,
+                        receiver != null ? receiver.getProfileImgUrl() : null
+                    );
+                })
+                .collect(Collectors.toList());
 
         } catch (Exception e) {
             LOGGER.error("❌ 발신자 채팅 메시지 조회 실패: ", e);
@@ -180,7 +241,27 @@ public class ChatServiceImpl implements ChatService {
             List<Chat> chatList = chatRepository.findAllByOrderByCreatedAtDesc();
             LOGGER.info("🗂️ 전체 채팅 메시지 조회: {}개", chatList.size());
 
-            return chatEntityMapper.toChatMessageServiceResponseDtos(chatList);
+            // 각 메시지의 roomId를 사용하여 수신자 정보 조회
+            return chatList.stream()
+                .map(chat -> {
+                    User receiver = null;
+                    // senderEmail로 sender User를 찾아서 receiver 조회
+                    try {
+                        User senderUser = userRepository.findByEmail(chat.getSenderEmail()).orElse(null);
+                        if (senderUser != null) {
+                            receiver = getReceiverFromRoomId(chat.getRoomId(), senderUser.getId());
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn("⚠️ 수신자 정보 조회 실패: roomId={}, senderEmail={}", 
+                            chat.getRoomId(), chat.getSenderEmail());
+                    }
+                    return chatEntityMapper.toChatMessageServiceResponseDto(
+                        chat,
+                        receiver != null ? receiver.getNickname() : null,
+                        receiver != null ? receiver.getProfileImgUrl() : null
+                    );
+                })
+                .collect(Collectors.toList());
 
         } catch (Exception e) {
             LOGGER.error("❌ 전체 채팅 메시지 조회 실패: ", e);
@@ -201,8 +282,20 @@ public class ChatServiceImpl implements ChatService {
 
         LOGGER.info("✅ 권한 확인 완료: 사용자 ID {}가 채팅방 {} 조회", userId, roomId);
 
-        // 권한 확인 후 조회
-        List<ChatMessageServiceResponseDto> result = getChatMessages(roomId);
+        // 상대방 정보 조회
+        User receiver = getReceiverFromRoomId(roomId, userId);
+        
+        // 권한 확인 후 조회 (정규화된 roomId와 역순 roomId 모두 검색)
+        String reverseRoomId = getReverseRoomId(roomId);
+        List<Chat> chatList = chatRepository.findByRoomIdOrderByCreatedAtDesc(roomId, reverseRoomId);
+        List<ChatMessageServiceResponseDto> result = chatList.stream()
+            .map(chat -> chatEntityMapper.toChatMessageServiceResponseDto(
+                chat,
+                receiver != null ? receiver.getNickname() : null,
+                receiver != null ? receiver.getProfileImgUrl() : null
+            ))
+            .collect(Collectors.toList());
+        
         // 조회 시 읽음 처리 (서비스 계층)
         markRoomRead(roomId, currentUser);
         return result;
@@ -221,8 +314,20 @@ public class ChatServiceImpl implements ChatService {
 
         LOGGER.info("✅ 권한 확인 완료: 사용자 ID {}가 채팅방 {} 조회 (오래된순)", userId, roomId);
 
-        // 권한 확인 후 조회
-        List<ChatMessageServiceResponseDto> result = getChatMessagesAsc(roomId);
+        // 상대방 정보 조회
+        User receiver = getReceiverFromRoomId(roomId, userId);
+        
+        // 권한 확인 후 조회 (정규화된 roomId와 역순 roomId 모두 검색)
+        String reverseRoomId = getReverseRoomId(roomId);
+        List<Chat> chatList = chatRepository.findByRoomIdOrderByCreatedAtAsc(roomId, reverseRoomId);
+        List<ChatMessageServiceResponseDto> result = chatList.stream()
+            .map(chat -> chatEntityMapper.toChatMessageServiceResponseDto(
+                chat,
+                receiver != null ? receiver.getNickname() : null,
+                receiver != null ? receiver.getProfileImgUrl() : null
+            ))
+            .collect(Collectors.toList());
+        
         // 조회 시 읽음 처리 (서비스 계층)
         markRoomRead(roomId, currentUser);
         return result;
@@ -252,6 +357,7 @@ public class ChatServiceImpl implements ChatService {
      * @param accessor STOMP 헤더 접근자
      * @return User 객체 또는 null
      */
+    @Override
     public User getCurrentUser(StompHeaderAccessor accessor) {
         try {
             LOGGER.info("🔍 Starting user authentication process...");
@@ -428,10 +534,16 @@ public class ChatServiceImpl implements ChatService {
         Long userId = currentUser.getId();
         List<ChatRepository.LastMessageProjection> rows = chatRepository.findLastMessagesForParticipant(userId);
         return rows.stream()
-            .map(r -> chatEntityMapper.toChatRoomLastMessageResponseDto(
-                r,
-                chatRepository.countByRoomIdAndReceiverEmailAndReadAtIsNull(r.getRoomId(), currentUser.getEmail())
-            ))
+            .map(r -> {
+                long unreadCount = chatRepository.countByRoomIdAndReceiverEmailAndReadAtIsNull(r.getRoomId(), currentUser.getEmail());
+                User receiver = getReceiverFromRoomId(r.getRoomId(), userId);
+                return chatEntityMapper.toChatRoomLastMessageResponseDto(
+                    r,
+                    unreadCount,
+                    receiver != null ? receiver.getNickname() : null,
+                    receiver != null ? receiver.getProfileImgUrl() : null
+                );
+            })
             .collect(Collectors.toList());
     }
 
@@ -479,5 +591,54 @@ public class ChatServiceImpl implements ChatService {
             throw new CustomException(ChatErrorCode.UNAUTHORIZED_CHAT);
         }
         return chatRepository.markRoomRead(roomId, currentUser.getEmail());
+    }
+
+    /**
+     * roomId와 현재 사용자 ID를 통해 상대방 User 정보 조회
+     * @param roomId 채팅방 ID (userIdA--userIdB 형식)
+     * @param currentUserId 현재 사용자 ID
+     * @return 상대방 User 객체 또는 null
+     */
+    private User getReceiverFromRoomId(String roomId, Long currentUserId) {
+        if (roomId == null || currentUserId == null) {
+            return null;
+        }
+        String[] parts = roomId.split("--", 2);
+        if (parts.length != 2) {
+            return null;
+        }
+        try {
+            Long part0 = Long.parseLong(parts[0]);
+            Long part1 = Long.parseLong(parts[1]);
+            Long receiverUserId = currentUserId.equals(part0) ? part1 : part0;
+            return userRepository.findById(receiverUserId).orElse(null);
+        } catch (NumberFormatException e) {
+            LOGGER.warn("⚠️ roomId 형식 오류: {}", roomId);
+            return null;
+        }
+    }
+
+    /**
+     * roomId의 역순을 반환 (10--6 -> 6--10)
+     * @param roomId 채팅방 ID (userIdA--userIdB 형식)
+     * @return 역순 roomId 또는 원본 roomId (파싱 실패 시)
+     */
+    private String getReverseRoomId(String roomId) {
+        if (roomId == null || roomId.isEmpty()) {
+            return roomId;
+        }
+        String[] parts = roomId.split("--", 2);
+        if (parts.length != 2) {
+            return roomId;
+        }
+        try {
+            Long part0 = Long.parseLong(parts[0].trim());
+            Long part1 = Long.parseLong(parts[1].trim());
+            // 역순 반환
+            return part1 + "--" + part0;
+        } catch (NumberFormatException e) {
+            LOGGER.warn("⚠️ roomId 파싱 실패: {}", roomId);
+            return roomId;
+        }
     }
 }
