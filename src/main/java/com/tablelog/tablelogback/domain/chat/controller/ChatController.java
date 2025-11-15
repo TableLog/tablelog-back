@@ -96,18 +96,22 @@ public class ChatController {
                 return;
             }
 
-            String roomId = message.get("roomId").toString();
-            LOGGER.info("📩 Received message in room {}: {}", roomId, message);
+            String rawRoomId = message.get("roomId").toString();
+            LOGGER.info("📩 Received message in room {}: {}", rawRoomId, message);
 
             // 사용자 정보 가져오기 (인증 필수)
             User currentUser = chatService.getCurrentUser(accessor);
             if (currentUser == null) {
-                LOGGER.warn("⚠️ 인증되지 않은 사용자의 채팅 메시지 전송 시도: roomId={}", roomId);
+                LOGGER.warn("⚠️ 인증되지 않은 사용자의 채팅 메시지 전송 시도: roomId={}", rawRoomId);
                 return; // 인증되지 않은 사용자의 메시지는 거부
             }
 
             LOGGER.info("👤 Current user: {} (ID: {}, Email: {})", 
                 currentUser.getNickname(), currentUser.getId(), currentUser.getEmail());
+
+            // roomId 정규화: 10--6과 6--10을 같은 채팅방으로 처리
+            String roomId = normalizeRoomId(rawRoomId, currentUser.getId());
+            LOGGER.info("🔄 roomId 정규화: {} -> {}", rawRoomId, roomId);
 
             // 권한 검증: roomId가 사용자의 userId를 포함하는지 확인 (2인 룸 규칙)
             Long userId = currentUser.getId();
@@ -139,10 +143,39 @@ public class ChatController {
                 LOGGER.error("❌ 채팅 메시지 저장 실패: ", e);
             }
 
-            // 메시지를 구독자들에게 전송
+            // 메시지를 구독자들에게 전송 (정규화된 roomId 사용)
             messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
         } catch (Exception e) {
             LOGGER.error("❌ Error processing message: ", e);
+        }
+    }
+
+    /**
+     * roomId를 정규화하여 항상 동일한 형식으로 반환
+     * 예: "10--6" 또는 "6--10" -> "6--10"
+     * @param rawRoomId 원본 roomId
+     * @param currentUserId 현재 사용자 ID
+     * @return 정규화된 roomId
+     */
+    private String normalizeRoomId(String rawRoomId, Long currentUserId) {
+        if (rawRoomId == null || rawRoomId.isEmpty()) {
+            throw new IllegalArgumentException("roomId는 null이거나 비어있을 수 없습니다.");
+        }
+
+        String[] parts = rawRoomId.split("--", 2);
+        if (parts.length != 2) {
+            LOGGER.warn("⚠️ roomId 형식 오류: {}", rawRoomId);
+            return rawRoomId; // 형식이 맞지 않으면 원본 반환
+        }
+
+        try {
+            Long part0 = Long.parseLong(parts[0].trim());
+            Long part1 = Long.parseLong(parts[1].trim());
+            // buildPairRoomId를 사용하여 정규화
+            return chatService.buildPairRoomId(part0, part1);
+        } catch (NumberFormatException e) {
+            LOGGER.warn("⚠️ roomId 파싱 실패: {}", rawRoomId);
+            return rawRoomId; // 파싱 실패 시 원본 반환
         }
     }
 
@@ -158,19 +191,23 @@ public class ChatController {
     @Operation(summary = "특정 채팅방 메시지 조회", description = "채팅방 메시지를 정렬 옵션과 함께 조회합니다. order=asc|desc (기본 asc)")
     @GetMapping("/chats/rooms/{roomId}")
     public ResponseEntity<List<ChatMessageServiceResponseDto>> getRoomChats(
-        @Parameter(description = "채팅방 ID(emailA--emailB)") @PathVariable("roomId") String roomId,
+        @Parameter(description = "채팅방 ID(userIdA--userIdB)") @PathVariable("roomId") String roomId,
         @Parameter(description = "정렬(order=asc|desc), 기본 asc") @RequestParam(name = "order", defaultValue = "asc") String order,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         LOGGER.info("📋 채팅방 메시지 조회 요청: roomId={}, order={}, user={}", 
             roomId, order, userDetails != null ? userDetails.user().getEmail() : "null");
         
+        // roomId 정규화: 10--6과 6--10을 같은 채팅방으로 처리
+        String normalizedRoomId = normalizeRoomId(roomId, userDetails.user().getId());
+        LOGGER.info("🔄 roomId 정규화: {} -> {}", roomId, normalizedRoomId);
+        
         List<ChatMessageServiceResponseDto> chats =
             "asc".equalsIgnoreCase(order)
-                ? chatService.getChatMessagesAscWithAuth(roomId, userDetails.user())
-                : chatService.getChatMessagesWithAuth(roomId, userDetails.user());
+                ? chatService.getChatMessagesAscWithAuth(normalizedRoomId, userDetails.user())
+                : chatService.getChatMessagesWithAuth(normalizedRoomId, userDetails.user());
         
-        LOGGER.info("✅ 채팅방 {} 메시지 조회 완료: {}개", roomId, chats.size());
+        LOGGER.info("✅ 채팅방 {} 메시지 조회 완료: {}개", normalizedRoomId, chats.size());
         return ResponseEntity.ok(chats);
     }
 
@@ -190,10 +227,14 @@ public class ChatController {
     @Operation(summary = "방 미읽음 개수 조회", description = "현재 로그인 사용자가 수신자 기준으로 해당 방의 미읽음 메시지 개수를 반환합니다.")
     @GetMapping("/chats/rooms/{roomId}/unread/count")
     public ResponseEntity<Long> getUnreadCount(
-        @Parameter(description = "채팅방 ID(emailA--emailB)") @PathVariable("roomId") String roomId,
+        @Parameter(description = "채팅방 ID(userIdA--userIdB)") @PathVariable("roomId") String roomId,
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        long count = chatService.getUnreadCount(roomId, userDetails.user());
+        // roomId 정규화: 10--6과 6--10을 같은 채팅방으로 처리
+        String normalizedRoomId = normalizeRoomId(roomId, userDetails.user().getId());
+        LOGGER.info("🔄 roomId 정규화: {} -> {}", roomId, normalizedRoomId);
+        
+        long count = chatService.getUnreadCount(normalizedRoomId, userDetails.user());
         return ResponseEntity.ok(count);
     }
 

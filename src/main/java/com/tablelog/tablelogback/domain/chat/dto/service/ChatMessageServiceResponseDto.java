@@ -8,7 +8,9 @@ public record ChatMessageServiceResponseDto(
     String sender,
     String message,
     String messageType,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    String nickname,
+    String profileImgUrl
 ) {
 }
 

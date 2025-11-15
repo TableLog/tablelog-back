@@ -6,7 +6,9 @@ public record ChatRoomLastMessageResponseDto(
     String roomId,
     String lastMessage,
     LocalDateTime lastCreatedAt,
-    long unreadCount
+    long unreadCount,
+    String nickname,
+    String profileImgUrl
 ) {
 }
 

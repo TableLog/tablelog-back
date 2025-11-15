@@ -15,15 +15,17 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
     
     /**
      * 특정 채팅방의 메시지 목록 조회 (최신순)
+     * 정규화된 roomId와 역순 roomId 모두 검색 (10--6과 6--10 모두 처리)
      */
-    @Query("SELECT c FROM Chat c WHERE c.roomId = :roomId ORDER BY c.createdAt DESC")
-    List<Chat> findByRoomIdOrderByCreatedAtDesc(@Param("roomId") String roomId);
+    @Query("SELECT c FROM Chat c WHERE c.roomId = :roomId OR c.roomId = :reverseRoomId ORDER BY c.createdAt DESC")
+    List<Chat> findByRoomIdOrderByCreatedAtDesc(@Param("roomId") String roomId, @Param("reverseRoomId") String reverseRoomId);
     
     /**
      * 특정 채팅방의 메시지 목록 조회 (오래된순)
+     * 정규화된 roomId와 역순 roomId 모두 검색 (10--6과 6--10 모두 처리)
      */
-    @Query("SELECT c FROM Chat c WHERE c.roomId = :roomId ORDER BY c.createdAt ASC")
-    List<Chat> findByRoomIdOrderByCreatedAtAsc(@Param("roomId") String roomId);
+    @Query("SELECT c FROM Chat c WHERE c.roomId = :roomId OR c.roomId = :reverseRoomId ORDER BY c.createdAt ASC")
+    List<Chat> findByRoomIdOrderByCreatedAtAsc(@Param("roomId") String roomId, @Param("reverseRoomId") String reverseRoomId);
     
     /**
      * 특정 채팅방의 메시지 개수 조회
