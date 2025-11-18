@@ -76,24 +76,16 @@ jobs:
           username: TableLog
           password: ${{ steps.check_token.outputs.token_available == 'true' && secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          # 조직 계정(TableLog)으로 이미지 푸시
-          # github.repository_owner는 소문자로 변환될 수 있으므로 명시적으로 TableLog 사용
-          images: ghcr.io/TableLog/tablelog-back
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=develop-
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          # 명시적으로 TableLog 조직 계정으로 이미지 푸시
+          # docker/metadata-action 대신 직접 태그 지정
+          tags: |
+            ghcr.io/TableLog/tablelog-back:latest
+            ghcr.io/TableLog/tablelog-back:develop-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
