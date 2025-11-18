@@ -7,9 +7,10 @@ on:
   workflow_dispatch:
     inputs:
       github_username:
-        description: "GitHub 사용자명 (이미지 푸시용)"
-        required: true
+        description: "GitHub 사용자명 (이미지 푸시용, 비워두면 자동으로 워크플로우 실행자 사용)"
+        required: false
         type: string
+        default: ""
 
 # 실행할 작업 정의
 jobs:
@@ -45,22 +46,33 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set GitHub username
+        id: set_username
+        run: |
+          if [ -z "${{ inputs.github_username }}" ]; then
+            echo "username=${{ github.actor }}" >> $GITHUB_OUTPUT
+            echo "✅ 사용자명이 입력되지 않아 워크플로우 실행자(${{ github.actor }})를 사용합니다."
+          else
+            echo "username=${{ inputs.github_username }}" >> $GITHUB_OUTPUT
+            echo "✅ 입력된 사용자명(${{ inputs.github_username }})을 사용합니다."
+          fi
+
       - name: Debug - Check GitHub username
         run: |
-          echo "🔍 입력된 GitHub 사용자명: ${{ inputs.github_username }}"
+          echo "🔍 최종 사용자명: ${{ steps.set_username.outputs.username }}"
+          echo "🔍 입력된 사용자명: ${{ inputs.github_username }}"
           echo "🔍 현재 워크플로우 실행자: ${{ github.actor }}"
           echo "🔍 저장소 소유자: ${{ github.repository_owner }}"
           echo ""
-          echo "⚠️ 주의: 이미지가 푸시될 위치: ghcr.io/${{ inputs.github_username }}/tablelog-back"
-          echo "⚠️ 사용자명이 정확한지 확인하세요!"
+          echo "⚠️ 주의: 이미지가 푸시될 위치: ghcr.io/${{ steps.set_username.outputs.username }}/tablelog-back"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          # 입력받은 사용자명으로 로그인
+          # 워크플로우 실행자 또는 입력받은 사용자명으로 로그인
           # 기본 GITHUB_TOKEN 사용
-          username: ${{ inputs.github_username }}
+          username: ${{ steps.set_username.outputs.username }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
@@ -68,8 +80,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # 조직 저장소 권한 문제 해결: 개인 계정으로 이미지 푸시
-          # 워크플로우 실행 시 입력한 사용자명 사용
-          images: ghcr.io/${{ inputs.github_username }}/tablelog-back
+          # 워크플로우 실행자 또는 입력받은 사용자명 사용
+          images: ghcr.io/${{ steps.set_username.outputs.username }}/tablelog-back
           tags: |
             type=raw,value=latest
             type=sha,prefix=develop-
