@@ -5,12 +5,6 @@ name: Manual Build
 on:
   # 수동 실행 (GitHub Actions 탭에서 "Run workflow" 버튼으로 실행)
   workflow_dispatch:
-    inputs:
-      github_username:
-        description: "GitHub 사용자명 (이미지 푸시용, 비워두면 자동으로 워크플로우 실행자 사용)"
-        required: false
-        type: string
-        default: ""
 
 # 실행할 작업 정의
 jobs:
@@ -46,42 +40,40 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set GitHub username
-        id: set_username
+      - name: Debug - Check repository info
         run: |
-          if [ -z "${{ inputs.github_username }}" ]; then
-            echo "username=${{ github.actor }}" >> $GITHUB_OUTPUT
-            echo "✅ 사용자명이 입력되지 않아 워크플로우 실행자(${{ github.actor }})를 사용합니다."
-          else
-            echo "username=${{ inputs.github_username }}" >> $GITHUB_OUTPUT
-            echo "✅ 입력된 사용자명(${{ inputs.github_username }})을 사용합니다."
-          fi
-
-      - name: Debug - Check GitHub username
-        run: |
-          echo "🔍 최종 사용자명: ${{ steps.set_username.outputs.username }}"
-          echo "🔍 입력된 사용자명: ${{ inputs.github_username }}"
+          echo "🔍 저장소 소유자 (조직): ${{ github.repository_owner }}"
           echo "🔍 현재 워크플로우 실행자: ${{ github.actor }}"
-          echo "🔍 저장소 소유자: ${{ github.repository_owner }}"
+          echo "🔍 저장소 이름: ${{ github.repository }}"
           echo ""
-          echo "⚠️ 주의: 이미지가 푸시될 위치: ghcr.io/${{ steps.set_username.outputs.username }}/tablelog-back"
+          echo "✅ 이미지가 푸시될 위치: ghcr.io/${{ github.repository_owner }}/tablelog-back"
+
+      - name: Check token availability
+        id: check_token
+        run: |
+          if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+            echo "token_available=true" >> $GITHUB_OUTPUT
+            echo "✅ GHCR_TOKEN이 설정되어 있습니다."
+          else
+            echo "token_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ GHCR_TOKEN이 설정되지 않았습니다. GITHUB_TOKEN을 사용합니다."
+          fi
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          # 워크플로우 실행자 또는 입력받은 사용자명으로 로그인
-          # Personal Access Token이 있으면 사용, 없으면 GITHUB_TOKEN 사용
-          username: ${{ steps.set_username.outputs.username }}
-          password: ${{ secrets.GHCR_TOKEN != '' && secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+          # 조직 계정(TableLog)으로 로그인
+          # GHCR_TOKEN이 있으면 우선 사용, 없으면 GITHUB_TOKEN 사용
+          username: ${{ github.repository_owner }}
+          password: ${{ steps.check_token.outputs.token_available == 'true' && secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # 조직 저장소 권한 문제 해결: 개인 계정으로 이미지 푸시
-          # 워크플로우 실행자 또는 입력받은 사용자명 사용
-          images: ghcr.io/${{ steps.set_username.outputs.username }}/tablelog-back
+          # 조직 계정(TableLog)으로 이미지 푸시
+          images: ghcr.io/${{ github.repository_owner }}/tablelog-back
           tags: |
             type=raw,value=latest
             type=sha,prefix=develop-
