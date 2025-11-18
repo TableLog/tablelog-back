@@ -5,6 +5,11 @@ name: Manual Build
 on:
   # 수동 실행 (GitHub Actions 탭에서 "Run workflow" 버튼으로 실행)
   workflow_dispatch:
+    inputs:
+      github_username:
+        description: "GitHub 사용자명 (이미지 푸시용)"
+        required: true
+        type: string
 
 # 실행할 작업 정의
 jobs:
@@ -44,16 +49,18 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # 입력받은 사용자명으로 로그인
+          # Secrets에 저장된 tablelog 토큰 사용
+          username: ${{ inputs.github_username }}
+          password: ${{ secrets.tablelog }}
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           # 조직 저장소 권한 문제 해결: 개인 계정으로 이미지 푸시
-          # ghcr.io/{사용자명}/tablelog-back 형식 사용
-          images: ghcr.io/${{ github.actor }}/tablelog-back
+          # 워크플로우 실행 시 입력한 사용자명 사용
+          images: ghcr.io/${{ inputs.github_username }}/tablelog-back
           tags: |
             type=raw,value=latest
             type=sha,prefix=develop-
