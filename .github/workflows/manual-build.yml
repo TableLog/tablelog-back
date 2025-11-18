@@ -51,11 +51,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          # 조직 저장소 권한 문제 해결: 개인 계정으로 이미지 푸시
+          # ghcr.io/{사용자명}/tablelog-back 형식 사용
+          images: ghcr.io/${{ github.actor }}/tablelog-back
           tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
+            type=sha,prefix=develop-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
