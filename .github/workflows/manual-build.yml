@@ -46,7 +46,9 @@ jobs:
           echo "🔍 현재 워크플로우 실행자: ${{ github.actor }}"
           echo "🔍 저장소 이름: ${{ github.repository }}"
           echo ""
-          echo "✅ 이미지가 푸시될 위치: ghcr.io/${{ github.repository_owner }}/tablelog-back"
+          echo "⚠️ 주의: github.repository_owner는 소문자로 변환될 수 있습니다."
+          echo "✅ 명시적으로 TableLog를 사용합니다."
+          echo "✅ 이미지가 푸시될 위치: ghcr.io/TableLog/tablelog-back"
 
       - name: Check token availability
         id: check_token
@@ -54,9 +56,15 @@ jobs:
           if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
             echo "token_available=true" >> $GITHUB_OUTPUT
             echo "✅ GHCR_TOKEN이 설정되어 있습니다."
+            echo "✅ GHCR_TOKEN을 사용하여 로그인합니다."
           else
             echo "token_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️ GHCR_TOKEN이 설정되지 않았습니다. GITHUB_TOKEN을 사용합니다."
+            echo "⚠️ GHCR_TOKEN이 설정되지 않았습니다."
+            echo "⚠️ GITHUB_TOKEN을 사용합니다. (조직 저장소에서는 권한이 부족할 수 있습니다)"
+            echo ""
+            echo "💡 해결 방법:"
+            echo "   1. Personal Access Token 생성 (권한: write:packages, read:packages)"
+            echo "   2. 저장소 Settings → Secrets → Actions에 'GHCR_TOKEN'으로 추가"
           fi
 
       - name: Log in to GitHub Container Registry
@@ -64,8 +72,8 @@ jobs:
         with:
           registry: ghcr.io
           # 조직 계정(TableLog)으로 로그인
-          # GHCR_TOKEN이 있으면 우선 사용, 없으면 GITHUB_TOKEN 사용
-          username: ${{ github.repository_owner }}
+          # github.repository_owner는 소문자로 변환될 수 있으므로 명시적으로 TableLog 사용
+          username: TableLog
           password: ${{ steps.check_token.outputs.token_available == 'true' && secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
@@ -73,7 +81,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # 조직 계정(TableLog)으로 이미지 푸시
-          images: ghcr.io/${{ github.repository_owner }}/tablelog-back
+          # github.repository_owner는 소문자로 변환될 수 있으므로 명시적으로 TableLog 사용
+          images: ghcr.io/TableLog/tablelog-back
           tags: |
             type=raw,value=latest
             type=sha,prefix=develop-
