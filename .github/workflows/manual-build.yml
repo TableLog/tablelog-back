@@ -45,6 +45,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Debug - Check GitHub username
+        run: |
+          echo "🔍 입력된 GitHub 사용자명: ${{ inputs.github_username }}"
+          echo "🔍 현재 워크플로우 실행자: ${{ github.actor }}"
+          echo "🔍 저장소 소유자: ${{ github.repository_owner }}"
+          echo ""
+          echo "⚠️ 주의: 이미지가 푸시될 위치: ghcr.io/${{ inputs.github_username }}/tablelog-back"
+          echo "⚠️ 사용자명이 정확한지 확인하세요!"
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
