@@ -71,9 +71,9 @@ jobs:
         with:
           registry: ghcr.io
           # 워크플로우 실행자 또는 입력받은 사용자명으로 로그인
-          # 기본 GITHUB_TOKEN 사용
+          # Personal Access Token이 있으면 사용, 없으면 GITHUB_TOKEN 사용
           username: ${{ steps.set_username.outputs.username }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_TOKEN != '' && secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
