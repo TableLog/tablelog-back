@@ -31,7 +31,7 @@ jobs:
         run: chmod +x gradlew
 
       # 4단계: Gradle 빌드 실행 (테스트 제외)
-      # assemble: 테스트 없이 컴파일 및 JAR 파일 생성
+      # -x test: 테스트 태스크를 제외하고 빌드 실행
       # --no-daemon: 백그라운드 데몬 프로세스 없이 실행 (CI 환경에 적합)
       - name: Run Gradle build (skip tests)
-        run: ./gradlew assemble --no-daemon
+        run: ./gradlew build -x test --no-daemon
