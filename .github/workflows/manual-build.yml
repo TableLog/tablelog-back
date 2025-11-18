@@ -50,9 +50,9 @@ jobs:
         with:
           registry: ghcr.io
           # 입력받은 사용자명으로 로그인
-          # Secrets에 저장된 tablelog 토큰 사용
+          # 기본 GITHUB_TOKEN 사용
           username: ${{ inputs.github_username }}
-          password: ${{ secrets.tablelog }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
