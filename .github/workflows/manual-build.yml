@@ -49,6 +49,7 @@ jobs:
           echo "⚠️ 주의: Docker 이미지 태그는 소문자여야 합니다."
           echo "✅ GitHub Container Registry는 조직 이름을 소문자로 변환합니다."
           echo "✅ 이미지가 푸시될 위치: ghcr.io/tablelog/tablelog-back"
+          
 
       - name: Check token availability
         id: check_token
