@@ -71,7 +71,7 @@ public class ShoppingListServiceImpl implements ShoppingListService {
     @Override
     public void updateShoppingList(ShoppingListUpdateServiceRequestDto requestDto, Long id, User user){
         ShoppingList shoppingList = findShoppingList(id);
-        Food food = foodRepository.findById(shoppingList.getFoodId())
+        foodRepository.findById(shoppingList.getFoodId())
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
         if(shoppingList.getUserId() != user.getId()){
             throw new ForbiddenAccessShoppingListException(ShoppingListErrorCode.FORBIDDEN_ACCESS_SHOPPING_LIST);
