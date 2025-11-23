@@ -66,30 +66,30 @@ public class FollowServiceImpl implements FollowService {
 
     @Override
     public Boolean isFollowing(Long followingId, User user) {
-        User following = findUser(followingId);
+        findUser(followingId);
         findFollow(user.getId(), followingId);
         return followRepository.existsByFollowerIdAndFollowingId(user.getId(), followingId);
     }
 
     @Transactional
-    public Long getFollowerCountByUser(Long userId) {
+    public Long readFollowerCountByUser(Long userId) {
         User user = findUser(userId);
-        Long c = followRepository.countFollowerIdByFollowingId(userId);
-        user.updateFollowerCount(c);
-        return c;
+        Long cnt = followRepository.countFollowerIdByFollowingId(userId);
+        user.updateFollowerCount(cnt);
+        return cnt;
     }
 
     @Transactional
-    public Long getFollowingCountByUser(Long userId) {
+    public Long readFollowingCountByUser(Long userId) {
         User user = findUser(userId);
-        Long c = followRepository.countFollowingIdByFollowerId(userId);
-        user.updateFollowingCount(c);
-        return c;
+        Long cnt = followRepository.countFollowingIdByFollowerId(userId);
+        user.updateFollowingCount(cnt);
+        return cnt;
     }
 
     @Override
-    public FollowUserListDto getFollowers(Long userId, int pageNumber, UserDetailsImpl userDetails) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public FollowUserListDto readFollowers(Long userId, int pageNum, UserDetailsImpl userDetails) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<User> slice = followRepository.findAllFollowersByFollowingId(userId, pageRequest);
         List<User> users = slice.getContent();
 
@@ -119,8 +119,8 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
-    public FollowUserListDto getFollowings(Long userId, int pageNumber, UserDetailsImpl userDetails) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public FollowUserListDto readFollowings(Long userId, int pageNum, UserDetailsImpl userDetails) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<User> slice = followRepository.findAllFollowingsByFollowerId(userId, pageRequest);
         List<User> users = slice.getContent();
         List<Long> targetIds = users.stream()

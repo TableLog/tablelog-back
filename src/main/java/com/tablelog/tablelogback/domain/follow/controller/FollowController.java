@@ -46,48 +46,43 @@ public class FollowController {
             @PathVariable Long userId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        return ResponseEntity.status(HttpStatus.OK).
-                body(followService.isFollowing(userId, userDetails.user()));
+        return ResponseEntity.status(HttpStatus.OK).body(followService.isFollowing(userId, userDetails.user()));
     }
 
     @Operation(summary = "팔로워 수 전체 조회 By 유저")
     @GetMapping("/users/{userId}/follower/count")
-    public ResponseEntity<Long> getFollowerCount(
+    public ResponseEntity<Long> readFollowerCount(
             @PathVariable Long userId
     ){
-        return ResponseEntity.status(HttpStatus.OK).
-                body(followService.getFollowerCountByUser(userId));
+        return ResponseEntity.status(HttpStatus.OK).body(followService.readFollowerCountByUser(userId));
     }
 
     @Operation(summary = "팔로잉 수 전체 조회 By 유저")
     @GetMapping("/users/{userId}/following/count")
-    public ResponseEntity<Long> getFollowingCount(
+    public ResponseEntity<Long> readFollowingCount(
             @PathVariable Long userId
     ){
-        return ResponseEntity.status(HttpStatus.OK).
-                body(followService.getFollowingCountByUser(userId));
+        return ResponseEntity.status(HttpStatus.OK).body(followService.readFollowingCountByUser(userId));
     }
 
     @Operation(summary = "팔로워 전체 조회")
     @GetMapping("/users/{userId}/follower")
-    public ResponseEntity<FollowUserListDto> getFollowers(
+    public ResponseEntity<FollowUserListDto> readFollowers(
             @PathVariable Long userId,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).
-                body(followService.getFollowers(userId, pageNumber, userDetails));
+        return ResponseEntity.status(HttpStatus.OK).body(followService.readFollowers(userId, pageNum, userDetails));
     }
 
     @Operation(summary = "팔로잉 전체 조회")
     @GetMapping("/users/{userId}/following")
-    public ResponseEntity<FollowUserListDto> getFollowings(
+    public ResponseEntity<FollowUserListDto> readFollowings(
             @PathVariable Long userId,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         UserDetailsImpl userDetails = getUserDetails();
-        return ResponseEntity.status(HttpStatus.OK).
-                body(followService.getFollowings(userId, pageNumber, userDetails));
+        return ResponseEntity.status(HttpStatus.OK).body(followService.readFollowings(userId, pageNum, userDetails));
     }
 
     private UserDetailsImpl getUserDetails(){
