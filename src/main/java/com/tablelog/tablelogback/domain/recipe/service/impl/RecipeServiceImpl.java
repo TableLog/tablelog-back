@@ -236,6 +236,7 @@ public class RecipeServiceImpl implements RecipeService {
                     boolean isChecked = existingFoodMap.containsKey(foodId);
                     Long shoppingListId = isChecked ? existingFoodMap.get(foodId) : 0L;
 
+                    // fixme: ??? 왜 dto?
                     return new RecipeFoodPreviewDto(
                             rf.getId(),
                             rf.getAmount(),
@@ -252,8 +253,8 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 10, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readAllRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid){
+        PageRequest pageRequest = PageRequest.of(pageNum, 10, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
             slice = recipeRepository.findAll(pageRequest);
@@ -261,15 +262,13 @@ public class RecipeServiceImpl implements RecipeService {
             slice = recipeRepository.findAllByIsPaidTrue(pageRequest);
         }
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
-//        List<RecipeReadAllServiceResponseDto> recipes =
-//                recipeEntityMapper.toRecipeReadAllResponseDto(slice.getContent());
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto readPopularRecipesLastWeek(int pageNumber, UserDetailsImpl user) {
+    public RecipeSliceResponseDto readPopularRecipesLastWeek(int pageNum, UserDetailsImpl user) {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findPopularRecipesLastWeek(oneWeekAgo, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         if(recipes.size() == 0){
@@ -280,8 +279,8 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readPopularRecipes(int pageNumber, UserDetailsImpl user, Boolean isPaid) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readPopularRecipes(int pageNum, UserDetailsImpl user, Boolean isPaid) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
             slice = recipeRepository.findPopularRecipes(pageRequest);
@@ -293,16 +292,16 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNumber, UserDetailsImpl user) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 9, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readAllRecipeByUser(Long id, int pageNum, UserDetailsImpl user) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 9, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.findAllByUserId(id, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto getAllMyRecipesLatest(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readAllMyRecipesLatest(UserDetailsImpl userDetails, int pageNum, Boolean isPaid) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
             slice = recipeRepository.findAllByUserId(userDetails.user().getId(), pageRequest);
@@ -314,8 +313,8 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto getAllMyRecipesPopular(UserDetailsImpl userDetails, int pageNumber, Boolean isPaid) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readAllMyRecipesPopular(UserDetailsImpl userDetails, int pageNum, Boolean isPaid) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
             slice = recipeRepository.findPopularRecipesByUserId(userDetails.user().getId(), pageRequest);
@@ -327,24 +326,24 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNumber, UserDetailsImpl user){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readAllRecipeByFoodName(String keyword, int pageNum, UserDetailsImpl user){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByFoodName(keyword, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNumber, UserDetailsImpl user){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readAllRecipeByTitleOrNickname(String keyword, int pageNum, UserDetailsImpl user){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
 
     @Override
-    public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNumber, UserDetailsImpl user){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum, UserDetailsImpl user){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
@@ -445,13 +444,9 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeSliceByAdminResponseDto searchRecipeByAdmin(String keyword, int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceByAdminResponseDto searchRecipeByAdmin(String keyword, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice = recipeRepository.searchRecipesByTitleOrNickname(keyword, pageRequest);
-
-        List<Long> recipeIds = slice.getContent().stream()
-                .map(Recipe::getId)
-                .collect(Collectors.toList());
 
         // 작성자 id
         List<Long> userIds = slice.getContent().stream()
