@@ -7,7 +7,7 @@ import com.tablelog.tablelogback.global.enums.ApplyStatus;
 public interface AdminUserService {
     void processWithdrawals();
 //    void approveDeleteUser(Long id) throws JacksonException;
-    AdminUserSliceReadResponseDto getAllAdminUser(ApplyStatus status, int pageNum);
+    AdminUserSliceReadResponseDto readAllAdminUser(ApplyStatus status, int pageNum);
     void reviewExpertVerification(Long id);
     void rejectExpertVerification(Long id, AdminUserRejectReasonServiceRequestDto serviceRequestDto);
 }

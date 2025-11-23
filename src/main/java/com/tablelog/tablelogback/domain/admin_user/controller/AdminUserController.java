@@ -25,6 +25,7 @@ public class AdminUserController {
     private final AdminUserServiceImpl adminUserService;
     private final AdminUserDtoMapper adminUserDtoMapper;
 
+//    TODO: 2차
 //    @Operation(summary = "회원탈퇴 승인")
 //    @DeleteMapping("/admin/withdraw/{id}")
 //    @PreAuthorize("hasRole('ADMIN')")
@@ -39,13 +40,13 @@ public class AdminUserController {
     @Operation(summary = "유저 요청 전체 조회")
     @GetMapping("/admin/request")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AdminUserSliceReadResponseDto> getAllAdminUser(
+    public ResponseEntity<AdminUserSliceReadResponseDto> readAllAdminUser(
             @RequestParam(required = false) ApplyStatus status,
             @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws JacksonException {
         return ResponseEntity.status(HttpStatus.OK).body(
-                adminUserService.getAllAdminUser(status, pageNum));
+                adminUserService.readAllAdminUser(status, pageNum));
     }
 
     @Operation(summary = "전문가 인증 처리", description = "승인과 비슷, 조건 안 맞으면 자동 거절됨")
