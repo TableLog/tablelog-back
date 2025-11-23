@@ -24,13 +24,13 @@ public class PointTransactionController {
 
     @Operation(summary = "내 포인트 전체 조회")
     @GetMapping("/users/me/point")
-    public ResponseEntity<?> getAllPointTransactionByUser(
+    public ResponseEntity<?> readAllPointTransactionByUser(
             @RequestParam(required = false) PointType pointType,
-            @RequestParam int pageNumber,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         PointTransactionSliceResponseDto responseDto = pointTransactionService
-                .getAllPointTransactionByUser(pointType, userDetails.user(), pageNumber);
+                .readAllPointTransactionByUser(pointType, userDetails.user(), pageNum);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }
