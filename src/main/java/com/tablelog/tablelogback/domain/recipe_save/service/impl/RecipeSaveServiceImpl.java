@@ -50,7 +50,7 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
 
     @Override
     public void deleteRecipeSave(Long recipeId, Long userId) {
-        Recipe recipe = findRecipe(recipeId);
+        findRecipe(recipeId);
         RecipeSave recipeSave = recipeSaveRepository.findByRecipeAndUser(recipeId, userId)
                 .orElseThrow(()->new NotFoundRecipeSaveException(RecipeSaveErrorCode.NOT_FOUND_RECIPE_SAVE));
         recipeSaveRepository.delete(recipeSave);
@@ -58,13 +58,13 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
 
     @Override
     public Boolean hasRecipeSaved(Long recipeId, Long userId){
-        Recipe recipe = findRecipe(recipeId);
+        findRecipe(recipeId);
         return recipeSaveRepository.existsByRecipeAndUser(recipeId, userId);
     }
 
     @Override
-    public RecipeSliceResponseDto getMySavedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readMySavedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNum) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if (isPaid == null || !isPaid) {
             slice = recipeSaveRepository.findAllByUser(userDetails.user().getId(), pageRequest);
@@ -76,8 +76,8 @@ public class RecipeSaveServiceImpl implements RecipeSaveService {
     }
 
     @Override
-    public RecipeSliceResponseDto getMySavedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readMySavedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if (isPaid == null || !isPaid) {
             slice = recipeSaveRepository.findAllByUserPopular(userDetails.user().getId(), pageRequest);
