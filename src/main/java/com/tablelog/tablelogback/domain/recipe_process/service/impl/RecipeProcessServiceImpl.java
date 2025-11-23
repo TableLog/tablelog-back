@@ -87,10 +87,10 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     }
 
     @Override
-    public RecipeProcessReadAllSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page) {
+    public RecipeProcessReadAllSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int pageNum) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
-        PageRequest pageRequest = PageRequest.of(page, 5);
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
         int totalCount = recipeProcessRepository.countByRecipeId(recipeId);
         Slice<RecipeProcess> slice = recipeProcessRepository.findAllByRecipeId(recipe.getId(), pageRequest);
         List<RecipeProcessReadAllServiceResponseDto> rpDtos =
@@ -98,7 +98,7 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         List<RecipeProcessSliceResponseDto> recipeProcesses =
                 IntStream.range(0, rpDtos.size())
                         .mapToObj(i -> {
-                            int globalIndex = page * 5 + i;
+                            int globalIndex = pageNum * 5 + i;
                             boolean hasPrev = globalIndex > 0;
                             boolean hasNext = globalIndex < totalCount - 1;
                             return new RecipeProcessSliceResponseDto(rpDtos.get(i), hasPrev, hasNext);

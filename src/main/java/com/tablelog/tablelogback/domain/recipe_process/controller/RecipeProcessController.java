@@ -66,10 +66,10 @@ public class RecipeProcessController {
     @GetMapping("/recipes/{recipeId}/recipe-process")
     public ResponseEntity<RecipeProcessReadAllSliceResponseDto> readAllRecipeProcessByRecipeId(
             @PathVariable Long recipeId,
-            @RequestParam int page
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId, page));
+                .body(recipeProcessService.readAllRecipeProcessesByRecipeId(recipeId, pageNum));
     }
 
     @Operation(summary = "레시피 조리과정 수정")
