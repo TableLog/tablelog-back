@@ -14,8 +14,8 @@ public interface UserService {
     void checkDuplicate(UserSignUpServiceRequestDto serviceRequestDto);
     User signUp(UserSignUpServiceRequestDto userSignUpServiceRequestDto, MultipartFile multipartFile) throws IOException;
     UserLoginDto login(UserLoginServiceRequestDto userLoginServiceRequestDto);
-    UserLoginResponseDto getUser(String token);
-    UserProfileDto getUserProfile(Long userId, UserDetailsImpl userDetails);
+    UserLoginResponseDto readUser(String token);
+    UserProfileDto readUserProfile(Long userId, UserDetailsImpl userDetails);
     FollowUserListDto findUsers(String keyword, int pageNum, UserDetailsImpl userDetails);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile, HttpServletResponse httpServletResponse)throws IOException;

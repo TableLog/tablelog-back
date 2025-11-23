@@ -13,7 +13,6 @@ import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.mapper.dto.UserDtoMapper;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
-import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -40,7 +39,6 @@ import java.io.IOException;
 public class UserController {
     private final UserService userService;
     private final UserDtoMapper userDtoMapper;
-    private final KakaoService kakaoService;
     private final GoogleService googleService;
     private final UserRepository userRepository;
 
@@ -55,8 +53,6 @@ public class UserController {
                 .toUserSignUpServiceRequestDto(controllerRequestDto);;
         if(controllerRequestDto.provider() == UserProvider.local){
             userService.signUp(serviceRequestDto, multipartFile);
-        } else if(controllerRequestDto.provider() == UserProvider.kakao){
-            kakaoService.signupWithKakao(serviceRequestDto, multipartFile, socialAccessToken);
         } else if(controllerRequestDto.provider() == UserProvider.google){
             googleService.signupWithGoogle(serviceRequestDto, multipartFile, socialAccessToken);
         }
@@ -68,24 +64,23 @@ public class UserController {
     public ResponseEntity<?> login(
             @RequestBody UserLoginControllerRequestDto controllerRequestDto
     ) {
-        UserLoginServiceRequestDto serviceRequestDto = userDtoMapper
-                .toUserLoginServiceRequestDto(controllerRequestDto);
+        UserLoginServiceRequestDto serviceRequestDto = userDtoMapper.toUserLoginServiceRequestDto(controllerRequestDto);
         UserLoginDto userLoginDto = userService.login(serviceRequestDto);
         return ResponseEntity.status(HttpStatus.OK).body(userLoginDto);
     }
 
     @Operation(summary = "사용자 정보", description = "스웨거에서는 공백 한 칸, Authorize에 따로 저장 X")
     @GetMapping("/users")
-    public ResponseEntity<UserLoginResponseDto> getUser(
+    public ResponseEntity<UserLoginResponseDto> readUser(
             @CookieValue("accessToken") String token
     ){
-        UserLoginResponseDto responseDto = userService.getUser(token);
+        UserLoginResponseDto responseDto = userService.readUser(token);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @Operation(summary = "사용자 프로필 정보")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserProfileDto> getUserProfile(
+    public ResponseEntity<UserProfileDto> readUserProfile(
             @PathVariable Long userId
     ){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -94,7 +89,7 @@ public class UserController {
                 && !"anonymousUser".equals(authentication.getPrincipal())){
             userDetails = (UserDetailsImpl) authentication.getPrincipal();
         }
-        UserProfileDto responseDto = userService.getUserProfile(userId, userDetails);
+        UserProfileDto responseDto = userService.readUserProfile(userId, userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
@@ -102,7 +97,7 @@ public class UserController {
     @GetMapping("/users/search")
     public ResponseEntity<FollowUserListDto> findUsers(
             @RequestParam String keyword,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = null;
@@ -111,7 +106,7 @@ public class UserController {
             userDetails = (UserDetailsImpl) authentication.getPrincipal();
         }
         return ResponseEntity.status(HttpStatus.OK).
-                body(userService.findUsers(keyword, pageNumber, userDetails));
+                body(userService.findUsers(keyword, pageNum, userDetails));
     }
 
     @Operation(summary = "사용자 정보 수정", description = "바꾸는 것만 작성, 안 바꾸면 빈 칸")
@@ -159,12 +154,10 @@ public class UserController {
                 userService.refreshAccessToken(refreshToken, socialRefreshToken, httpServletResponse);
         User user = userRepository.findByEmail(responseDto.email())
                 .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        if(responseDto.provider() == UserProvider.kakao){
-            kakaoService.refresh(socialRefreshToken, user);
-        } else if(responseDto.provider() == UserProvider.google){
+        if(responseDto.provider() == UserProvider.google){
             googleService.refresh(user);
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Operation(summary = "이메일 중복 확인")

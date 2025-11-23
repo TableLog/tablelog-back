@@ -152,6 +152,10 @@ public class User extends BaseEntity {
         this.followingCount = followingCount;
     }
 
+    public void updateBoardCount(Long boardCount){
+        this.boardCount = boardCount;
+    }
+
     public void addPointBalance(Integer point){
         this.pointBalance = this.pointBalance + point;
     }
