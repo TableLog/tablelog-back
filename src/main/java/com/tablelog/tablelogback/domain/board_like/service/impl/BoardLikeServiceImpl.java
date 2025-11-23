@@ -50,38 +50,39 @@ public class BoardLikeServiceImpl implements BoardLikeService {
 
     @Override
     public void deleteBoardLike(Long boardId, Long userId) {
-        Board board = findBoard(boardId);
+        findBoard(boardId);
         BoardLike boardLike = findBoardLike(boardId, userId);
         boardLikeRepository.delete(boardLike);
     }
 
     @Override
     public Boolean hasBoardLiked(Long boardId, Long userId) {
-        Board board = findBoard(boardId);
+        findBoard(boardId);
         return boardLikeRepository.existsByBoardAndUser(boardId, userId);
     }
 
     @Override
     public Long readBoardLikeCountByBoard(Long boardId) {
-        Board board = findBoard(boardId);
+        findBoard(boardId);
         return boardLikeRepository.countByBoard(boardId);
     }
 
     @Override
-    public BoardListResponseDto readMyLikedBoards(Long userId, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(PageRequest.of(pageNumber, 5));
+    public BoardListResponseDto readMyLikedBoards(Long userId, int pageNum) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
+        Slice<Board> boards = boardRepository.findAllByOrderByIdAsc(pageRequest);
         List<Board> boardList = boards.getContent();
 
         List<BoardReadResponseDto> responseDtos = new ArrayList<>();
         for (Board board : boardList) {
             User user = userRepository.findByNickname(board.getUser()
             ).orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-            Long like_count = boardLikeRepository.countByBoard(board.getId());
-            Integer comment_count = boardCommentRepository.countByBoardId(board.getId().toString());
+            Long likeCount = boardLikeRepository.countByBoard(board.getId());
+            Integer commentCount = boardCommentRepository.countByBoardId(board.getId().toString());
             boolean isLiked = hasBoardLiked(board.getId(), userId);
             boolean isMine = user.getId().equals(userId);
-            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user.getProfileImgUrl(), comment_count, like_count,isMine,isLiked,user.getId()));
+            responseDtos.add(boardEntityMapper.toReadResponseDto(board, user.getProfileImgUrl(), commentCount,
+                    likeCount,isMine,isLiked,user.getId()));
         }
         return new BoardListResponseDto(responseDtos, boards.hasNext());
     }
