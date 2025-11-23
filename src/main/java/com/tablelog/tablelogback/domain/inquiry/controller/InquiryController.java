@@ -62,7 +62,7 @@ public class InquiryController {
     public ResponseEntity<?> readAllInquiriesByUser(
             @RequestParam(required = false) ApplyStatus applyStatus,
             @RequestParam(required = false) InquiryType inquiryType,
-            @RequestParam int pageNum,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         InquirySliceReadResponseDto responseDto = inquiryService
@@ -76,7 +76,7 @@ public class InquiryController {
     public ResponseEntity<?> readAllInquiriesByAdmin(
             @RequestParam(required = false) ApplyStatus applyStatus,
             @RequestParam(required = false) InquiryType inquiryType,
-            @RequestParam int pageNum,
+            @RequestParam("page") int pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         InquirySliceReadResponseDto responseDto = inquiryService
