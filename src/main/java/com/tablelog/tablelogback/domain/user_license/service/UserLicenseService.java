@@ -13,14 +13,9 @@ import java.io.IOException;
 public interface UserLicenseService {
     void createUserLicense(UserLicenseCreateServiceRequestDto serviceRequestDto,
                            MultipartFile multipartFile, User user) throws IOException;
-
-    UserLicenseSliceResponseDto getAllUserLicenseByUser(int pageNum, User user);
-
-    UserLicenseSliceResponseDto getAllUserLicensesByUserAndLicenseType(LicenseType licenseType, int pageNum, User user);
-
-    UserLicenseCountResponseDto getCountByUser(User user);
-
-    UserLicenseSliceResponseDto getAllUserLicenseByUserId(Long userId, int pageNumber);
-
-    UserLicenseReadResponseDto getUserLicense(Long id);
+    UserLicenseSliceResponseDto readAllUserLicenseByUser(int pageNum, User user);
+    UserLicenseSliceResponseDto readAllUserLicensesByUserAndLicenseType(LicenseType licenseType, int pageNum, User user);
+    UserLicenseCountResponseDto readCountByUser(User user);
+    UserLicenseSliceResponseDto readAllUserLicenseByUserId(Long userId, int pageNum);
+    UserLicenseReadResponseDto readUserLicense(Long id);
 }
