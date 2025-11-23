@@ -29,11 +29,11 @@ public class RecipePaymentController {
 
     @Operation(summary = "내 레시피 구매 내역 전체 조회")
     @GetMapping("/users/me/recipes-payments")
-    public ResponseEntity<?> getPaymentsRecipeWithPoints(
+    public ResponseEntity<?> readPaymentsRecipeWithPoints(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipePaymentService.getAllMyRecipePayments(userDetails.user(), pageNumber));
+                .body(recipePaymentService.readAllMyRecipePayments(userDetails.user(), pageNum));
     }
 }

@@ -5,5 +5,5 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 
 public interface RecipePaymentService {
     void createRecipePayment(Long recipeId, User user);
-    RecipePaymentSliceResponseDto getAllMyRecipePayments(User user, int pageNum);
+    RecipePaymentSliceResponseDto readAllMyRecipePayments(User user, int pageNum);
 }
