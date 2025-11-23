@@ -52,12 +52,12 @@ public class FoodController {
     @GetMapping("/foods")
     public ResponseEntity<FoodSliceResponseDto> readAllFoods(
             @RequestParam(required = false) String search,
-            @RequestParam(name = "page", required = false) Integer page
+            @RequestParam(name = "page", required = false) int pageNum
     ){
         if(search != null && !search.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.OK).body(foodService.searchFoods(search, page));
+            return ResponseEntity.status(HttpStatus.OK).body(foodService.searchFoods(search, pageNum));
         } else {
-            return ResponseEntity.status(HttpStatus.OK).body(foodService.readAllFoods(page));
+            return ResponseEntity.status(HttpStatus.OK).body(foodService.readAllFoods(pageNum));
         }
     }
 
