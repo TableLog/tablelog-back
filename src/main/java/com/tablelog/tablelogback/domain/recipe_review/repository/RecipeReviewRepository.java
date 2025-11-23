@@ -14,6 +14,7 @@ public interface RecipeReviewRepository extends JpaRepository<RecipeReview, Long
     Slice<RecipeReview> findAllByUser(String user, Pageable pageable);
 
     Slice<RecipeReview> findAllByRecipeIdAndPrrId(Long recipeId, Long prrId, Pageable pageable);
+
     RecipeReview findAllByPrrId(Long prrId);
 
     List<RecipeReview> findAllByPrrIdIn(List<Long> recipeIds);

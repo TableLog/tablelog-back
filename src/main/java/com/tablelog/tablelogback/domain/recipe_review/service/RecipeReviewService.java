@@ -8,9 +8,9 @@ public interface RecipeReviewService {
     void createRecipeReview(RecipeReviewCreateServiceRequestDto serviceRequestDto, Long recipeId, User user);
     void createRecipeReply(RecipeReviewReplyCreateServiceRequestDto serviceRequestDto, Long recipeId, User user);
     RecipeReviewReadResponseDto readRecipeReview(Long recipeId, Long id, Boolean includeReplies, UserDetailsImpl userDetails);
-    RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNumber, UserDetailsImpl userDetails);
-    RecipeReviewSliceResponseByUserDto readAllRecipeReviewsByUser(Long userId, int pageNumber, UserDetailsImpl userDetails);
-    RecipeReviewSliceResponseByUserDto getAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNumber);
+    RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(Long recipeId, int pageNum, UserDetailsImpl userDetails);
+    RecipeReviewSliceResponseByUserDto readAllRecipeReviewsByUser(Long userId, int pageNum, UserDetailsImpl userDetails);
+    RecipeReviewSliceResponseByUserDto readAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNum);
     void updateRecipeReview(RecipeReviewUpdateServiceRequestDto requestDto, Long recipeId, Long id, User user);
     void deleteRecipeReview(Long recipeId, Long id, User user);
 }

@@ -84,7 +84,7 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     public RecipeReviewReadResponseDto readRecipeReview(
             Long recipeId, Long id, Boolean includeReplies, UserDetailsImpl userDetails
     ) {
-        Recipe recipe = recipeRepository.findById(recipeId)
+        recipeRepository.findById(recipeId)
                 .orElseThrow(()-> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         RecipeReview recipeReview = recipeReviewRepository.findById(id)
                 .orElseThrow(() -> new NotFoundRecipeReviewException(RecipeReviewErrorCode.NOT_FOUND_RECIPE_REVIEW));
@@ -120,11 +120,11 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
 
     @Override
     public RecipeReviewSliceResponseDto readAllRecipeReviewsByRecipe(
-            Long recipeId, int pageNumber, UserDetailsImpl userDetails
+            Long recipeId, int pageNum, UserDetailsImpl userDetails
     ) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
 
         // 댓글만 조회
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByRecipeIdAndPrrId(recipe.getId(), 0L, pageRequest);
@@ -135,10 +135,12 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     @Override
-    public RecipeReviewSliceResponseByUserDto readAllRecipeReviewsByUser(Long userId, int pageNumber, UserDetailsImpl userDetails) {
+    public RecipeReviewSliceResponseByUserDto readAllRecipeReviewsByUser(
+            Long userId, int pageNum, UserDetailsImpl userDetails
+    ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(user.getNickname(), pageRequest);
         boolean isMyReview = false;
         if(userDetails != null && userDetails.user().getId().equals(userId)){
@@ -149,8 +151,8 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
     }
 
     @Override
-    public RecipeReviewSliceResponseByUserDto getAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeReviewSliceResponseByUserDto readAllMyRecipeReviews(UserDetailsImpl userDetails, int pageNum) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipeReview> slice = recipeReviewRepository.findAllByUser(userDetails.user().getNickname(), pageRequest);
         List<RecipeReviewReadResponseByUserDto> recipeReviews = mappingRecipeReviewsByUser(slice, userDetails, true);
         return new RecipeReviewSliceResponseByUserDto(recipeReviews, slice.hasNext(), null);
