@@ -9,24 +9,12 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import java.io.IOException;
 
 public interface BoardCommentService {
-
-    void create(BoardCommentCreateServiceRequestDto requestDto
-    , Long board_id
-    , User user
-    , Long comment_id
-    ) throws IOException;
-
-    void update(BoardCommentUpdateServiceRequestDto requestDto
-            ,User user
-            ,Long board_id
-            ,Long boardComment_id
-    ) throws IOException;
-     void delete(
-        Long board_id,
-         Long boardComment_id,
-         User user
-     ) throws IOException;
-    BoardCommentReadResponseDto getOnce(Long id);
-    BoardCommentListResponseDto getAll(Long boardId, int pageNumber);
-    BoardCommentListResponseDto getAllByDesc(Long boardId, int pageNumber);
+    void createBoardComment(BoardCommentCreateServiceRequestDto requestDto, Long boardId,
+                User user, Long boardCommentId) throws IOException;
+    void updateBoardComment(BoardCommentUpdateServiceRequestDto requestDto, User user,
+                            Long boardId, Long boardCommentId) throws IOException;
+    void deleteBoardComment(Long boardId, Long boardCommentId, User user) throws IOException;
+    BoardCommentReadResponseDto readBoardComment(Long boardId, Long boardCommentId);
+    BoardCommentListResponseDto readAllBoardComment(Long boardId, int pageNum);
+    BoardCommentListResponseDto readAllBoardCommentByDesc(Long boardId, int pageNum);
 }
