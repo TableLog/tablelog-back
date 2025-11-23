@@ -6,7 +6,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 
 public interface RecipeMemoService {
     void createRecipeMemo(Long recipeId, User user, RecipeMemoRequestDto requestDto);
-    RecipeMemoResponseDto getRecipeMemo(Long recipeId, User user);
+    RecipeMemoResponseDto readRecipeMemo(Long recipeId, User user);
     void updateRecipeMemo(Long recipeId, User user, RecipeMemoRequestDto requestDto);
     void deleteRecipeMemo(Long recipeId, User user);
 }

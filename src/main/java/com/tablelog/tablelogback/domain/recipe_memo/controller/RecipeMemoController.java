@@ -32,11 +32,11 @@ public class RecipeMemoController {
 
     @Operation(summary = "레시피 메모 단건 조회")
     @GetMapping("/recipes/{recipeId}/memos")
-    public ResponseEntity<?> getRecipeMemo(
+    public ResponseEntity<?> readRecipeMemo(
             @PathVariable Long recipeId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        RecipeMemoResponseDto recipeMemo = recipeMemoService.getRecipeMemo(recipeId, userDetails.user());
+        RecipeMemoResponseDto recipeMemo = recipeMemoService.readRecipeMemo(recipeId, userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).body(recipeMemo);
     }
 
