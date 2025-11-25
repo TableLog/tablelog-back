@@ -8,31 +8,21 @@ import java.io.IOException;
 import java.util.List;
 
 public interface BoardService {
-
-    void create(BoardCreateServiceRequestDto requestDto
-    , User user
-    , List<MultipartFile> multipartFiles
-    ) throws IOException;
-
-    void update(BoardUpdateServiceRequestDto requestDto
-            ,User user
-            ,Long id
-            ,List<MultipartFile> multipartFiles
-    ) throws IOException;
-     void delete(
-         Long id,
-         User user
-     ) throws IOException;
-    BoardListResponseDto getAll(int pageNumber);
-    BoardListResponseDto getAllByDesc(int pageNumber);
-    BoardListResponseDto getAllByAsc(int pageNumber);
-    BoardReadResponseDto getOnce(Long id);
-    BoardListResponseDto getAllByUser(int pageNumber,User user);
-    BoardListResponseDto getAllByDescAndUser(int pageNumber,User user);
-    BoardReadResponseDto getOnceLogin(Long id,User user);
-    BoardListResponseDto getReadAllLoginUser(int pageNumber,Long user_id);
-    void deleteBoardByAdmin(Long id);
+    void createBoard(BoardCreateServiceRequestDto requestDto, User user,
+                List<MultipartFile> multipartFiles) throws IOException;
+    void updateBoard(BoardUpdateServiceRequestDto requestDto, User user,
+                Long id, List<MultipartFile> multipartFiles) throws IOException;
+     void deleteBoard(Long id, User user) throws IOException;
+    BoardListResponseDto readAllBoard(int pageNum);
+    BoardListResponseDto readAllBoardByDesc(int pageNum);
+    BoardListResponseDto readAllBoardByAsc(int pageNum);
+    BoardReadResponseDto readBoard(Long boardId);
+    BoardListResponseDto readAllBoardByUser(int pageNum, User user);
+    BoardListResponseDto readAllBoardByDescAndUser(int pageNum, User user);
+    BoardReadResponseDto readBoardByLogin(Long boardId, User user);
+    BoardListResponseDto readAllBoardByLoginUser(int pageNum, Long user_id);
+    void deleteBoardByAdmin(Long boardId);
     BoardAllStatisticTypeDto readBoardStatistics();
-    BoardReadSliceByAdminDto readAllBoardByAdmin(int pageNumber);
-    BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNumber);
+    BoardReadSliceByAdminDto readAllBoardByAdmin(int pageNum);
+    BoardReadSliceByAdminDto searchBoardByAdmin(String keyword, int pageNum);
 }
