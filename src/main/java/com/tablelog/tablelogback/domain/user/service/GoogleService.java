@@ -23,7 +23,6 @@ import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import com.tablelog.tablelogback.global.jwt.exception.NotFoundSocialRefreshTokenException;
 import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshToken;
 import com.tablelog.tablelogback.global.jwt.oauth2.GoogleRefreshTokenRepository;
-import com.tablelog.tablelogback.global.s3.S3Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +67,6 @@ public class GoogleService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final HttpServletRequest httpServletRequest;
     private final GoogleRefreshTokenRepository googleRefreshTokenRepository;
-    private final S3Provider s3Provider;
     private final UserServiceImpl userService;
     private final OAuthAccountRepository oAuthAccountRepository;
     private final OAuthAccountService oAuthAccountService;
@@ -116,7 +114,7 @@ public class GoogleService {
 
         SocialUserInfoDto socialUserInfoDto;
         try {
-            socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+            socialUserInfoDto = readGoogleUserInfoWithAccessToken(googleAccessToken);
             httpServletResponse.addCookie(jwtUtil.createCookie("Google-Access-Token", googleAccessToken));
             if(googleRefreshToken != null && !googleRefreshToken.isEmpty()){
                 httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
@@ -146,14 +144,14 @@ public class GoogleService {
             }
             httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
             googleRefreshTokenRepository.save(googleRefresh);
-            List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(googleUser.getId());
+            List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(googleUser.getId());
             return userEntityMapper.toUserLoginResponseDto(googleUser, dtos);
         } else {
             return socialUserInfoDto;
         }
     }
 
-    public SocialUserInfoDto getGoogleUserInfoWithAccessToken(String accessToken) throws JsonProcessingException {
+    public SocialUserInfoDto readGoogleUserInfoWithAccessToken(String accessToken) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
 
@@ -208,7 +206,7 @@ public class GoogleService {
                 .userId(user.getId())
                 .build();
         oAuthAccountRepository.save(oAuthAccount);
-        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
@@ -228,7 +226,7 @@ public class GoogleService {
     }
 
     public void unlinkGoogle(String googleAccessToken) throws JacksonException {
-        SocialUserInfoDto socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+        SocialUserInfoDto socialUserInfoDto = readGoogleUserInfoWithAccessToken(googleAccessToken);
 
         User user = userRepository.findByEmail(socialUserInfoDto.email())
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
@@ -271,7 +269,7 @@ public class GoogleService {
 
         SocialUserInfoDto socialUserInfoDto;
         try {
-            socialUserInfoDto = getGoogleUserInfoWithAccessToken(googleAccessToken);
+            socialUserInfoDto = readGoogleUserInfoWithAccessToken(googleAccessToken);
             httpServletResponse.addCookie(jwtUtil.createCookie("Google-Access-Token", googleAccessToken));
             if (googleRefreshToken != null && !googleRefreshToken.isEmpty()) {
                 httpServletResponse.addCookie(jwtUtil.createCookie("Google-Refresh-Token", googleRefreshToken));
@@ -296,7 +294,7 @@ public class GoogleService {
         } else {
             throw new NotMatchNameException(UserErrorCode.NOT_MATCH_NAME);
         }
-        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
@@ -332,7 +330,6 @@ public class GoogleService {
             return jsonNode;
 
         } catch (HttpClientErrorException e){
-            System.out.println(e.getResponseBodyAsString());
             throw new FailedRefreshGoogleException(UserErrorCode.FAILED_REFRESH_GOOGLE);
         }
     }

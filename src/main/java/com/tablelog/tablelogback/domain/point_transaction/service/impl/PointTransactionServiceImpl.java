@@ -22,8 +22,8 @@ public class PointTransactionServiceImpl implements PointTransactionService {
     private final PointTransactionEntityMapper pointTransactionEntityMapper;
 
     @Override
-    public PointTransactionSliceResponseDto getAllPointTransactionByUser(PointType pointType, User user, int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+    public PointTransactionSliceResponseDto readAllPointTransactionByUser(PointType pointType, User user, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<PointTransaction> slice;
         if(pointType == null) {
             slice = pointTransactionRepository.findAllByUserId(user.getId(), pageRequest);

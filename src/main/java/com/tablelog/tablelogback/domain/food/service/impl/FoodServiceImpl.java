@@ -47,8 +47,8 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public FoodSliceResponseDto readAllFoods(Integer pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+    public FoodSliceResponseDto readAllFoods(int pageNum) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<Food> slice = foodRepository.findAll(pageRequest);
         List<FoodReadAllServiceResponseDto> foods =
                 foodEntityMapper.toFoodReadAllResponseDto(slice.getContent());
@@ -56,8 +56,8 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public FoodSliceResponseDto searchFoods(String keyword, Integer pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+    public FoodSliceResponseDto searchFoods(String keyword, int pageNum) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<Food> slice = foodRepository.findByFoodNameContaining(keyword, pageRequest);
         List<FoodReadAllServiceResponseDto> foods =
                 foodEntityMapper.toFoodReadAllResponseDto(slice.getContent());

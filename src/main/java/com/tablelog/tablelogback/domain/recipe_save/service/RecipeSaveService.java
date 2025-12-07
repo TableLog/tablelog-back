@@ -7,6 +7,6 @@ public interface RecipeSaveService {
     void createRecipeSave(Long recipeId, Long userId);
     void deleteRecipeSave(Long recipeId, Long userId);
     Boolean hasRecipeSaved(Long recipeId, Long userId);
-    RecipeSliceResponseDto getMySavedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNum);
-    RecipeSliceResponseDto getMySavedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNum);
+    RecipeSliceResponseDto readMySavedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNum);
+    RecipeSliceResponseDto readMySavedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNum);
 }

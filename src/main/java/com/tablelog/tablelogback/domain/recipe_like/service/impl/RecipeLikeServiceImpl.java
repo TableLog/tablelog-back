@@ -50,7 +50,7 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
 
     @Override
     public void deleteRecipeLike(Long recipeId, Long userId) {
-        Recipe recipe = findRecipe(recipeId);
+        findRecipe(recipeId);
         RecipeLike recipeLike = recipeLikeRepository.findByRecipeAndUser(recipeId, userId)
                 .orElseThrow(()->new NotFoundRecipeLikeException(RecipeLikeErrorCode.NOT_FOUND_RECIPE_LIKE));
         recipeLikeRepository.delete(recipeLike);
@@ -58,19 +58,19 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
 
     @Override
     public Boolean hasRecipeLiked(Long recipeId, Long userId){
-        Recipe recipe = findRecipe(recipeId);
+        findRecipe(recipeId);
         return recipeLikeRepository.existsByRecipeAndUser(recipeId, userId);
     }
 
     @Override
-    public Long getRecipeLikeCountByRecipe(Long recipeId) {
-        Recipe recipe = findRecipe(recipeId);
+    public Long readRecipeLikeCountByRecipe(Long recipeId) {
+        findRecipe(recipeId);
         return recipeLikeRepository.countByRecipe(recipeId);
     }
 
     @Override
-    public RecipeSliceResponseDto getMyLikedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readMyLikedRecipesLatest(Boolean isPaid, UserDetailsImpl userDetails, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if(isPaid == null || !isPaid) {
             slice = recipeLikeRepository.findAllByUserLatest(userDetails.user().getId(), pageRequest);
@@ -82,8 +82,8 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
     }
 
     @Override
-    public RecipeSliceResponseDto getMyLikedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipeSliceResponseDto readMyLikedRecipesPopular(Boolean isPaid, UserDetailsImpl userDetails, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<Recipe> slice;
         if (isPaid == null || !isPaid) {
             slice = recipeLikeRepository.findAllByUserPopular(userDetails.user().getId(), pageRequest);

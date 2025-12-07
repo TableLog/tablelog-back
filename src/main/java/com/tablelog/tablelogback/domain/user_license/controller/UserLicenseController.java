@@ -45,49 +45,50 @@ public class UserLicenseController {
 
     @Operation(summary = "전문가 인증 라이센스 전체 조회 By User", description = "licenseType null이면 전체 조회")
     @GetMapping("/users/license")
-    public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicensesByUser(
+    public ResponseEntity<UserLicenseSliceResponseDto> readAllUserLicensesByUser(
             @RequestParam(required = false) LicenseType licenseType,
-            @RequestParam("page") Integer pageNumber,
+            @RequestParam("page") Integer pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         UserLicenseSliceResponseDto responseDto = null;
         if (licenseType == null) {
-            responseDto = userLicenseService.getAllUserLicenseByUser(pageNumber, userDetails.user());
+            responseDto = userLicenseService.readAllUserLicenseByUser(pageNum, userDetails.user());
         } else {
-            responseDto = userLicenseService.getAllUserLicensesByUserAndLicenseType(licenseType, pageNumber, userDetails.user());
+            responseDto = userLicenseService.readAllUserLicensesByUserAndLicenseType(licenseType,
+                    pageNum, userDetails.user());
         }
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @Operation(summary = "라이센스 개수 조회 By User")
     @GetMapping("/users/license/count")
-    public ResponseEntity<UserLicenseCountResponseDto> getUserLicenseCountByUser(
+    public ResponseEntity<UserLicenseCountResponseDto> readUserLicenseCountByUser(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        UserLicenseCountResponseDto responseDto = userLicenseService.getCountByUser(userDetails.user());
+        UserLicenseCountResponseDto responseDto = userLicenseService.readCountByUser(userDetails.user());
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @Operation(summary = "관리자가 전문가 승인 위해 유저의 라이센스 전체 조회")
     @GetMapping("/admin/users/{userId}/licenses")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserLicenseSliceResponseDto> getAllUserLicenseByUserId(
+    public ResponseEntity<UserLicenseSliceResponseDto> readAllUserLicenseByUserId(
             @PathVariable Long userId,
-            @RequestParam("page") Integer pageNumber,
+            @RequestParam("page") Integer pageNum,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        UserLicenseSliceResponseDto responseDto = userLicenseService.getAllUserLicenseByUserId(userId, pageNumber);
+        UserLicenseSliceResponseDto responseDto = userLicenseService.readAllUserLicenseByUserId(userId, pageNum);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     @Operation(summary = "관리자가 전문가 승인 위해 라이센스 단건 조회")
     @GetMapping("/admin/licenses/{licenseId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserLicenseReadResponseDto> getUserLicense(
+    public ResponseEntity<UserLicenseReadResponseDto> readUserLicense(
             @PathVariable Long licenseId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        UserLicenseReadResponseDto responseDto = userLicenseService.getUserLicense(licenseId);
+        UserLicenseReadResponseDto responseDto = userLicenseService.readUserLicense(licenseId);
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

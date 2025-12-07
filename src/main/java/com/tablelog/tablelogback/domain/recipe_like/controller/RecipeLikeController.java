@@ -50,32 +50,32 @@ public class RecipeLikeController {
 
     @Operation(summary = "좋아요 수 전체 조회 By 레시피")
     @GetMapping("/recipes/{recipeId}/likes/count")
-    public ResponseEntity<Long> getRecipeLikeCount(
+    public ResponseEntity<Long> readRecipeLikeCount(
             @PathVariable Long recipeId
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeLikeService.getRecipeLikeCountByRecipe(recipeId));
+                body(recipeLikeService.readRecipeLikeCountByRecipe(recipeId));
     }
 
     @Operation(summary = "내 레시피 좋아요 전체 조회 최신순")
     @GetMapping("/users/me/recipe-likes/latest")
-    public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipesLatest(
+    public ResponseEntity<RecipeSliceResponseDto> readMyLikedRecipesLatest(
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeLikeService.getMyLikedRecipesLatest(isPaid, userDetails, pageNumber));
+                body(recipeLikeService.readMyLikedRecipesLatest(isPaid, userDetails, pageNum));
     }
 
     @Operation(summary = "내 레시피 좋아요 전체 조회 인기순")
     @GetMapping("/users/me/recipe-likes/popular")
-    public ResponseEntity<RecipeSliceResponseDto> getMyLikedRecipesPopular(
+    public ResponseEntity<RecipeSliceResponseDto> readMyLikedRecipesPopular(
             @RequestParam(required = false) Boolean isPaid,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(recipeLikeService.getMyLikedRecipesPopular(isPaid, userDetails, pageNumber));
+                body(recipeLikeService.readMyLikedRecipesPopular(isPaid, userDetails, pageNum));
     }
 }

@@ -11,8 +11,8 @@ import java.io.IOException;
 public interface FoodService {
     void createFood (FoodCreateServiceRequestDto requestDto, User user) throws IOException;
     FoodReadAllServiceResponseDto readFood(Long id);
-    FoodSliceResponseDto readAllFoods(Integer pageNumber);
-    FoodSliceResponseDto searchFoods(String keyword, Integer page);
+    FoodSliceResponseDto readAllFoods(int pageNum);
+    FoodSliceResponseDto searchFoods(String keyword, int pageNum);
     void updateFood (Long id, FoodUpdateServiceRequestDto requestDto, User user) throws IOException;
     void deleteFood(Long id, User user);
 }

@@ -35,22 +35,19 @@ public class UserLicenseServiceImpl implements UserLicenseService {
                                   MultipartFile multipartFile, User user
     ) throws IOException {
         UserLicense userLicense;
-
         if (multipartFile == null || multipartFile.isEmpty()) {
-            userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto,
-                    user.getId(), null);
+            userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto, user.getId(), null);
         } else {
             s3Provider.createFolder(serviceRequestDto.licenseName());
             String imageName = serviceRequestDto.licenseName() + SEPARATOR + s3Provider.originalFileName(multipartFile);
             String imageUrl = s3Provider.saveFile(multipartFile, imageName);
-            userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto,
-                    user.getId(), imageUrl);
+            userLicense = userLicenseEntityMapper.toUserLicense(serviceRequestDto, user.getId(), imageUrl);
         }
         userLicenseRepository.save(userLicense);
     }
 
     @Override
-    public UserLicenseSliceResponseDto getAllUserLicenseByUser(int pageNum, User user){
+    public UserLicenseSliceResponseDto readAllUserLicenseByUser(int pageNum, User user){
         PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<UserLicense> slice = userLicenseRepository.findAllByUserId(user.getId(), pageRequest);
         List<UserLicenseReadResponseDto> userLicenses =
@@ -59,7 +56,7 @@ public class UserLicenseServiceImpl implements UserLicenseService {
     }
 
     @Override
-    public UserLicenseSliceResponseDto getAllUserLicensesByUserAndLicenseType(LicenseType licenseType, int pageNum, User user){
+    public UserLicenseSliceResponseDto readAllUserLicensesByUserAndLicenseType(LicenseType licenseType, int pageNum, User user){
         PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<UserLicense> slice = null;
         if(licenseType == LicenseType.BUSINESS_REGISTRATION) {
@@ -75,7 +72,7 @@ public class UserLicenseServiceImpl implements UserLicenseService {
     }
 
     @Override
-    public UserLicenseCountResponseDto getCountByUser(User user){
+    public UserLicenseCountResponseDto readCountByUser(User user){
         Long recipeCount = user.getRecipeCount();
         Long businessCount = userLicenseRepository
                 .countByUserIdAndLicenseType(user.getId(), LicenseType.BUSINESS_REGISTRATION);
@@ -84,8 +81,8 @@ public class UserLicenseServiceImpl implements UserLicenseService {
     }
 
     @Override
-    public UserLicenseSliceResponseDto getAllUserLicenseByUserId(Long userId, int pageNumber){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5);
+    public UserLicenseSliceResponseDto readAllUserLicenseByUserId(Long userId, int pageNum){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<UserLicense> slice = userLicenseRepository.findAllByUserId(userId, pageRequest);
         List<UserLicenseReadResponseDto> userLicenses =
                 userLicenseEntityMapper.toUserLicenseReadAllResponseDto(slice.getContent());
@@ -93,7 +90,7 @@ public class UserLicenseServiceImpl implements UserLicenseService {
     }
 
     @Override
-    public UserLicenseReadResponseDto getUserLicense(Long id){
+    public UserLicenseReadResponseDto readUserLicense(Long id){
         UserLicense userLicense = userLicenseRepository.findById(id)
                 .orElseThrow(() -> new NotFoundUserLicenseException(UserLicenseErrorCode.NOT_FOUND_USER_LICENSE));
         return userLicenseEntityMapper.toUserLicenseReadResponseDto(userLicense);

@@ -93,8 +93,8 @@ public class RecipePaymentServiceImpl implements RecipePaymentService {
     }
 
     @Override
-    public RecipePaymentSliceResponseDto getAllMyRecipePayments(User user, int pageNumber) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public RecipePaymentSliceResponseDto readAllMyRecipePayments(User user, int pageNum) {
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<RecipePayment> slice = recipePaymentRepository.findAllByUserId(user.getId(), pageRequest);
         List<RecipePaymentReadResponseDto> recipePayments = slice.getContent().stream()
                 .map(recipePayment -> new RecipePaymentReadResponseDto(

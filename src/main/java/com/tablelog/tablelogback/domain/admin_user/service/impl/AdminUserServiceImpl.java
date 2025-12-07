@@ -33,7 +33,6 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final RecipeRepository recipeRepository;
     private final UserLicenseRepository userLicenseRepository;
     private final AdminUserEntityMapper adminUserEntityMapper;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     @Scheduled(cron = "0 0 0 * * *") // 매일 00시
 //    @Scheduled(fixedRate = 10000) // 10초마다 실행 -> 테스트 참고
@@ -49,6 +48,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         userRepository.saveAll(users);
     }
 
+//    TODO: 2차
 //    @Transactional
 //    public void approveDeleteUser(Long id) throws JacksonException {
 //        AdminUser adminUser = adminUserRepository.findById(id)
@@ -99,7 +99,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 //    }
 
     @Override
-    public AdminUserSliceReadResponseDto getAllAdminUser(ApplyStatus status, int pageNum){
+    public AdminUserSliceReadResponseDto readAllAdminUser(ApplyStatus status, int pageNum){
         PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<AdminUser> slice;
         if(status == null){

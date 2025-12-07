@@ -15,7 +15,7 @@ import java.util.List;
 public class OAuthAccountService {
     private final OAuthAccountRepository oAuthAccountRepository;
 
-    public List<OAuthAccountResponseDto> getAllOAuthAccountDtos(Long userId){
+    public List<OAuthAccountResponseDto> readAllOAuthAccountDtos(Long userId){
         List<OAuthAccount> oAuthAccounts = oAuthAccountRepository.findAllByUserId(userId)
                 .orElseThrow(() -> new NotFoundOAuthAccountException(UserErrorCode.NOT_FOUND_SOCIAL_ACCOUNT));
         List<OAuthAccountResponseDto> dtos = oAuthAccounts.stream()
@@ -24,7 +24,7 @@ public class OAuthAccountService {
         return dtos;
     }
 
-    public List<OAuthAccount> getAllOAuthAccounts(Long userId){
+    public List<OAuthAccount> readAllOAuthAccounts(Long userId){
         List<OAuthAccount> oAuthAccounts = oAuthAccountRepository.findAllByUserId(userId)
                 .orElseThrow(() -> new NotFoundOAuthAccountException(UserErrorCode.NOT_FOUND_SOCIAL_ACCOUNT));
         return oAuthAccounts;

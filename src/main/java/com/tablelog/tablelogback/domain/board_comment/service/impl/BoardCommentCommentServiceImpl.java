@@ -35,66 +35,57 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     private final BoardCommentEntityMapper boardCommentEntityMapper;
     private final UserRepository userRepository;
 
-    // TestCreateServiceRequestDto -> Test
     @Override
-    public void create(final BoardCommentCreateServiceRequestDto boardCommentRequestDto,
-            Long board_id
-            , User user
-            , Long comment_id
-            )throws IOException
-    {
-        Board board = boardRepository.findById(board_id)
-                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        if(comment_id != null){
-            BoardComment boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto,board,user,comment_id);
-            boardCommentRepository.save(boardComment);
+    public void createBoardComment(final BoardCommentCreateServiceRequestDto boardCommentRequestDto,
+            Long boardId, User user, Long boardCommentId
+    ) throws IOException {
+        Board board = findBoard(boardId);
+        BoardComment boardComment;
+        if(boardCommentId != null){
+            boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto, board, user, boardCommentId);
+        } else{
+            boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto, board, user, null);
         }
-        else{
-            BoardComment boardComment = boardCommentEntityMapper.toBoardComment(boardCommentRequestDto,board,user,null);
-            boardCommentRepository.save(boardComment);
-        }
+        boardCommentRepository.save(boardComment);
 
     }
 
     @Override
-    public void update(final BoardCommentUpdateServiceRequestDto boardCommentRequestDto
-            , User user
-            , Long board_id
-            , Long boardComment_id
-    )throws IOException
-    {
-        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
-                .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        BoardComment boardComment = boardCommentRepository.findByBoardIdAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
+    public void updateBoardComment(final BoardCommentUpdateServiceRequestDto boardCommentRequestDto,
+                                   User user, Long boardId, Long boardCommentId
+    ) throws IOException {
+        Board board = findBoard(boardId);
+        BoardComment boardComment = boardCommentRepository
+                .findByBoardIdAndIdAndUser(board.getId().toString(), boardCommentId, user.getNickname())
                 .orElseThrow(()-> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         boardComment.update(boardCommentRequestDto.content());
         boardCommentRepository.save(boardComment);
     }
 
-    public void delete(Long board_id,Long boardComment_id,User user){
-        Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
-            .orElseThrow(()->new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        BoardComment boardComment = boardCommentRepository.findByBoardIdAndIdAndUser(board.getId().toString(),boardComment_id,user.getNickname())
-                .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
+    public void deleteBoardComment(Long boardId, Long boardCommentId, User user){
+        Board board = findBoard(boardId);
+        BoardComment boardComment = boardCommentRepository
+                .findByBoardIdAndIdAndUser(board.getId().toString(), boardCommentId, user.getNickname())
+                .orElseThrow(() -> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         boardCommentRepository.delete(boardComment);
     }
 
     @Override
-    public BoardCommentReadResponseDto getOnce(Long boardComment_id) {
-        BoardComment boardComment = boardCommentRepository.findById(boardComment_id)
-                .orElseThrow(()->new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
+    public BoardCommentReadResponseDto readBoardComment(Long boardId, Long boardCommentId) {
+        findBoard(boardId);
+        BoardComment boardComment = boardCommentRepository.findById(boardCommentId)
+                .orElseThrow(() -> new NotFoundBoardCommentException(BoardCommentErrorCode.NOT_FOUND_BOARDCOMMENT));
         String name = boardComment.getUser();
         User user = userRepository.findByNickname(name)
             .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        String comment_count = boardCommentRepository.countByCommentId(boardComment_id).toString();
+        String comment_count = boardCommentRepository.countByCommentId(boardCommentId).toString();
         return boardCommentEntityMapper.toBoardCommentReadResponseDto(boardComment,user,comment_count);
     }
 
     @Override
-    public BoardCommentListResponseDto getAll(Long boardId, int pageNumber) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 5개씩 가져오기
+    public BoardCommentListResponseDto readAllBoardComment(Long boardId, int pageNum) {
+        Board board = findBoard(boardId);
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
         Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardId(board.getId().toString(), pageRequest);
         List<BoardComment> comments = commentSlice.getContent();
         List<BoardCommentReadResponseDto> content = new ArrayList<>();
@@ -102,28 +93,35 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
             String name = comment.getUser();
             User user = userRepository.findByNickname(name)
                     .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-            String comment_count = boardCommentRepository.countByCommentId(comment.getId()).toString();
-            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user,comment_count);
+            String boardCommentCount = boardCommentRepository.countByCommentId(comment.getId()).toString();
+            BoardCommentReadResponseDto boardCommentReadResponseDto =
+                    boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user, boardCommentCount);
             content.add(boardCommentReadResponseDto);
         }
         return new BoardCommentListResponseDto(content, commentSlice.hasNext());
     }
-    public BoardCommentListResponseDto getAllByDesc(Long boardId, int pageNumber) {
-        Board board = boardRepository.findById(boardId)
-            .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5); // 5개씩 가져오기
-        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardIdOrderByCreatedAtDesc(board.getId().toString(), pageRequest);
+
+    public BoardCommentListResponseDto readAllBoardCommentByDesc(Long boardId, int pageNum) {
+        Board board = findBoard(boardId);
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<BoardComment> commentSlice = boardCommentRepository
+                .findAllByBoardIdOrderByCreatedAtDesc(board.getId().toString(), pageRequest);
         List<BoardComment> comments = commentSlice.getContent();
         List<BoardCommentReadResponseDto> content = new ArrayList<>();
         for (BoardComment comment : comments) {
             String name = comment.getUser();
             User user = userRepository.findByNickname(name)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-            String comment_count = boardCommentRepository.countByCommentId(comment.getId()).toString();
-            BoardCommentReadResponseDto boardCommentReadResponseDto = boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user,comment_count);
+            String boardCommentCount = boardCommentRepository.countByCommentId(comment.getId()).toString();
+            BoardCommentReadResponseDto boardCommentReadResponseDto =
+                    boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user, boardCommentCount);
             content.add(boardCommentReadResponseDto);
         }
         return new BoardCommentListResponseDto(content, commentSlice.hasNext());
     }
 
+    private Board findBoard(Long boardId){
+        return boardRepository.findById(boardId)
+                .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
+    }
 }

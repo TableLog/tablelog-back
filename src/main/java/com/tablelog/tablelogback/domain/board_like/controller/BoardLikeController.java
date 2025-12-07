@@ -44,8 +44,8 @@ public class BoardLikeController {
             @PathVariable Long boardId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        return ResponseEntity.status(HttpStatus.OK).
-                body(boardLikeService.hasBoardLiked(boardId, userDetails.user().getId()));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(boardLikeService.hasBoardLiked(boardId, userDetails.user().getId()));
     }
 
     @Operation(summary = "좋아요 수 전체 조회 By 게시판")
@@ -53,17 +53,16 @@ public class BoardLikeController {
     public ResponseEntity<Long> readBoardLikeCountByBoard(
             @PathVariable Long boardId
     ){
-        return ResponseEntity.status(HttpStatus.OK).
-                body(boardLikeService.readBoardLikeCountByBoard(boardId));
+        return ResponseEntity.status(HttpStatus.OK).body(boardLikeService.readBoardLikeCountByBoard(boardId));
     }
 
     @Operation(summary = "내 좋아요 게시판 전체 조회")
     @GetMapping("/users/me/board-likes")
     public ResponseEntity<BoardListResponseDto> readMyLikedBoards(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK).
-                body(boardLikeService.readMyLikedBoards(userDetails.user().getId(), pageNumber));
+                body(boardLikeService.readMyLikedBoards(userDetails.user().getId(), pageNum));
     }
 }

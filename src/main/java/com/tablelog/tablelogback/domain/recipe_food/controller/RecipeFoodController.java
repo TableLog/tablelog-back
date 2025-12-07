@@ -54,10 +54,10 @@ public class RecipeFoodController {
     @GetMapping("/recipes/{recipeId}/recipe-food")
     public ResponseEntity<RecipeFoodSliceResponseDto> readAllRecipeFoodsByRecipeId(
             @PathVariable Long recipeId,
-            @RequestParam int page
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK).body(
-                recipeFoodService.readAllRecipeFoodsByRecipeId(recipeId, page));
+                recipeFoodService.readAllRecipeFoodsByRecipeId(recipeId, pageNum));
     }
 
     @Operation(summary = "레시피 식재료 수정")

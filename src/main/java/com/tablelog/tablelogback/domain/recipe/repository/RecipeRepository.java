@@ -19,20 +19,20 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     @Query(value = """
         SELECT * FROM tb_recipe r
-        WHERE r.id IN (
+         WHERE r.id IN (
             SELECT rf.recipe_id
-            FROM tb_recipe_food rf
-            JOIN tb_food f ON rf.food_id = f.id
-            WHERE LOWER(f.food_name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              FROM tb_recipe_food rf
+              JOIN tb_food f ON rf.food_id = f.id
+             WHERE LOWER(f.food_name) LIKE LOWER(CONCAT('%', :keyword, '%'))
         )
         """,
             countQuery = """
                     SELECT COUNT(*) FROM tb_recipe r
-                    WHERE r.id IN (
+                     WHERE r.id IN (
                         SELECT rf.recipe_id
-                        FROM tb_recipe_food rf
-                        JOIN tb_food f ON rf.food_id = f.id
-                        WHERE LOWER(f.food_name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                          FROM tb_recipe_food rf
+                          JOIN tb_food f ON rf.food_id = f.id
+                         WHERE LOWER(f.food_name) LIKE LOWER(CONCAT('%', :keyword, '%'))
                     )
                     """,
             nativeQuery = true)
@@ -40,51 +40,51 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     @Query(value = """
         SELECT * FROM tb_recipe r
-        WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR r.user_id IN (
+         WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR r.user_id IN (
                 SELECT u.id FROM tb_user u
-                WHERE LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                 WHERE LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))
            )
         """,
             countQuery = """
-        SELECT COUNT(*) FROM tb_recipe r
-        WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR r.user_id IN (
-                SELECT u.id FROM tb_user u
-                WHERE LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           )
-        """,
+                SELECT COUNT(*) FROM tb_recipe r
+                 WHERE LOWER(r.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR r.user_id IN (
+                        SELECT u.id FROM tb_user u
+                         WHERE LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   )
+            """,
             nativeQuery = true)
     Slice<Recipe> searchRecipesByTitleOrNickname(@Param("keyword") String keyword, Pageable pageable);
 
     @Query(value = """
         SELECT r.*
-        FROM tb_recipe r
-        WHERE r.created_at >= :oneWeekAgo
-        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+          FROM tb_recipe r
+         WHERE r.created_at >= :oneWeekAgo
+         ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesLastWeek(@Param("oneWeekAgo") LocalDateTime oneWeekAgo, Pageable pageable);
 
     @Query(value = """
         SELECT r.*
-        FROM tb_recipe r
-        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+          FROM tb_recipe r
+         ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipes(Pageable pageable);
 
     @Query(value = """
         SELECT r.*
-        FROM tb_recipe r
-        WHERE r.is_paid = true
-        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+          FROM tb_recipe r
+         WHERE r.is_paid = true
+         ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesByIsPaidTrue(Pageable pageable);
 
     @Query(value = """
         SELECT r.*
-        FROM tb_recipe r
-        WHERE r.user_id = :userId
-        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+          FROM tb_recipe r
+         WHERE r.user_id = :userId
+         ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesByUserId(
             @Param("userId") Long userId,
@@ -93,10 +93,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     @Query(value = """
         SELECT r.*
-        FROM tb_recipe r
-        WHERE r.is_paid = true 
-          AND r.user_id = :userId
-        ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
+          FROM tb_recipe r
+         WHERE r.is_paid = true 
+           AND r.user_id = :userId
+         ORDER BY r.star DESC, r.review_count DESC, r.created_at DESC
     """, nativeQuery = true)
     Slice<Recipe> findPopularRecipesByUserIdAndIsPaidTrue(
             @Param("userId") Long userId,

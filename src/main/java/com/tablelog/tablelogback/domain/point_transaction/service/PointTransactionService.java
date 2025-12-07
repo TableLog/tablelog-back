@@ -5,5 +5,5 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.PointType;
 
 public interface PointTransactionService {
-    PointTransactionSliceResponseDto getAllPointTransactionByUser(PointType pointType, User user, int pageNumber);
+    PointTransactionSliceResponseDto readAllPointTransactionByUser(PointType pointType, User user, int pageNum);
 }

@@ -4,6 +4,7 @@ import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommen
 import com.tablelog.tablelogback.domain.board_comment.dto.controller.BoardCommentUpdateControllerRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentListResponseDto;
+import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentReadResponseDto;
 import com.tablelog.tablelogback.domain.board_comment.dto.service.BoardCommentUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.board_comment.mapper.dto.BoardCommentDtoMapper;
 import com.tablelog.tablelogback.domain.board_comment.service.BoardCommentService;
@@ -27,83 +28,86 @@ public class BoardCommentController {
     private final BoardCommentService boardCommentService;
 
     @Operation(summary = "피드댓글 생성")
-    @PostMapping("boards/{board_id}/board_comment")
-    public ResponseEntity<?> creatComment(
-            @PathVariable Long board_id,
+    @PostMapping("boards/{boardId}/board_comment")
+    public ResponseEntity<?> createBoardComment(
+            @PathVariable Long boardId,
             @RequestBody BoardCommentCreateControllerRequestDto requestDto,
-            // BoardCreateControllerRequestDto controllerRequestDto
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
-        BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
-        boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user(),null);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto
+                = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
+        boardCommentService.createBoardComment(
+                boardCommentCreateServiceRequestDto, boardId, userDetails.user(),null);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "피드답글 생성")
-    @PostMapping("boards/{board_id}/{comment_id}")
+    @PostMapping("boards/{boardId}/{boardCommentId}")
     public ResponseEntity<?> createCommentReply(
-        @PathVariable Long board_id,
-        @PathVariable Long comment_id,
+        @PathVariable Long boardId,
+        @PathVariable Long boardCommentId,
         @RequestBody BoardCommentCreateControllerRequestDto requestDto,
-        // BoardCreateControllerRequestDto controllerRequestDto
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws IOException {
-        BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
-        boardCommentService.create(boardCommentCreateServiceRequestDto,board_id,userDetails.user(),comment_id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        BoardCommentCreateServiceRequestDto boardCommentCreateServiceRequestDto
+                = boardCommentDtoMapper.toBoardCommentServiceRequestDto(requestDto);
+        boardCommentService.createBoardComment(
+                boardCommentCreateServiceRequestDto, boardId, userDetails.user(), boardCommentId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-
     @Operation(summary = "피드댓글 수정")
-    @PutMapping("/boards/{board_id}/board_comments/{board_comment_id}")
+    @PutMapping("/boards/{boardId}/board_comments/{boardCommentId}")
     public ResponseEntity<?> updateBoardComment(
-            @PathVariable Long board_id,
-            @PathVariable Long board_comment_id,
+            @PathVariable Long boardId,
+            @PathVariable Long boardCommentId,
             @RequestBody BoardCommentUpdateControllerRequestDto requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     )throws IOException{
         BoardCommentUpdateServiceRequestDto boardCommentUpdateServiceRequestDto
                 = boardCommentDtoMapper.toBoardCommentUpdateServiceRequestDto(requestDto);
-        boardCommentService.update(boardCommentUpdateServiceRequestDto,userDetails.user(),board_id,board_comment_id);
+        boardCommentService.updateBoardComment(
+                boardCommentUpdateServiceRequestDto, userDetails.user(), boardId, boardCommentId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Operation(summary = "피드댓글 삭제")
-    @DeleteMapping("/boards/{board_id}/board_comments/{board_comment_id}")
-    public void deleteBoardComment(
-            @PathVariable Long board_id,
-            @PathVariable Long board_comment_id,
-            String user
-    )throws IOException{
+    @DeleteMapping("/boards/{boardId}/board_comments/{boardCommentId}")
+    public ResponseEntity<?> deleteBoardComment(
+            @PathVariable Long boardId,
+            @PathVariable Long boardCommentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) throws IOException{
+        boardCommentService.deleteBoardComment(boardId, boardCommentId, userDetails.user());
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 
+    @Operation(summary = "피드댓글 단건 조회")
+    @GetMapping("/boards/{boardId}/board_comments/{boardCommentId}")
+    public ResponseEntity<BoardCommentReadResponseDto> readBoardComment(
+            @PathVariable Long boardId,
+            @PathVariable Long boardCommentId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(boardCommentService.readBoardComment(boardId, boardCommentId));
     }
 
     @Operation(summary = "피드댓글 전체 조회 내림차순")
-    @GetMapping("/boards/{board_id}/board_comments/desc")
-    public BoardCommentListResponseDto readAllByDescBoardComments(
-            @PathVariable Long board_id,
-        @RequestParam("page") Integer pageNumber    )
-    {
-        return boardCommentService.getAllByDesc(board_id,pageNumber);
+    @GetMapping("/boards/{boardId}/board_comments/desc")
+    public ResponseEntity<BoardCommentListResponseDto> readAllByDescBoardComments(
+            @PathVariable Long boardId,
+            @RequestParam("page") Integer pageNum
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(boardCommentService.readAllBoardCommentByDesc(boardId, pageNum));
     }
 
     @Operation(summary = "피드댓글 전체 조회")
-    @GetMapping("/boards/{board_id}/board_comments")
-    public BoardCommentListResponseDto readAllBoardComments(
-        @RequestParam("page") Integer pageNumber,
-        @PathVariable Long board_id
+    @GetMapping("/boards/{boardId}/board_comments")
+    public ResponseEntity<BoardCommentListResponseDto> readAllBoardComments(
+        @RequestParam("page") Integer pageNum,
+        @PathVariable Long boardId
     ) {
-        return boardCommentService.getAll(board_id,pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(boardCommentService.readAllBoardComment(boardId, pageNum));
     }
-
-//    @GetMapping("/boards/{board_id}/board_comments/{board_comment_id}")
-//    public Map<String, Object> readAllBoards(
-//            @PathVariable Long board_id,
-//            @PathVariable Long board_comment_id
-//    )throws  IOException{
-//        Map<String, Object> board_comment1 = new HashMap<>();
-//        board_comment1.put("content", "이것은 첫 번째 게시글의 내용입니다.");
-//        board_comment1.put("user", "admin");
-//        return board_comment1;
-//    }
 }

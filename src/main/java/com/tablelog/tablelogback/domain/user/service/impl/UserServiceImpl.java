@@ -25,7 +25,6 @@ import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.jwt.RefreshToken;
 import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.jwt.exception.*;
-import com.tablelog.tablelogback.global.jwt.oauth2.KakaoRefreshTokenRepository;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import jakarta.servlet.http.HttpServletResponse;
@@ -55,7 +54,6 @@ public class UserServiceImpl implements UserService {
     private final HttpServletResponse httpServletResponse;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final KakaoRefreshTokenRepository kakaoRefreshTokenRepository;
     private final S3Provider s3Provider;
     private final OAuthAccountService oAuthAccountService;
     private final OAuthAccountRepository oAuthAccountRepository;
@@ -101,7 +99,6 @@ public class UserServiceImpl implements UserService {
         String fileUrl = null;
         String folderName = serviceRequestDto.nickname();
         User user;
-
         if (multipartFile != null && !multipartFile.isEmpty()) {
             fileName = s3Provider.originalFileName(multipartFile);
             fileUrl = url + folderName + SEPARATOR + fileName;
@@ -139,7 +136,7 @@ public class UserServiceImpl implements UserService {
         String refresh = jwtUtil.addTokenToCookie(user, httpServletResponse, "refreshToken");
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
-        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
         // 탈퇴 요청 중 유저가 재로그인하면
         boolean isRecovered = false;
         if (user.getIsDeleted()) {
@@ -151,19 +148,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserLoginResponseDto getUser(final String token){
+    public UserLoginResponseDto readUser(final String token){
         if (jwtUtil.isExpiredAccessToken(token)) {
             throw new ExpiredJwtAccessTokenException(JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN);
         }
         String email = jwtUtil.getUserInfoFromToken(token).getSubject();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
     @Override
-    public UserProfileDto getUserProfile(Long userId, UserDetailsImpl userDetails){
+    public UserProfileDto readUserProfile(Long userId, UserDetailsImpl userDetails){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         Boolean isFollowed = userDetails != null
@@ -172,8 +169,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public FollowUserListDto findUsers(String keyword, int pageNumber, UserDetailsImpl userDetails){
-        PageRequest pageRequest = PageRequest.of(pageNumber, 5, Sort.by(Sort.Direction.DESC, "id"));
+    public FollowUserListDto findUsers(String keyword, int pageNum, UserDetailsImpl userDetails){
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
 
         Slice<User> slice;
         if(keyword != null && !keyword.isBlank()){
@@ -293,11 +290,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
-        if(user.getProvider() == UserProvider.kakao){
-            jwtUtil.deleteCookie("Kakao-Access-Token", response);
-            jwtUtil.deleteCookie("Kakao-Refresh-Token", response);
-            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
-        } else if(user.getProvider() == UserProvider.google){
+        if(user.getProvider() == UserProvider.google){
             jwtUtil.deleteCookie("Google-Access-Token", response);
             jwtUtil.deleteCookie("Google-Refresh-Token", response);
         }
@@ -317,11 +310,7 @@ public class UserServiceImpl implements UserService {
         // 로그아웃 처리
         jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
-        if(user.getProvider() == UserProvider.kakao){
-            jwtUtil.deleteCookie("Kakao-Access-Token", response);
-            jwtUtil.deleteCookie("Kakao-Refresh-Token", response);
-            kakaoRefreshTokenRepository.deleteById(String.valueOf(user.getId()));
-        } else if(user.getProvider() == UserProvider.google){
+        if(user.getProvider() == UserProvider.google){
             jwtUtil.deleteCookie("Google-Access-Token", response);
             jwtUtil.deleteCookie("Google-Refresh-Token", response);
         }
@@ -351,7 +340,7 @@ public class UserServiceImpl implements UserService {
         String newToken = jwtUtil.addTokenToCookie(user, response, "refreshToken");
         refreshTokenRepository.deleteById(String.valueOf(user.getId()));
         refreshTokenRepository.save(new RefreshToken(user.getId(), newToken, timeToLive));
-        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserLoginResponseDto(user, dtos);
     }
 
@@ -425,7 +414,6 @@ public class UserServiceImpl implements UserService {
             // 기본: 전체 유저 조회
             slice = userRepository.findAll(pageRequest);
         }
-//        Slice<User> slice = userRepository.findAll(pageRequest);
         List<User> users = slice.getContent();
         List<UserProfileByAdminDto> dtos = users.stream()
                 .map(user -> new UserProfileByAdminDto(
@@ -436,7 +424,7 @@ public class UserServiceImpl implements UserService {
                         user.getNickname(),
                         user.getCreatedAt(),
                         user.getProvider(),
-                        oAuthAccountService.getAllOAuthAccountDtos(user.getId())
+                        oAuthAccountService.readAllOAuthAccountDtos(user.getId())
                 ))
                 .toList();
         return new UserProfileByAdminSliceDto(dtos, slice.hasNext());
@@ -446,7 +434,7 @@ public class UserServiceImpl implements UserService {
     public UserDetailProfileByAdminDto readUserProfileByAdmin(Long id){
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        List<OAuthAccountResponseDto> dtos = oAuthAccountService.getAllOAuthAccountDtos(user.getId());
+        List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
         return userEntityMapper.toUserDetailProfileByAdminDto(user, dtos);
     }
 }

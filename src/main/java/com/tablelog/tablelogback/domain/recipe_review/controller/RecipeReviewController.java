@@ -73,32 +73,32 @@ public class RecipeReviewController {
     @GetMapping("/recipes/{recipeId}/recipe-reviews")
     public ResponseEntity<?> readAllRecipeReviewsByRecipeId(
             @PathVariable Long recipeId,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         UserDetailsImpl userDetails = findUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeReviewService.readAllRecipeReviewsByRecipe(recipeId, pageNumber, userDetails));
+                .body(recipeReviewService.readAllRecipeReviewsByRecipe(recipeId, pageNum, userDetails));
     }
 
     @Operation(summary = "레시피 댓글 전체 조회 By 유저")
     @GetMapping("/users/{userId}/recipe-reviews")
     public ResponseEntity<?> readAllRecipeReviewsByUser(
             @PathVariable Long userId,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         UserDetailsImpl userDetails = findUserDetails();
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeReviewService.readAllRecipeReviewsByUser(userId, pageNumber, userDetails));
+                .body(recipeReviewService.readAllRecipeReviewsByUser(userId, pageNum, userDetails));
     }
 
     @Operation(summary = "내 레시피 댓글 전체 조회")
     @GetMapping("/users/me/recipe-reviews")
-    public ResponseEntity<?> getMyAllRecipeReviews (
+    public ResponseEntity<?> readMyAllRecipeReviews (
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam int pageNumber
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK)
-                .body(recipeReviewService.getAllMyRecipeReviews(userDetails, pageNumber));
+                .body(recipeReviewService.readAllMyRecipeReviews(userDetails, pageNum));
     }
 
     @Operation(summary = "레시피 댓글 수정")

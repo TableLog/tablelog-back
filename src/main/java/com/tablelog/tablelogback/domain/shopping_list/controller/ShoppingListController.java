@@ -52,10 +52,10 @@ public class ShoppingListController {
     @GetMapping("/shopping-list")
     public ResponseEntity<ShoppingListSliceResponseDto> readAllShoppingListsByUserId(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam int page
+            @RequestParam("page") int pageNum
     ){
         return ResponseEntity.status(HttpStatus.OK).body(
-                shoppingListService.readAllShoppingListsByUserId(userDetails.user(), page));
+                shoppingListService.readAllShoppingListsByUserId(userDetails.user(), pageNum));
     }
 
     @Operation(summary = "장보기 목록 수정")

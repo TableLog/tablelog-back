@@ -12,7 +12,7 @@ public interface RecipeProcessService {
                              List<MultipartFile> recipeProcessImages, User user) throws IOException;
     RecipeProcessReadAllServiceResponseDto readRecipeProcess(Long rId, Long rfId);
     RecipeProcessSliceResponseDto readRecipeProcessWithSequence(Long rId, Long s);
-    RecipeProcessReadAllSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int page);
+    RecipeProcessReadAllSliceResponseDto readAllRecipeProcessesByRecipeId(Long recipeId, int pageNum);
     void updateRecipeProcess(Long rId, Long rfId, RecipeProcessUpdateServiceRequestDto requestDto,
                              List<MultipartFile> recipeProcessImages, User user) throws IOException;
     void deleteRecipeProcess(Long rId, Long rfId, User user);

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.tablelog.tablelogback.domain.user.exception.InvalidProviderException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
-import com.tablelog.tablelogback.domain.user.service.KakaoService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1")
 @Tag(name = "사용자 - 소셜 API", description = "")
 public class SocialController {
-    private final KakaoService kakaoService;
     private final GoogleService googleService;
 
     @Operation(summary = "소셜 로그인")
@@ -30,9 +28,7 @@ public class SocialController {
             @RequestParam("code") String code
     ) throws JacksonException {
         Object objectDto = null;
-        if(provider == UserProvider.kakao) {
-            objectDto = kakaoService.handleKakaoLogin(code);
-        } else if(provider == UserProvider.google) {
+        if(provider == UserProvider.google){
             objectDto = googleService.handleGoogleLogin(code);
         } else {
             throw new InvalidProviderException(UserErrorCode.INVALID_PROVIDER);
@@ -48,9 +44,7 @@ public class SocialController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) throws JacksonException {
         Object objectDto = null;
-        if(provider == UserProvider.kakao) {
-            objectDto = kakaoService.linkKakao(code, userDetails.user());
-        } else if(provider == UserProvider.google) {
+        if(provider == UserProvider.google){
             objectDto = googleService.linkGoogle(code, userDetails.user());
         } else {
             throw new InvalidProviderException(UserErrorCode.INVALID_PROVIDER);

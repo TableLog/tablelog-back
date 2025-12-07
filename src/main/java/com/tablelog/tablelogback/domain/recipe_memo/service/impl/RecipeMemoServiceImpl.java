@@ -1,6 +1,5 @@
 package com.tablelog.tablelogback.domain.recipe_memo.service.impl;
 
-import com.tablelog.tablelogback.domain.recipe.entity.Recipe;
 import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException;
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
@@ -24,8 +23,7 @@ public class RecipeMemoServiceImpl implements RecipeMemoService {
 
     @Override
     public void createRecipeMemo(Long recipeId, User user, RecipeMemoRequestDto requestDto){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        existsRecipe(recipeId);
         if(recipeMemoRepository.existsByRecipeIdAndUserId(recipeId, user.getId())){
             throw new AlreadyExistsRecipeMemoException(RecipeMemoErrorCode.ALREADY_EXIST_RECIPE_MEMO);
         }
@@ -38,9 +36,8 @@ public class RecipeMemoServiceImpl implements RecipeMemoService {
     }
 
     @Override
-    public RecipeMemoResponseDto getRecipeMemo(Long recipeId, User user){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+    public RecipeMemoResponseDto readRecipeMemo(Long recipeId, User user){
+        existsRecipe(recipeId);
         RecipeMemo recipeMemo = recipeMemoRepository.findByRecipeIdAndUserId(recipeId, user.getId())
                 .orElseThrow(() -> new NotFoundRecipeMemoException(RecipeMemoErrorCode.NOT_FOUND_RECIPE_MEMO));
         return new RecipeMemoResponseDto(
@@ -53,8 +50,7 @@ public class RecipeMemoServiceImpl implements RecipeMemoService {
 
     @Override
     public void updateRecipeMemo(Long recipeId, User user, RecipeMemoRequestDto requestDto){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        existsRecipe(recipeId);
         RecipeMemo recipeMemo = recipeMemoRepository.findByRecipeIdAndUserId(recipeId, user.getId())
                 .orElseThrow(() -> new NotFoundRecipeMemoException(RecipeMemoErrorCode.NOT_FOUND_RECIPE_MEMO));
         recipeMemo.updateRecipeMemo(requestDto.memo());
@@ -63,10 +59,15 @@ public class RecipeMemoServiceImpl implements RecipeMemoService {
 
     @Override
     public void deleteRecipeMemo(Long recipeId, User user){
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
+        existsRecipe(recipeId);
         RecipeMemo recipeMemo = recipeMemoRepository.findByRecipeIdAndUserId(recipeId, user.getId())
                 .orElseThrow(() -> new NotFoundRecipeMemoException(RecipeMemoErrorCode.NOT_FOUND_RECIPE_MEMO));
         recipeMemoRepository.delete(recipeMemo);
+    }
+
+    private void existsRecipe(Long recipeId){
+        if(!recipeRepository.existsById(recipeId)) {
+            throw new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE);
+        }
     }
 }
