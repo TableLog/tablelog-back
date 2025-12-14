@@ -28,7 +28,7 @@ public class BoardCommentController {
     private final BoardCommentService boardCommentService;
 
     @Operation(summary = "피드댓글 생성")
-    @PostMapping("boards/{boardId}/board_comment")
+    @PostMapping("/boards/{boardId}/board_comments")
     public ResponseEntity<?> createBoardComment(
             @PathVariable Long boardId,
             @RequestBody BoardCommentCreateControllerRequestDto requestDto,
@@ -42,7 +42,7 @@ public class BoardCommentController {
     }
 
     @Operation(summary = "피드답글 생성")
-    @PostMapping("boards/{boardId}/{boardCommentId}")
+    @PostMapping("/boards/{boardId}/board_comments/{boardCommentId}")
     public ResponseEntity<?> createCommentReply(
         @PathVariable Long boardId,
         @PathVariable Long boardCommentId,
