@@ -132,19 +132,19 @@ public class UserServiceImpl implements UserService {
         if(!passwordEncoder.matches(userLoginServiceRequestDto.password(),user.getPassword())){
             throw new NotMatchPasswordException(UserErrorCode.NOT_MATCH_PASSWORD);
         }
+
+        // 탈퇴한 사용자는 로그인 불가
+        if(user.getIsDeleted()){
+            throw new NotFoundUserException(UserErrorCode.NOT_FOUND_USER);
+        }
+
         jwtUtil.addTokenToCookie(user, httpServletResponse, "accessToken");
         String refresh = jwtUtil.addTokenToCookie(user, httpServletResponse, "refreshToken");
         RefreshToken refreshToken = new RefreshToken(user.getId(), refresh, timeToLive);
         refreshTokenRepository.save(refreshToken);
         List<OAuthAccountResponseDto> dtos = oAuthAccountService.readAllOAuthAccountDtos(user.getId());
-        // 탈퇴 요청 중 유저가 재로그인하면
-        boolean isRecovered = false;
-        if (user.getIsDeleted()) {
-            user.updateIsDeleted(false);
-            userRepository.save(user);
-            isRecovered = true;
-        }
-        return new UserLoginDto(isRecovered, user.getUserRole());
+
+        return new UserLoginDto(user.getUserRole());
     }
 
     @Override
