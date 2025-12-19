@@ -17,4 +17,5 @@ public interface BoardCommentService {
     BoardCommentReadResponseDto readBoardComment(Long boardId, Long boardCommentId);
     BoardCommentListResponseDto readAllBoardComment(Long boardId, int pageNum);
     BoardCommentListResponseDto readAllBoardCommentByDesc(Long boardId, int pageNum);
+    BoardCommentListResponseDto readAllBoardCommentReply(Long boardId, Long boardCommentId, int pageNum);
 }
