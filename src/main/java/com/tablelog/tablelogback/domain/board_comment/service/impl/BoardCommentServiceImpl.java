@@ -29,7 +29,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class BoardCommentCommentServiceImpl implements BoardCommentService {
+public class BoardCommentServiceImpl implements BoardCommentService {
     private final BoardRepository boardRepository;
     private final BoardCommentRepository boardCommentRepository;
     private final BoardCommentEntityMapper boardCommentEntityMapper;
@@ -86,7 +86,8 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
     public BoardCommentListResponseDto readAllBoardComment(Long boardId, int pageNum) {
         Board board = findBoard(boardId);
         PageRequest pageRequest = PageRequest.of(pageNum, 5);
-        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByBoardId(board.getId().toString(), pageRequest);
+        Slice<BoardComment> commentSlice = boardCommentRepository
+                .findAllByBoardIdAndCommentId(board.getId().toString(), null, pageRequest);
         List<BoardComment> comments = commentSlice.getContent();
         List<BoardCommentReadResponseDto> content = new ArrayList<>();
         for (BoardComment comment : comments) {
@@ -112,6 +113,25 @@ public class BoardCommentCommentServiceImpl implements BoardCommentService {
             String name = comment.getUser();
             User user = userRepository.findByNickname(name)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+            String boardCommentCount = boardCommentRepository.countByCommentId(comment.getId()).toString();
+            BoardCommentReadResponseDto boardCommentReadResponseDto =
+                    boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user, boardCommentCount);
+            content.add(boardCommentReadResponseDto);
+        }
+        return new BoardCommentListResponseDto(content, commentSlice.hasNext());
+    }
+
+    @Override
+    public BoardCommentListResponseDto readAllBoardCommentReply(Long boardId, Long boardCommentId, int pageNum) {
+        findBoard(boardId);
+        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        Slice<BoardComment> commentSlice = boardCommentRepository.findAllByCommentId(boardCommentId, pageRequest);
+        List<BoardComment> comments = commentSlice.getContent();
+        List<BoardCommentReadResponseDto> content = new ArrayList<>();
+        for (BoardComment comment : comments) {
+            String name = comment.getUser();
+            User user = userRepository.findByNickname(name)
+                    .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
             String boardCommentCount = boardCommentRepository.countByCommentId(comment.getId()).toString();
             BoardCommentReadResponseDto boardCommentReadResponseDto =
                     boardCommentEntityMapper.toBoardCommentReadResponseDto(comment, user, boardCommentCount);

@@ -108,6 +108,18 @@ public class BoardCommentController {
         @RequestParam("page") Integer pageNum,
         @PathVariable Long boardId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(boardCommentService.readAllBoardComment(boardId, pageNum));
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(boardCommentService.readAllBoardComment(boardId, pageNum));
+    }
+
+    @Operation(summary = "피드답글 전체 조회 By 부모댓글")
+    @GetMapping("/boards/{boardId}/board_comments/{boardCommentId}/replys")
+    public ResponseEntity<BoardCommentListResponseDto> readAllBoardCommentReplys(
+            @RequestParam("page") Integer pageNum,
+            @PathVariable Long boardId,
+            @PathVariable Long boardCommentId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(boardCommentService.readAllBoardCommentReply(boardId, boardCommentId, pageNum));
     }
 }

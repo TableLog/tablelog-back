@@ -12,10 +12,11 @@ import java.util.Optional;
 @Repository
 public interface BoardCommentRepository extends JpaRepository<BoardComment, Long> {
     List<BoardComment> findAllByUser(String user);
-    Optional<BoardComment> findByBoardIdAndIdAndUser(String board_id,Long id,String user);
-    Slice<BoardComment> findAllByBoardId(String board_Id, Pageable pageable);
-    Slice<BoardComment> findAllByBoardIdOrderByCreatedAtDesc(String board_Id, Pageable pageable);
-    Slice<BoardComment> findAllByBoardIdOrderByCreatedAtAsc(String board_Id, Pageable pageable);
+    Optional<BoardComment> findByBoardIdAndIdAndUser(String boardId, Long id, String user);
+    Slice<BoardComment> findAllByBoardId(String boardId, Pageable pageable);
+    Slice<BoardComment> findAllByBoardIdOrderByCreatedAtDesc(String boardId, Pageable pageable);
+    Slice<BoardComment> findAllByBoardIdAndCommentId(String boardId, Long commentId, Pageable pageable);
+    Slice<BoardComment> findAllByCommentId(Long commentId, Pageable pageable);
     Integer countByBoardId(String boardId);
-    Integer countByCommentId(Long commentId);  // CommentId로 사용
+    Integer countByCommentId(Long commentId);
 }
