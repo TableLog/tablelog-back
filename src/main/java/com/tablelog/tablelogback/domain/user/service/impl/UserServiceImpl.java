@@ -281,13 +281,31 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void logout(final String token, final HttpServletResponse response){
-        if (jwtUtil.isExpiredAccessToken(token)) {
-            throw new ExpiredJwtAccessTokenException(JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN);
+    public void logout(final String accessToken, String refreshTokenCookie, final HttpServletResponse response){
+        User user = null;
+
+        try{
+            jwtUtil.isExpiredAccessToken(accessToken);
+        } catch(Exception e){
+            String refresh = refreshTokenCookie;
+            if (refreshTokenCookie.startsWith("refreshToken=")) {
+                refresh = refreshTokenCookie.substring("refreshToken=".length());
+            }
+            RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refresh)
+                    .orElseThrow(() -> new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN));
+            if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
+                throw new FailedJwtTokenException(JwtErrorCode.FAILED_JWT_TOKEN);
+            }
+            user = userRepository.findById(refreshToken.getId())
+                    .orElseThrow(()->new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         }
-        String email = jwtUtil.getUserInfoFromToken(token).getSubject();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+
+        if(user == null) {
+            String email = jwtUtil.getUserInfoFromToken(accessToken).getSubject();
+            user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
+        }
+
         jwtUtil.deleteCookie("accessToken", response);
         jwtUtil.deleteCookie("refreshToken", response);
         if(user.getProvider() == UserProvider.google){

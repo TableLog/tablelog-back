@@ -126,10 +126,11 @@ public class UserController {
     @Operation(summary = "로그아웃")
     @PostMapping("/users/logout")
     public ResponseEntity<?> logout(
-            @CookieValue("accessToken") String token,
+            @CookieValue("accessToken") String accessToken,
+            @CookieValue("refreshToken") String refreshToken,
             HttpServletResponse httpServletResponse
     ){
-        userService.logout(token, httpServletResponse);
+        userService.logout(accessToken, refreshToken, httpServletResponse);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
