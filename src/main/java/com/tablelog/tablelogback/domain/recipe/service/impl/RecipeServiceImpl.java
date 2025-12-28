@@ -236,7 +236,6 @@ public class RecipeServiceImpl implements RecipeService {
                     boolean isChecked = existingFoodMap.containsKey(foodId);
                     Long shoppingListId = isChecked ? existingFoodMap.get(foodId) : 0L;
 
-                    // fixme: ??? 왜 dto?
                     return new RecipeFoodPreviewDto(
                             rf.getId(),
                             rf.getAmount(),
@@ -394,6 +393,7 @@ public class RecipeServiceImpl implements RecipeService {
         recipeRepository.delete(recipe);
         s3Provider.delete(recipe.getFolderName());
         user.updateRecipeCount(user.getRecipeCount() - 1);
+        userRepository.save(user);
     }
 
     @Transactional
@@ -408,6 +408,7 @@ public class RecipeServiceImpl implements RecipeService {
         User writer = userRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
         writer.updateRecipeCount(writer.getRecipeCount() - 1);
+        userRepository.save(writer);
     }
 
     @Override

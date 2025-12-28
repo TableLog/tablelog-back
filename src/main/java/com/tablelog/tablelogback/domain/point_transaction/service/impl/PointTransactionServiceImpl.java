@@ -11,6 +11,7 @@ import com.tablelog.tablelogback.global.enums.PointType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class PointTransactionServiceImpl implements PointTransactionService {
 
     @Override
     public PointTransactionSliceResponseDto readAllPointTransactionByUser(PointType pointType, User user, int pageNum){
-        PageRequest pageRequest = PageRequest.of(pageNum, 5);
+        PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
         Slice<PointTransaction> slice;
         if(pointType == null) {
             slice = pointTransactionRepository.findAllByUserId(user.getId(), pageRequest);

@@ -19,7 +19,7 @@ public interface UserService {
     FollowUserListDto findUsers(String keyword, int pageNum, UserDetailsImpl userDetails);
     void updateUser(User user, UpdateUserServiceRequestDto updateUserServiceRequestDto,
                     MultipartFile multipartFile, HttpServletResponse httpServletResponse)throws IOException;
-    void logout(String token, HttpServletResponse httpServletResponse);
+    void logout(String accessToken, String refreshToken, HttpServletResponse httpServletResponse);
     void deleteUser(User user, HttpServletResponse httpServletResponse);
     UserLoginResponseDto refreshAccessToken(String refreshToken, String socialRefresh, HttpServletResponse response);
     void isNotDupUserEmail(isNotDupUserEmailServiceRequestDto serviceRequestDto);
