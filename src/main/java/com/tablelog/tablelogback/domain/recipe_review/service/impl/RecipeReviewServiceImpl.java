@@ -8,6 +8,7 @@ import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
 import com.tablelog.tablelogback.domain.recipe_review.dto.service.*;
 import com.tablelog.tablelogback.domain.recipe_review.entity.RecipeReview;
+import com.tablelog.tablelogback.domain.recipe_review.exception.DuplicateRecipeReviewUserException;
 import com.tablelog.tablelogback.domain.recipe_review.exception.ForbiddenAccessRecipeReviewException;
 import com.tablelog.tablelogback.domain.recipe_review.exception.NotFoundRecipeReviewException;
 import com.tablelog.tablelogback.domain.recipe_review.exception.RecipeReviewErrorCode;
@@ -50,6 +51,10 @@ public class RecipeReviewServiceImpl implements RecipeReviewService {
         // 작성자 댓글 생성 불가
         if(Objects.equals(user.getId(), recipe.getUserId())){
             throw new ForbiddenAccessRecipeReviewException(RecipeReviewErrorCode.FORBIDDEN_ACCESS_RECIPE_REVIEW);
+        }
+        // 작성자 댓글 중복 작성 불가
+        if(recipeReviewRepository.existsByRecipeIdAndUserAndPrrId(recipeId, user.getNickname(), 0L)){
+            throw new DuplicateRecipeReviewUserException(RecipeReviewErrorCode.DUPLICATE_RECIPE_REVIEW_USER);
         }
         RecipeReview recipeReview = recipeReviewEntityMapper.toRecipeReview(serviceRequestDto, recipeId, user, 0L);
         recipeReviewRepository.save(recipeReview);

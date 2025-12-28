@@ -52,4 +52,8 @@ public class RecipeReview extends BaseEntity {
         this.user = user;
         this.prrId = prrId;
     }
+
+    public void updateUser(String user){
+        this.user = user;
+    }
 }
