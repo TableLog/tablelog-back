@@ -24,7 +24,7 @@ public class Report extends BaseEntity {
     @Column(nullable = false) // 신고된 사람
     private Long reportedUserId;
 
-    @Column(length = 900) // 300글자
+    @Column(length = 300)
     private String reportContent;
 
     @Column

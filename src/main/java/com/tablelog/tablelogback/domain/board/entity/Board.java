@@ -19,17 +19,23 @@ public class Board extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column
     private String title;
+
     @Column(length = 500)
     private String content;
+
     @Column
     @ElementCollection(fetch = FetchType.LAZY)
     private List<String> image_urls;
+
     @Column
     private String category;
+
     @Column
     private String user;
+
     @Builder
     public Board(final String title, final String content,final List<String> image_urls, final String category, final String user) {
         this.title = title;

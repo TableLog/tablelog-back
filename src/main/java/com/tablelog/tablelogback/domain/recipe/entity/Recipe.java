@@ -27,7 +27,7 @@ public class Recipe extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column
+    @Column(length = 300)
     private String intro;
 
     @Column

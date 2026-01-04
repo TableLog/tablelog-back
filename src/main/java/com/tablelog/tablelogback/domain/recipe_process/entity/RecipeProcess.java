@@ -26,7 +26,7 @@ public class RecipeProcess extends BaseEntity {
     @Column(nullable = false)
     private String rpTitle;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 300)
     private String description;
 
     @ElementCollection(fetch = FetchType.LAZY)

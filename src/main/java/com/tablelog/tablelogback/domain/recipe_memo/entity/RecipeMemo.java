@@ -22,7 +22,7 @@ public class RecipeMemo extends BaseEntity {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(length = 500)
+    @Column(length = 300)
     private String memo;
 
     @Builder
