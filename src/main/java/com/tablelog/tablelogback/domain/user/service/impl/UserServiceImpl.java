@@ -11,6 +11,8 @@ import com.tablelog.tablelogback.domain.follow.dto.FollowUserListDto;
 import com.tablelog.tablelogback.domain.follow.repository.FollowRepository;
 import com.tablelog.tablelogback.domain.point_transaction.entity.PointTransaction;
 import com.tablelog.tablelogback.domain.point_transaction.repository.PointTransactionRepository;
+import com.tablelog.tablelogback.domain.recipe_review.entity.RecipeReview;
+import com.tablelog.tablelogback.domain.recipe_review.repository.RecipeReviewRepository;
 import com.tablelog.tablelogback.domain.user.dto.service.request.*;
 import com.tablelog.tablelogback.domain.user.dto.service.response.*;
 import com.tablelog.tablelogback.domain.user.entity.User;
@@ -62,6 +64,7 @@ public class UserServiceImpl implements UserService {
     private final BoardCommentRepository boardCommentRepository;
     private final AdminUserRepository adminUserRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final RecipeReviewRepository recipeReviewRepository;
     private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     private final String SEPARATOR = "/";
     @Value("${spring.jwt.refresh.expiration-period}")
@@ -259,6 +262,13 @@ public class UserServiceImpl implements UserService {
                 comment.updateUser(newNickname);
             }
             boardRepository.saveAll(boards);
+
+            // 레시피 리뷰
+            List<RecipeReview> recipeReviews = recipeReviewRepository.findAllByUser(oldNickname);
+            for(RecipeReview recipeReview : recipeReviews){
+                recipeReview.updateUser(newNickname);
+            }
+            recipeReviewRepository.saveAll(recipeReviews);
         }
 
         // 프로필 이미지

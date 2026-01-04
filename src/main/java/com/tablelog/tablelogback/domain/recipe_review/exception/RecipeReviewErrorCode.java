@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum RecipeReviewErrorCode implements ErrorCode {
     // 403
     FORBIDDEN_ACCESS_RECIPE_REVIEW(HttpStatus.FORBIDDEN, "ERR403001"),
+    DUPLICATE_RECIPE_REVIEW_USER(HttpStatus.FORBIDDEN, "ERR403002"),
 
     // 404
     NOT_FOUND_RECIPE_REVIEW(HttpStatus.NOT_FOUND, "ERR404001");
