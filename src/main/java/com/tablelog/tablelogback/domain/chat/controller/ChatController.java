@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -211,13 +212,61 @@ public class ChatController {
         return ResponseEntity.ok(chats);
     }
 
-    // 로그인한 사용자가 소유한 채팅방 목록 조회
+    /**
+     * WebSocket을 통한 채팅방 목록 조회
+     * 
+     * 클라이언트 사용 방법:
+     * 1. WebSocket 연결 후 사용자별 채팅방 목록 구독
+     *    stompClient.subscribe('/sub/chat/rooms/{userId}', function(message) {
+     *        const rooms = JSON.parse(message.body);
+     *        console.log('채팅방 목록:', rooms);
+     *    });
+     * 
+     * 2. /pub/chat/rooms로 요청 전송 (빈 객체 또는 null)
+     *    stompClient.send('/pub/chat/rooms', {}, JSON.stringify({}));
+     * 
+     * 3. 응답은 /sub/chat/rooms/{userId}로 수신됨
+     * 
+     * @param request 요청 메시지 (빈 Map 또는 null 가능)
+     * @param accessor STOMP 헤더 접근자
+     */
+    @MessageMapping("/chat/rooms")
+    public void getOwnedRoomsViaWebSocket(
+            @Payload(required = false) Map<String, Object> request,
+            StompHeaderAccessor accessor
+    ) {
+        try {
+            // 사용자 정보 가져오기 (인증 필수)
+            User currentUser = chatService.getCurrentUser(accessor);
+            if (currentUser == null) {
+                LOGGER.warn("⚠️ 인증되지 않은 사용자의 채팅방 목록 조회 시도");
+                return;
+            }
+
+            LOGGER.info("📋 WebSocket 채팅방 목록 조회 요청: user={} (ID: {})",
+                currentUser.getEmail(), currentUser.getId());
+
+            List<ChatRoomLastMessageResponseDto> rooms = chatService.getOwnedChatRooms(currentUser);
+            
+            LOGGER.info("✅ 채팅방 목록 조회 완료: {}개 방", rooms.size());
+            
+            // 사용자별 구독 채널로 응답 전송 (/sub/chat/rooms/{userId})
+            String destination = "/sub/chat/rooms/" + currentUser.getId();
+            messagingTemplate.convertAndSend(destination, rooms);
+            
+            LOGGER.info("📤 채팅방 목록 전송 완료: destination={}", destination);
+        } catch (Exception e) {
+            LOGGER.error("❌ 채팅방 목록 조회 실패: ", e);
+        }
+    }
+
+    // 로그인한 사용자가 소유한 채팅방 목록 조회 (REST API - 하위 호환성 유지)
     @Operation(summary = "내 채팅방 목록(마지막 메시지) 조회", description = "내가 참가자인 채팅방을 최근 대화 순으로 조회하고, 각 방의 마지막 메시지와 미읽음 카운트를 반환합니다.")
     @GetMapping("/chats/rooms")
     public ResponseEntity<List<ChatRoomLastMessageResponseDto>> getOwnedRooms(
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        LOGGER.info("📋 소유 채팅방 목록 조회 요청: user={}",
+        LOGGER.info("📋 소유 채팅방 목록 조회 요청 (REST): user={}",
             userDetails != null ? userDetails.user().getEmail() : "null");
         List<ChatRoomLastMessageResponseDto> rooms = chatService.getOwnedChatRooms(userDetails.user());
         return ResponseEntity.ok(rooms);
