@@ -1,6 +1,7 @@
 package com.tablelog.tablelogback.domain.chat.controller;
 
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.chat.service.ChatService;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceRequestDto;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceResponseDto;
@@ -41,6 +42,7 @@ public class ChatController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
     private final SimpMessageSendingOperations messagingTemplate;
     private final ChatService chatService;
+    private final UserRepository userRepository;
 
     /**
      * 클라이언트 WebSocket 연결 이벤트
@@ -140,6 +142,9 @@ public class ChatController {
                 
                 chatService.saveChatMessage(chatMessageServiceRequestDto);
                 LOGGER.info("💾 채팅 메시지가 데이터베이스에 저장되었습니다: {}", message.get("message"));
+                
+                // 채팅방 목록 자동 업데이트: 메시지 저장 후 관련된 두 사용자 모두에게 채팅방 목록 전송
+                updateChatRoomListForParticipants(roomId, currentUser);
             } catch (Exception e) {
                 LOGGER.error("❌ 채팅 메시지 저장 실패: ", e);
             }
@@ -148,6 +153,60 @@ public class ChatController {
             messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
         } catch (Exception e) {
             LOGGER.error("❌ Error processing message: ", e);
+        }
+    }
+
+    /**
+     * 채팅방 목록 자동 업데이트: 메시지 저장 후 관련된 두 사용자 모두에게 채팅방 목록 전송
+     * @param roomId 채팅방 ID (정규화된 형식)
+     * @param currentUser 현재 메시지를 보낸 사용자
+     */
+    private void updateChatRoomListForParticipants(String roomId, User currentUser) {
+        try {
+            // roomId에서 두 사용자 ID 추출
+            String[] parts = roomId.split("--", 2);
+            if (parts.length != 2) {
+                LOGGER.warn("⚠️ roomId 형식 오류로 채팅방 목록 업데이트 스킵: {}", roomId);
+                return;
+            }
+            
+            try {
+                Long userId1 = Long.parseLong(parts[0]);
+                Long userId2 = Long.parseLong(parts[1]);
+                
+                // 두 사용자 모두에게 채팅방 목록 업데이트 전송
+                updateChatRoomListForUser(userId1);
+                updateChatRoomListForUser(userId2);
+                
+                LOGGER.info("📤 채팅방 목록 자동 업데이트 완료: roomId={}, 사용자1={}, 사용자2={}", 
+                    roomId, userId1, userId2);
+            } catch (NumberFormatException e) {
+                LOGGER.warn("⚠️ roomId 파싱 실패로 채팅방 목록 업데이트 스킵: {}", roomId);
+            }
+        } catch (Exception e) {
+            LOGGER.error("❌ 채팅방 목록 자동 업데이트 실패: ", e);
+        }
+    }
+    
+    /**
+     * 특정 사용자에게 채팅방 목록 업데이트 전송
+     * @param userId 사용자 ID
+     */
+    private void updateChatRoomListForUser(Long userId) {
+        try {
+            // UserRepository에서 사용자 조회
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                LOGGER.warn("⚠️ 사용자를 찾을 수 없어 채팅방 목록 업데이트 스킵: userId={}", userId);
+                return;
+            }
+            
+            List<ChatRoomLastMessageResponseDto> rooms = chatService.getOwnedChatRooms(user);
+            String destination = "/sub/chat/rooms/" + userId;
+            messagingTemplate.convertAndSend(destination, rooms);
+            LOGGER.info("📤 사용자 {}에게 채팅방 목록 업데이트 전송: {}개 방", userId, rooms.size());
+        } catch (Exception e) {
+            LOGGER.error("❌ 사용자 {} 채팅방 목록 업데이트 실패: ", userId, e);
         }
     }
 
