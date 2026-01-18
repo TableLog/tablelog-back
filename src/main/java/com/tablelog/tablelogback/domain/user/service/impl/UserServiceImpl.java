@@ -301,9 +301,16 @@ public class UserServiceImpl implements UserService {
             if (refreshTokenCookie.startsWith("refreshToken=")) {
                 refresh = refreshTokenCookie.substring("refreshToken=".length());
             }
-            RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refresh)
-                    .orElseThrow(() -> new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN));
+            Optional<RefreshToken> optional = refreshTokenRepository.findByRefreshToken(refresh);
+            if (optional.isEmpty()) {
+                jwtUtil.deleteCookie("accessToken", response);
+                jwtUtil.deleteCookie("refreshToken", response);
+                throw new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN);
+            }
+            RefreshToken refreshToken = optional.get();
             if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
+                jwtUtil.deleteCookie("accessToken", response);
+                jwtUtil.deleteCookie("refreshToken", response);
                 throw new FailedJwtTokenException(JwtErrorCode.FAILED_JWT_TOKEN);
             }
             user = userRepository.findById(refreshToken.getId())
@@ -353,9 +360,16 @@ public class UserServiceImpl implements UserService {
         if (refreshTokenCookie.startsWith("refreshToken=")) {
             refresh = refreshTokenCookie.substring("refreshToken=".length());
         }
-        RefreshToken refreshToken = refreshTokenRepository.findByRefreshToken(refresh)
-                .orElseThrow(() -> new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN));
+        Optional<RefreshToken> optional = refreshTokenRepository.findByRefreshToken(refresh);
+        if (optional.isEmpty()) {
+            jwtUtil.deleteCookie("accessToken", response);
+            jwtUtil.deleteCookie("refreshToken", response);
+            throw new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN);
+        }
+        RefreshToken refreshToken = optional.get();
         if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
+            jwtUtil.deleteCookie("accessToken", response);
+            jwtUtil.deleteCookie("refreshToken", response);
             throw new FailedJwtTokenException(JwtErrorCode.FAILED_JWT_TOKEN);
         }
         User user = userRepository.findById(refreshToken.getId())
