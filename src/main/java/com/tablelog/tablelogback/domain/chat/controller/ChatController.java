@@ -268,6 +268,14 @@ public class ChatController {
                 : chatService.getChatMessagesWithAuth(normalizedRoomId, userDetails.user());
         
         LOGGER.info("✅ 채팅방 {} 메시지 조회 완료: {}개", normalizedRoomId, chats.size());
+
+        // ✅ 읽음 처리 이후, 해당 채팅방 참가자들의 채팅방 목록(unreadCount 포함)을 WebSocket으로 실시간 전송
+        try {
+            updateChatRoomListForParticipants(normalizedRoomId, userDetails.user());
+        } catch (Exception e) {
+            LOGGER.error("❌ 채팅방 목록 실시간 업데이트 실패 (메시지 조회 후): roomId={}", normalizedRoomId, e);
+        }
+
         return ResponseEntity.ok(chats);
     }
 
