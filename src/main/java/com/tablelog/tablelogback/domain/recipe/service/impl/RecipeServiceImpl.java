@@ -72,7 +72,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final ShoppingListRepository shoppingListRepository;
     private final RecipeMemoRepository recipeMemoRepository;
     private final PointTransactionRepository pointTransactionRepository;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    // 이미지 URL은 S3Provider의 getImagePath를 사용 (로컬 경로 기반)
     private final String SEPARATOR = "/";
 
     @Override
@@ -88,6 +88,7 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe;
         if (recipeImage != null && !recipeImage.isEmpty()) {
             recipeImageName = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
+            // 메인 레시피 이미지 URL도 S3Provider를 통해 생성
             recipe = recipeEntityMapper.toRecipe(
                     requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
         } else {
@@ -140,7 +141,8 @@ public class RecipeServiceImpl implements RecipeService {
                     if (image != null && !image.isEmpty() && s < 3) {
                         String fileName = s3Provider.originalFileName(image);
                         String filePath = recipeFolderName + S3Provider.SEPARATOR + fileName;
-                        String fileUrl = url + filePath;
+                        // 조리 과정 이미지 URL을 로컬 기준으로 생성
+                        String fileUrl = s3Provider.getImagePath(filePath);
 
                         imageUrls.add(fileUrl);
                         rpImageNames.add(fileName);

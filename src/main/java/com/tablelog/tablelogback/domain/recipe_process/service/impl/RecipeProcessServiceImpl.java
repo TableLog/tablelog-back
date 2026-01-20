@@ -36,7 +36,6 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
     private final RecipeProcessEntityMapper recipeProcessEntityMapper;
     private final RecipeRepository recipeRepository;
     private final S3Provider s3Provider;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
 
     @Override
     public void createRecipeProcess(
@@ -56,7 +55,8 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
                 if (!image.isEmpty()) {
                     String fileName = s3Provider.originalFileName(image);
                     String filePath = folderName + S3Provider.SEPARATOR + fileName;
-                    String fileUrl = url + filePath;
+                    // 로컬 저장 경로와 URL을 일치시키기 위해 S3Provider를 통해 URL 생성
+                    String fileUrl = s3Provider.getImagePath(filePath);
 
                     s3Provider.saveFile(image, filePath);
                     recipeProcessImageUrls.add(fileUrl);
@@ -126,7 +126,8 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
                 if (!image.isEmpty()) {
                     String fileName = s3Provider.originalFileName(image);
                     String filePath = folderName + S3Provider.SEPARATOR + fileName;
-                    String fileUrl = url + filePath;
+                    // 로컬 저장 경로와 URL을 일치시키기 위해 S3Provider를 통해 URL 생성
+                    String fileUrl = s3Provider.getImagePath(filePath);
 
                     s3Provider.saveFile(image, filePath);
                     recipeProcessImageUrls.add(fileUrl);
@@ -147,10 +148,9 @@ public class RecipeProcessServiceImpl implements RecipeProcessService {
         RecipeProcess recipeProcess = findRecipeProcess(recipeProcessId);
 
         if (recipeProcess.getRecipeProcessImageUrls() != null){
-            for(int i = 0; i < recipeProcess.getRecipeProcessImageUrls().size(); i++) {
-                String image_name = recipeProcess.getRecipeProcessImageUrls().get(i).replace(url, "");
-                image_name = image_name.substring(image_name.lastIndexOf("/"));
-                s3Provider.delete(user.getFolderName() + image_name);
+            // 저장된 URL을 그대로 넘기면 S3Provider가 내부에서 경로를 추출하여 삭제 처리
+            for(String imageUrl : recipeProcess.getRecipeProcessImageUrls()) {
+                s3Provider.delete(imageUrl);
             }
         }
         recipeProcessRepository.delete(recipeProcess);

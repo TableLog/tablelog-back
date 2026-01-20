@@ -44,7 +44,6 @@ public class BoardServiceImpl implements BoardService {
     private final BoardCommentRepository boardCommentRepository;
     private final PointTransactionRepository pointTransactionRepository;
     private final S3Provider s3Provider;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
     private final UserRepository userRepository;
 
     @Override
@@ -85,9 +84,8 @@ public class BoardServiceImpl implements BoardService {
             imageUrls = boardRequestDto.image_urls();
             for (String oldImageUrl : oldImageUrls) {
                 if (!imageUrls.contains(oldImageUrl)) {
-                    String imageName = oldImageUrl.replace(url, "");
-                    imageName = imageName.substring(imageName.lastIndexOf("/"));
-                    s3Provider.delete(user.getFolderName() + imageName);
+                    // 저장된 URL을 그대로 넘기면 S3Provider가 내부에서 경로를 추출하여 삭제 처리
+                    s3Provider.delete(oldImageUrl);
                 }
             }
             board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),
@@ -99,9 +97,8 @@ public class BoardServiceImpl implements BoardService {
             imageUrls.addAll(newImageUrls);
             for (String oldImageUrl : oldImageUrls) {
                 if (!imageUrls.contains(oldImageUrl)) {
-                    String imageName = oldImageUrl.replace(url, "");
-                    imageName = imageName.substring(imageName.lastIndexOf("/"));
-                    s3Provider.delete(user.getFolderName() + imageName);
+                    // 저장된 URL을 그대로 넘기면 S3Provider가 내부에서 경로를 추출하여 삭제 처리
+                    s3Provider.delete(oldImageUrl);
                 }
             }
             board.updateBoard(boardRequestDto.title(), boardRequestDto.content(),
@@ -119,9 +116,8 @@ public class BoardServiceImpl implements BoardService {
             boardRepository.delete(board);
         } else {
             for (String imageUrl : board.getImage_urls()) {
-                String imageName = imageUrl.replace(url,"");
-                imageName = imageName.substring(imageName.lastIndexOf("/"));
-                s3Provider.delete(user.getFolderName() + imageName);
+                // 저장된 URL을 그대로 넘기면 S3Provider가 내부에서 경로를 추출하여 삭제 처리
+                s3Provider.delete(imageUrl);
             }
             boardRepository.delete(board);
         }
@@ -268,9 +264,8 @@ public class BoardServiceImpl implements BoardService {
             boardRepository.delete(board);
         } else {
             for (String imageUrl : board.getImage_urls()) {
-                String imageName = imageUrl.replace(url,"");
-                imageName = imageName.substring(imageName.lastIndexOf("/"));
-                s3Provider.delete(user.getFolderName() + imageName);
+                // 저장된 URL을 그대로 넘기면 S3Provider가 내부에서 경로를 추출하여 삭제 처리
+                s3Provider.delete(imageUrl);
             }
             boardRepository.delete(board);
         }

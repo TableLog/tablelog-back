@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
     private final AdminUserRepository adminUserRepository;
     private final PointTransactionRepository pointTransactionRepository;
     private final RecipeReviewRepository recipeReviewRepository;
-    private final String url = "https://tablelog.s3.ap-northeast-2.amazonaws.com/";
+    // S3 URL 대신 로컬 이미지 URL(S3Provider)을 사용
     private final String SEPARATOR = "/";
     @Value("${spring.jwt.refresh.expiration-period}")
     private Long timeToLive;
@@ -104,7 +104,8 @@ public class UserServiceImpl implements UserService {
         User user;
         if (multipartFile != null && !multipartFile.isEmpty()) {
             fileName = s3Provider.originalFileName(multipartFile);
-            fileUrl = url + folderName + SEPARATOR + fileName;
+            // 로컬 저장 경로와 URL을 일치시키기 위해 S3Provider를 통해 URL 생성
+            fileUrl = s3Provider.getImagePath(folderName + SEPARATOR + fileName);
             s3Provider.createFolder(folderName);
             s3Provider.saveFile(multipartFile, folderName + SEPARATOR + fileName);
         }
