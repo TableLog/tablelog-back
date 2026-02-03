@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.domain.chat.controller;
 import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.chat.service.ChatService;
+import com.tablelog.tablelogback.domain.chat.presence.ChatRoomPresenceTracker;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceRequestDto;
 import com.tablelog.tablelogback.domain.chat.dto.service.ChatMessageServiceResponseDto;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
@@ -27,6 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +45,7 @@ public class ChatController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final ChatService chatService;
     private final UserRepository userRepository;
+    private final ChatRoomPresenceTracker presenceTracker;
 
     /**
      * 클라이언트 WebSocket 연결 이벤트
@@ -61,18 +64,52 @@ public class ChatController {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String destination = accessor.getDestination(); // 구독한 채널 정보
         String sessionId = accessor.getSessionId();
+        String subscriptionId = accessor.getSubscriptionId();
         
         if (destination != null && destination.startsWith("/sub/chat/room/")) {
-            String roomId = destination.substring("/sub/chat/room/".length());
-            LOGGER.info("✅ 구독 완료 - 세션: {}, 채팅방: {}", sessionId, roomId);
+            String rawRoomId = destination.substring("/sub/chat/room/".length());
+            String roomId = normalizePairRoomIdIfPossible(rawRoomId);
+            LOGGER.info("✅ 구독 완료 - 세션: {}, 채팅방: {} (raw={})", sessionId, roomId, rawRoomId);
             
             // Service에서 사용자 정보 확인 (선택적 - 로깅용)
             User currentUser = chatService.getCurrentUser(accessor);
             if (currentUser != null) {
                 LOGGER.info("👤 구독자 정보: {} (Email: {})", currentUser.getNickname(), currentUser.getEmail());
+
+                // 입장(구독) 상태 기록
+                if (subscriptionId != null) {
+                    presenceTracker.onSubscribe(sessionId, subscriptionId, roomId, currentUser.getId());
+                }
+
+                // ✅ 구독(입장) 시점에 읽음 처리
+                try {
+                    chatService.markRoomRead(roomId, currentUser);
+                } catch (Exception e) {
+                    LOGGER.warn("⚠️ 구독 시 읽음 처리 실패: roomId={}, userId={}", roomId, currentUser.getId(), e);
+                }
+
+                // ✅ unreadCount 반영을 위해 참가자 채팅방 목록 갱신 push
+                try {
+                    updateChatRoomListForParticipants(roomId, currentUser);
+                } catch (Exception e) {
+                    LOGGER.warn("⚠️ 구독 시 채팅방 목록 갱신 실패: roomId={}, userId={}", roomId, currentUser.getId(), e);
+                }
             }
         } else {
             LOGGER.info("📌 User subscribed - 세션: {}, destination: {}", sessionId, destination);
+        }
+    }
+
+    /**
+     * 클라이언트가 특정 채널 구독 해제할 때 실행
+     */
+    @EventListener
+    public void handleUnsubscribeEvent(SessionUnsubscribeEvent event) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        String sessionId = accessor.getSessionId();
+        String subscriptionId = accessor.getSubscriptionId();
+        if (subscriptionId != null) {
+            presenceTracker.onUnsubscribe(sessionId, subscriptionId);
         }
     }
 
@@ -84,6 +121,7 @@ public class ChatController {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = accessor.getSessionId();
         LOGGER.info("❌ User disconnected: {}", sessionId);
+        presenceTracker.onDisconnect(sessionId);
     }
 
     /**
@@ -142,8 +180,21 @@ public class ChatController {
                 
                 chatService.saveChatMessage(chatMessageServiceRequestDto);
                 LOGGER.info("💾 채팅 메시지가 데이터베이스에 저장되었습니다: {}", message.get("message"));
-                
-                // 채팅방 목록 자동 업데이트: 메시지 저장 후 관련된 두 사용자 모두에게 채팅방 목록 전송
+
+                // ✅ 수신자가 현재 방에 들어와 있으면 즉시 읽음 처리
+                try {
+                    Long receiverId = getOtherUserId(roomId, currentUser.getId());
+                    if (receiverId != null && presenceTracker.isUserInRoom(roomId, receiverId)) {
+                        User receiverUser = userRepository.findById(receiverId).orElse(null);
+                        if (receiverUser != null) {
+                            chatService.markRoomRead(roomId, receiverUser);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("⚠️ 실시간 읽음 처리 실패: roomId={}", roomId, e);
+                }
+
+                // 채팅방 목록 자동 업데이트: 메시지 저장(및 실시간 읽음 처리) 후 관련된 두 사용자 모두에게 채팅방 목록 전송
                 updateChatRoomListForParticipants(roomId, currentUser);
             } catch (Exception e) {
                 LOGGER.error("❌ 채팅 메시지 저장 실패: ", e);
@@ -153,6 +204,32 @@ public class ChatController {
             messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, message);
         } catch (Exception e) {
             LOGGER.error("❌ Error processing message: ", e);
+        }
+    }
+
+    private String normalizePairRoomIdIfPossible(String rawRoomId) {
+        if (rawRoomId == null) return null;
+        String[] parts = rawRoomId.split("--", 2);
+        if (parts.length != 2) return rawRoomId;
+        try {
+            Long a = Long.parseLong(parts[0].trim());
+            Long b = Long.parseLong(parts[1].trim());
+            return chatService.buildPairRoomId(a, b);
+        } catch (NumberFormatException e) {
+            return rawRoomId;
+        }
+    }
+
+    private Long getOtherUserId(String roomId, Long currentUserId) {
+        if (roomId == null || currentUserId == null) return null;
+        String[] parts = roomId.split("--", 2);
+        if (parts.length != 2) return null;
+        try {
+            Long a = Long.parseLong(parts[0].trim());
+            Long b = Long.parseLong(parts[1].trim());
+            return currentUserId.equals(a) ? b : a;
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
