@@ -39,9 +39,8 @@ public class RecipeFood extends BaseEntity {
         this.foodId = foodId;
     }
 
-    public void updateRecipeFood(Integer amount, FoodUnit recipeFoodUnit, Long foodId){
+    public void updateRecipeFood(Integer amount, FoodUnit recipeFoodUnit){
         this.amount = amount;
         this.recipeFoodUnit = recipeFoodUnit;
-        this.foodId = foodId;
     }
 }

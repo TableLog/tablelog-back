@@ -4,7 +4,6 @@ import com.tablelog.tablelogback.global.enums.FoodUnit;
 
 public record RecipeFoodUpdateServiceRequestDto(
         Integer amount,
-        FoodUnit recipeFoodUnit,
-        Long foodId
+        FoodUnit recipeFoodUnit
 ) {
 }
