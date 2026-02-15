@@ -13,6 +13,7 @@ import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodReadAl
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodSliceResponseDto;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodUpdateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
+import com.tablelog.tablelogback.domain.recipe_food.exception.DuplicateRecipeFoodException;
 import com.tablelog.tablelogback.domain.recipe_food.exception.ForbiddenAccessRecipeFoodException;
 import com.tablelog.tablelogback.domain.recipe_food.exception.NotFoundRecipeFoodException;
 import com.tablelog.tablelogback.domain.recipe_food.exception.RecipeFoodErrorCode;
@@ -20,6 +21,7 @@ import com.tablelog.tablelogback.domain.recipe_food.mapper.entity.RecipeFoodEnti
 import com.tablelog.tablelogback.domain.recipe_food.repository.RecipeFoodRepository;
 import com.tablelog.tablelogback.domain.recipe_food.service.RecipeFoodService;
 import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.global.enums.FoodUnit;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -40,13 +42,19 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
     private final RecipeRepository recipeRepository;
     private final FoodRepository foodRepository;
 
-    @Override
+    @Transactional
     public void createRecipeFood(Long recipeId, final RecipeFoodCreateServiceRequestDto serviceRequestDto, User user) {
         Recipe recipe = findRecipe(recipeId);
         validateRecipeFood(recipe, user);
         Food food = foodRepository.findById(serviceRequestDto.foodId())
                 .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        if(recipeFoodRepository.existsByRecipeIdAndFoodId(recipe.getId(), food.getId())) {
+                throw new DuplicateRecipeFoodException(RecipeFoodErrorCode.DUPLICATE_RECIPE_FOOD);
+        }
         RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipe, food.getId());
+        Integer cal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
+        recipe.updateTotalCal(recipe.getTotalCal() + cal);
+        recipeRepository.save(recipe);
         recipeFoodRepository.save(recipeFood);
     }
 
@@ -82,15 +90,24 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         Recipe recipe = findRecipe(recipeId);
         validateRecipeFood(recipe, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
-        recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit(), requestDto.foodId());
+        Food food = findFood(recipeFood.getFoodId());
+        Integer beforeCal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
+        Integer nowCal = calculateCal(requestDto.recipeFoodUnit(), requestDto.amount(), food);
+        recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit());
+        recipe.updateTotalCal(recipe.getTotalCal() - beforeCal + nowCal);
+        recipeRepository.save(recipe);
         recipeFoodRepository.save(recipeFood);
     }
 
-    @Override
+    @Transactional
     public void deleteRecipeFood(Long recipeId, Long recipeFoodId, User user) {
         Recipe recipe = findRecipe(recipeId);
         validateRecipeFood(recipe, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
+        Food food = findFood(recipeFood.getFoodId());
+        Integer cal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
+        recipe.updateTotalCal(recipe.getTotalCal() - cal);
+        recipeRepository.save(recipe);
         recipeFoodRepository.delete(recipeFood);
     }
 
@@ -110,5 +127,19 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new NotFoundRecipeException(RecipeErrorCode.NOT_FOUND_RECIPE));
         return recipe;
+    }
+
+    private Food findFood(Long foodId){
+        Food food = foodRepository.findById(foodId)
+                .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
+        return food;
+    }
+
+    private Integer calculateCal(FoodUnit foodUnit, Integer amount, Food food){
+        double userAmountInBase = foodUnit.toBaseUnit(amount);
+        double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
+        double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
+        int cal = (int) (userAmountInBase * caloriePerBaseUnit);
+        return cal;
     }
 }

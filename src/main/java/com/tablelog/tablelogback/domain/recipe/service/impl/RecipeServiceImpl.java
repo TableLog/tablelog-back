@@ -34,6 +34,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.domain.user.exception.NotFoundUserException;
 import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
+import com.tablelog.tablelogback.global.enums.FoodUnit;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.enums.UserRole;
@@ -114,11 +115,7 @@ public class RecipeServiceImpl implements RecipeService {
                     .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
 
             // 칼로리 계산
-            double userAmountInBase = rfDto.recipeFoodUnit().toBaseUnit(rfDto.amount());
-            double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
-            double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
-            int cal = (int) (userAmountInBase * caloriePerBaseUnit);
-            totalCal += cal;
+            totalCal += calculateCal(rfDto, food);
 
             RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(rfRequestDtos.get(i), recipe, food.getId());
             recipeFoods.add(recipeFood);
@@ -552,5 +549,13 @@ public class RecipeServiceImpl implements RecipeService {
             isSaved = recipeSaveRepository.existsByRecipeAndUser(id, userId);
         }
         return isSaved;
+    }
+
+    private Integer calculateCal(RecipeFoodCreateServiceRequestDto rfDto, Food food){
+        double userAmountInBase = rfDto.recipeFoodUnit().toBaseUnit(rfDto.amount());
+        double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
+        double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
+        int cal = (int) (userAmountInBase * caloriePerBaseUnit);
+        return cal;
     }
 }
