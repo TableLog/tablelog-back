@@ -48,16 +48,16 @@ public class FoodController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
-    @Operation(summary = "식재료 전체 조회 (페이징 + 검색)")
+    @Operation(summary = "식재료 전체 조회 (커서 페이징 + 검색)")
     @GetMapping("/foods")
     public ResponseEntity<FoodSliceResponseDto> readAllFoods(
             @RequestParam(required = false) String search,
-            @RequestParam(name = "page", required = false) int pageNum
+            @RequestParam(required = false) Long cursor
     ){
         if(search != null && !search.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.OK).body(foodService.searchFoods(search, pageNum));
+            return ResponseEntity.status(HttpStatus.OK).body(foodService.searchFoods(search, cursor));
         } else {
-            return ResponseEntity.status(HttpStatus.OK).body(foodService.readAllFoods(pageNum));
+            return ResponseEntity.status(HttpStatus.OK).body(foodService.readAllFoods(cursor));
         }
     }
 

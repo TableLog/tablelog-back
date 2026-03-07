@@ -13,6 +13,7 @@ import com.tablelog.tablelogback.domain.user.entity.User;
 import com.tablelog.tablelogback.global.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,21 +48,30 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public FoodSliceResponseDto readAllFoods(int pageNum) {
-        PageRequest pageRequest = PageRequest.of(pageNum, 5);
-        Slice<Food> slice = foodRepository.findAll(pageRequest);
+    public FoodSliceResponseDto readAllFoods(Long cursor) {
+        long effectiveCursor = (cursor == null) ? 0L : cursor;
+        Pageable pageable = PageRequest.of(0, 5);
+        Slice<Food> slice = foodRepository.findByIdGreaterThanOrderByIdAsc(effectiveCursor, pageable);
         List<FoodReadAllServiceResponseDto> foods =
                 foodEntityMapper.toFoodReadAllResponseDto(slice.getContent());
-        return new FoodSliceResponseDto(foods, slice.hasNext());
+        Long nextCursor = slice.hasNext()
+                ? slice.getContent().get(slice.getContent().size() - 1).getId()
+                : null;
+        return new FoodSliceResponseDto(foods, nextCursor, slice.hasNext());
     }
 
     @Override
-    public FoodSliceResponseDto searchFoods(String keyword, int pageNum) {
-        PageRequest pageRequest = PageRequest.of(pageNum, 5);
-        Slice<Food> slice = foodRepository.findByFoodNameContaining(keyword, pageRequest);
+    public FoodSliceResponseDto searchFoods(String keyword, Long cursor) {
+        long effectiveCursor = (cursor == null) ? 0L : cursor;
+        Pageable pageable = PageRequest.of(0, 5);
+        Slice<Food> slice = foodRepository.findByIdGreaterThanAndFoodNameContainingOrderByIdAsc(
+                effectiveCursor, keyword, pageable);
         List<FoodReadAllServiceResponseDto> foods =
                 foodEntityMapper.toFoodReadAllResponseDto(slice.getContent());
-        return new FoodSliceResponseDto(foods, slice.hasNext());
+        Long nextCursor = slice.hasNext()
+                ? slice.getContent().get(slice.getContent().size() - 1).getId()
+                : null;
+        return new FoodSliceResponseDto(foods, nextCursor, slice.hasNext());
     }
 
     @Transactional

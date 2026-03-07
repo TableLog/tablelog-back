@@ -4,6 +4,7 @@ import java.util.List;
 
 public record FoodSliceResponseDto(
         List<FoodReadAllServiceResponseDto> foods,
+        Long nextCursor,
         Boolean hasNext
 ) {
 }
