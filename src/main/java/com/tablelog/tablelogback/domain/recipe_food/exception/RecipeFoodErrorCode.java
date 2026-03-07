@@ -11,6 +11,7 @@ public enum RecipeFoodErrorCode implements ErrorCode {
     // 403
     FORBIDDEN_ACCESS_RECIPE_FOOD(HttpStatus.FORBIDDEN, "ERF403001"),
     INVALID_RECIPE_FOOD(HttpStatus.BAD_REQUEST, "ERF403002"),
+    DUPLICATE_RECIPE_FOOD(HttpStatus.BAD_REQUEST, "ERF403003"),
 
     // 404
     NOT_FOUND_RECIPE_FOOD(HttpStatus.NOT_FOUND, "ERF404001");

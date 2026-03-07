@@ -9,5 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RecipeFoodRepository extends JpaRepository<RecipeFood, Long> {
     Slice<RecipeFood> findAllByRecipeId(Long id, Pageable pageable);
+    Boolean existsByRecipeIdAndFoodId(Long recipeId, Long foodId);
     void deleteAllByRecipeId(Long recipeId);
 }
