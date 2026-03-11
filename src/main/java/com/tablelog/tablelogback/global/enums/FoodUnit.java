@@ -29,7 +29,6 @@ public enum FoodUnit {
                 return amount * 15;    // 1 tbsp ≈ 15 ml
             case g:
             case ml:
-            case 개:
             default:
                 return amount;
         }
