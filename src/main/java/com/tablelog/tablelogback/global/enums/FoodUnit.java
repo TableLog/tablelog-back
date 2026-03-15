@@ -8,7 +8,8 @@ public enum FoodUnit {
     ml,
     L,
     cup,
-    tbsp;
+    tbsp,
+    개;
 
     @JsonCreator
     public static FoodUnit fromString(String inputValue) {
@@ -28,6 +29,7 @@ public enum FoodUnit {
                 return amount * 15;    // 1 tbsp ≈ 15 ml
             case g:
             case ml:
+            case 개:
             default:
                 return amount;
         }
