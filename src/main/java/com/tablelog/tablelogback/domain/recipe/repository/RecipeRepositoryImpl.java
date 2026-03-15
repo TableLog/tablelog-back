@@ -33,15 +33,15 @@ public class RecipeRepositoryImpl implements CustomRecipeRepository {
             builder.and(recipe.cookingTime.eq(condition.cookingTime()));
         }
 
-        if (condition.calorieRange() != null) {
-            RecipeCalorieRange r = condition.calorieRange();
-            if (r.getMin() != null) {
-                builder.and(recipe.totalCal.goe(r.getMin()));
-            }
-            if (r.getMax() != null) {
-                builder.and(recipe.totalCal.loe(r.getMax()));
-            }
-        }
+//        if (condition.calorieRange() != null) {
+//            RecipeCalorieRange r = condition.calorieRange();
+//            if (r.getMin() != null) {
+//                builder.and(recipe.totalCal.goe(r.getMin()));
+//            }
+//            if (r.getMax() != null) {
+//                builder.and(recipe.totalCal.loe(r.getMax()));
+//            }
+//        }
 
         if (condition.recipePrice() != null) {
             builder.and(recipe.price.eq(condition.recipePrice()));

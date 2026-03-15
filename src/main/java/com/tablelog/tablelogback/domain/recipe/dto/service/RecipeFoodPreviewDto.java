@@ -4,11 +4,11 @@ import com.tablelog.tablelogback.global.enums.FoodUnit;
 
 public record RecipeFoodPreviewDto(
         Long id,
-        Integer amount,
+        Double amount,
         FoodUnit recipeFoodUnit,
         Long foodId,
         String foodName,
-        Integer cal,
+//        Double cal,
         Boolean isChecked,
         Long shoppingListId
 ) {

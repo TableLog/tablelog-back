@@ -15,7 +15,7 @@ public record RecipeReadAllServiceResponseDto(
         Float star,
         RecipePrice price,
         CookingTime cookingTime,
-        Integer totalCal,
+//        Double totalCal,
         Boolean isPaid,
         Integer recipePoint,
         Integer reviewCount,

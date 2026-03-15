@@ -109,7 +109,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.updateIsPaid(false);
             recipe.updateRecipePoint(0);
         }
-        recipe.updateTotalCal(0);
+//        recipe.updateTotalCal(0D);
         recipeRepository.save(recipe);
         user.updateRecipeCount(user.getRecipeCount() + 1);
 
@@ -126,10 +126,10 @@ public class RecipeServiceImpl implements RecipeService {
         for (RecipeFoodCreateServiceRequestDto rfDto : rfRequestDtos) {
             Food food = Optional.ofNullable(foodMap.get(rfDto.foodId()))
                     .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
-            totalCal += calculateCal(rfDto, food);
+//            totalCal += calculateCal(rfDto, food);
             recipeFoods.add(recipeFoodEntityMapper.toRecipeFood(rfDto, recipe, food.getId()));
         }
-        recipe.updateTotalCal(totalCal);
+//        recipe.updateTotalCal(totalCal);
         recipeFoodRepository.saveAll(recipeFoods);
 
         // ── 조리과정: URL 선행 계산 후 bytes 수집
@@ -220,7 +220,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .map(rf -> {
                     Food food = foodMap.get(rf.getFoodId());
                     String foodName = food.getFoodName();
-                    int calorie = rf.getAmount() * food.getCal();
+//                    int calorie = rf.getAmount() * food.getCal();
                     Long foodId = rf.getFoodId();
                     boolean isChecked = existingFoodMap.containsKey(foodId);
                     Long shoppingListId = isChecked ? existingFoodMap.get(foodId) : 0L;
@@ -231,7 +231,7 @@ public class RecipeServiceImpl implements RecipeService {
                             rf.getRecipeFoodUnit(),
                             rf.getFoodId(),
                             foodName,
-                            calorie,
+//                            calorie,
                             isChecked,
                             shoppingListId
                     );
@@ -541,11 +541,11 @@ public class RecipeServiceImpl implements RecipeService {
         return isSaved;
     }
 
-    private Integer calculateCal(RecipeFoodCreateServiceRequestDto rfDto, Food food){
-        double userAmountInBase = rfDto.recipeFoodUnit().toBaseUnit(rfDto.amount());
-        double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
-        double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
-        int cal = (int) (userAmountInBase * caloriePerBaseUnit);
-        return cal;
-    }
+//    private Integer calculateCal(RecipeFoodCreateServiceRequestDto rfDto, Food food){
+//        double userAmountInBase = rfDto.recipeFoodUnit().toBaseUnit(rfDto.amount());
+//        double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
+//        double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
+//        int cal = (int) (userAmountInBase * caloriePerBaseUnit);
+//        return cal;
+//    }
 }

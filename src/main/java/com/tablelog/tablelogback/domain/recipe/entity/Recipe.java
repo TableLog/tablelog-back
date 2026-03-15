@@ -58,7 +58,7 @@ public class Recipe extends BaseEntity {
     private CookingTime cookingTime;
 
     @Column(nullable = false)
-    private Integer totalCal = 0;
+    private Double totalCal = 0D;
 
     @Column(nullable = false)
     private Boolean isPaid = false;
@@ -73,7 +73,7 @@ public class Recipe extends BaseEntity {
     public Recipe(final Long userId, final String title, final String intro, final String folderName,
                   final String imageUrl, final List<RecipeCategory> recipeCategoryList,
                   final RecipePrice price, final CookingTime cookingTime,
-                  final Integer totalCal, final Boolean isPaid, final Integer recipePoint
+                  final Double totalCal, final Boolean isPaid, final Integer recipePoint
     ){
         this.userId = userId;
         this.title = title;
@@ -107,9 +107,9 @@ public class Recipe extends BaseEntity {
         this.recipePoint = recipePoint;
     }
 
-    public void updateTotalCal(Integer totalCal){
-        this.totalCal = totalCal;
-    }
+//    public void updateTotalCal(Double totalCal){
+//        this.totalCal = totalCal;
+//    }
 
     public void updateIsPaid(Boolean isPaid){
         this.isPaid = isPaid;
