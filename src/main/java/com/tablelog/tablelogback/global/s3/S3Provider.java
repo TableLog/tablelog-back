@@ -132,6 +132,30 @@ public class S3Provider {
     }
 
     /**
+     * byte[] 로 S3에 직접 저장 (MultipartFile 만료 문제 없이 비동기 업로드용)
+     */
+    public String saveBytes(byte[] bytes, String contentType, String key) {
+        if (bytes == null || bytes.length == 0 || key == null || key.isBlank()) return null;
+
+        PutObjectRequest putRequest = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .contentType(contentType)
+                .build();
+
+        s3Client.putObject(putRequest, RequestBody.fromBytes(bytes));
+        return getImagePath(key);
+    }
+
+    /**
+     * 업로드 없이 S3 key 만 계산 (URL 선행 계산용)
+     */
+    public String computeKey(MultipartFile file, String folderName) {
+        String fileName = originalFileName(file);
+        return folderName + SEPARATOR + fileName;
+    }
+
+    /**
      * 이미지 경로를 URL로 변환
      */
     public String getImagePath(String objectKey) {

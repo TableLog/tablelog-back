@@ -17,6 +17,7 @@ import com.tablelog.tablelogback.domain.user.exception.UserErrorCode;
 import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
+import com.tablelog.tablelogback.global.s3.AsyncImageUploadService;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 
 import java.time.LocalDate;
@@ -45,17 +46,32 @@ public class BoardServiceImpl implements BoardService {
     private final PointTransactionRepository pointTransactionRepository;
     private final S3Provider s3Provider;
     private final UserRepository userRepository;
+    private final AsyncImageUploadService asyncImageUploadService;
 
     @Override
     public void createBoard(final BoardCreateServiceRequestDto boardRequestDto,
                             User user, List<MultipartFile> multipartFiles
     ) throws IOException {
-        List<String> imageUrls;
-        if (multipartFiles == null || multipartFiles.isEmpty()) {
-            imageUrls = null;
-        } else {
-            imageUrls = s3Provider.updateImages(multipartFiles, user.getFolderName());
+        // ── 이미지 URL 선행 계산 (업로드는 비동기로)
+        List<String> imageUrls = null;
+        List<byte[]> imageBytesList = new ArrayList<>();
+        List<String> contentTypes = new ArrayList<>();
+        List<String> keys = new ArrayList<>();
+
+        if (multipartFiles != null && !multipartFiles.isEmpty()) {
+            imageUrls = new ArrayList<>();
+            for (MultipartFile file : multipartFiles) {
+                if (!file.isEmpty()) {
+                    String key = s3Provider.computeKey(file, user.getFolderName());
+                    imageUrls.add(s3Provider.getImagePath(key));
+                    keys.add(key);
+                    imageBytesList.add(file.getBytes());
+                    contentTypes.add(file.getContentType());
+                }
+            }
         }
+
+        // ── DB 저장 (S3 업로드 대기 없이 즉시)
         Board board = boardEntityMapper.toBoard(boardRequestDto, imageUrls, user);
         boardRepository.save(board);
         user.addPointBalance(300);
@@ -68,6 +84,11 @@ public class BoardServiceImpl implements BoardService {
                 .pointType(PointType.EARN)
                 .build();
         pointTransactionRepository.save(pointTransaction);
+
+        // ── S3 업로드: 비동기 처리
+        if (!imageBytesList.isEmpty()) {
+            asyncImageUploadService.uploadBoardImages(imageBytesList, contentTypes, keys);
+        }
     }
 
     @Override

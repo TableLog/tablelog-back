@@ -13,7 +13,6 @@ import com.tablelog.tablelogback.domain.recipe.exception.NotFoundRecipeException
 import com.tablelog.tablelogback.domain.recipe.exception.RecipeErrorCode;
 import com.tablelog.tablelogback.domain.recipe.mapper.entity.RecipeEntityMapper;
 import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepository;
-import com.tablelog.tablelogback.domain.recipe.repository.RecipeRepositoryImpl;
 import com.tablelog.tablelogback.domain.recipe.service.RecipeService;
 import com.tablelog.tablelogback.domain.recipe_food.dto.service.RecipeFoodCreateServiceRequestDto;
 import com.tablelog.tablelogback.domain.recipe_food.entity.RecipeFood;
@@ -38,6 +37,7 @@ import com.tablelog.tablelogback.global.enums.FoodUnit;
 import com.tablelog.tablelogback.global.enums.PointReason;
 import com.tablelog.tablelogback.global.enums.PointType;
 import com.tablelog.tablelogback.global.enums.UserRole;
+import com.tablelog.tablelogback.global.s3.AsyncImageUploadService;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -65,7 +66,6 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeFoodEntityMapper recipeFoodEntityMapper;
     private final RecipeProcessEntityMapper recipeProcessEntityMapper;
     private final S3Provider s3Provider;
-    private final RecipeRepositoryImpl recipeRepositoryImpl;
     private final RecipeLikeRepository recipeLikeRepository;
     private final RecipeSaveRepository recipeSaveRepository;
     private final UserRepository userRepository;
@@ -73,10 +73,12 @@ public class RecipeServiceImpl implements RecipeService {
     private final ShoppingListRepository shoppingListRepository;
     private final RecipeMemoRepository recipeMemoRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final AsyncImageUploadService asyncImageUploadService;
     // 이미지 URL은 S3Provider의 getImagePath를 사용 (로컬 경로 기반)
     private final String SEPARATOR = "/";
 
     @Override
+    @Transactional
     public void createRecipe(
             final RecipeCreateServiceRequestDto requestDto,
             final MultipartFile recipeImage,
@@ -85,13 +87,18 @@ public class RecipeServiceImpl implements RecipeService {
             final User user
     ) throws IOException {
         String recipeFolderName = requestDto.title() + UUID.randomUUID();
-        String recipeImageName = null;
+
+        // ── 메인 이미지: URL 선행 계산 (업로드는 마지막에 비동기로)
+        String recipeImageKey = null;
+        byte[] recipeImageBytes = null;
+        String recipeImageContentType = null;
         Recipe recipe;
         if (recipeImage != null && !recipeImage.isEmpty()) {
-            recipeImageName = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
-            // 메인 레시피 이미지 URL도 S3Provider를 통해 생성
+            recipeImageKey = recipeFolderName + SEPARATOR + s3Provider.originalFileName(recipeImage);
+            recipeImageBytes = recipeImage.getBytes();
+            recipeImageContentType = recipeImage.getContentType();
             recipe = recipeEntityMapper.toRecipe(
-                    requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageName), user, 500);
+                    requestDto, recipeFolderName, s3Provider.getImagePath(recipeImageKey), user, 500);
         } else {
             recipe = recipeEntityMapper.toRecipe(
                     requestDto, recipeFolderName, null, user, 500);
@@ -106,54 +113,52 @@ public class RecipeServiceImpl implements RecipeService {
         recipeRepository.save(recipe);
         user.updateRecipeCount(user.getRecipeCount() + 1);
 
-        // 레시피 식재료 생성
+        // ── 식재료 N+1 해결: 한 번에 일괄 조회
+        List<Long> foodIds = rfRequestDtos.stream()
+                .map(RecipeFoodCreateServiceRequestDto::foodId)
+                .distinct()
+                .toList();
+        Map<Long, Food> foodMap = foodRepository.findAllById(foodIds).stream()
+                .collect(Collectors.toMap(Food::getId, f -> f));
+
         Integer totalCal = 0;
         List<RecipeFood> recipeFoods = new ArrayList<>();
-        for (int i = 0; i < rfRequestDtos.size(); i++) {
-            RecipeFoodCreateServiceRequestDto rfDto = rfRequestDtos.get(i);
-            Food food = foodRepository.findById(rfDto.foodId())
+        for (RecipeFoodCreateServiceRequestDto rfDto : rfRequestDtos) {
+            Food food = Optional.ofNullable(foodMap.get(rfDto.foodId()))
                     .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
-
-            // 칼로리 계산
             totalCal += calculateCal(rfDto, food);
-
-            RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(rfRequestDtos.get(i), recipe, food.getId());
-            recipeFoods.add(recipeFood);
+            recipeFoods.add(recipeFoodEntityMapper.toRecipeFood(rfDto, recipe, food.getId()));
         }
         recipe.updateTotalCal(totalCal);
         recipeFoodRepository.saveAll(recipeFoods);
 
-        // 레시피 조리과정 생성
+        // ── 조리과정: URL 선행 계산 후 bytes 수집
         List<RecipeProcess> recipeProcesses = new ArrayList<>();
-        List<String> rpImageNames = new ArrayList<>();
-        List<MultipartFile> recipeProcessImages = new ArrayList<>();
+        List<byte[]> rpImageBytesList = new ArrayList<>();
+        List<String> rpImageContentTypes = new ArrayList<>();
+        List<String> rpImageKeys = new ArrayList<>();
 
         for (RecipeProcessDto rpDto : rpRequestDtos.dtos()) {
             List<String> imageUrls = new ArrayList<>();
             List<MultipartFile> files = rpDto.files();
-            // 사이즈 3개로 제한
             int s = 0;
             if (files != null) {
                 for (MultipartFile image : files) {
                     if (image != null && !image.isEmpty() && s < 3) {
-                        String fileName = s3Provider.originalFileName(image);
-                        String filePath = recipeFolderName + S3Provider.SEPARATOR + fileName;
-                        // 조리 과정 이미지 URL을 로컬 기준으로 생성
-                        String fileUrl = s3Provider.getImagePath(filePath);
-
-                        imageUrls.add(fileUrl);
-                        rpImageNames.add(fileName);
-                        recipeProcessImages.add(image);
+                        String key = recipeFolderName + S3Provider.SEPARATOR + s3Provider.originalFileName(image);
+                        imageUrls.add(s3Provider.getImagePath(key));
+                        rpImageKeys.add(key);
+                        rpImageBytesList.add(image.getBytes());
+                        rpImageContentTypes.add(image.getContentType());
                         s++;
                     }
                 }
             }
-            RecipeProcess process = recipeProcessEntityMapper.toRecipeProcess(recipe, rpDto, imageUrls);
-            recipeProcesses.add(process);
+            recipeProcesses.add(recipeProcessEntityMapper.toRecipeProcess(recipe, rpDto, imageUrls));
         }
         recipeProcessRepository.saveAll(recipeProcesses);
-        saveImage(recipeFolderName, recipeImage, recipeImageName, recipeProcessImages, rpImageNames);
 
+        // ── 포인트 지급
         user.addPointBalance(3000);
         userRepository.save(user);
         PointTransaction pointTransaction = PointTransaction.builder()
@@ -163,28 +168,13 @@ public class RecipeServiceImpl implements RecipeService {
                 .pointType(PointType.EARN)
                 .build();
         pointTransactionRepository.save(pointTransaction);
-    }
 
-    private void saveImage(
-            String recipeFolderName,
-            MultipartFile recipeImage,
-            String recipeImageName,
-            List<MultipartFile> rpImage,
-            List<String> rpImageName
-    ) throws IOException {
-        s3Provider.createFolder(recipeFolderName);
-        if(recipeImage != null && !recipeImage.isEmpty()) {
-            s3Provider.saveFile(recipeImage, recipeImageName);
-        }
-        if (rpImage != null && rpImageName != null && rpImage.size() == rpImageName.size()) {
-            for (int i = 0; i < rpImage.size(); i++) {
-                MultipartFile image = rpImage.get(i);
-                String filePath = recipeFolderName + S3Provider.SEPARATOR + rpImageName.get(i);
-                if (!image.isEmpty()) {
-                    s3Provider.saveFile(image, filePath);
-                }
-            }
-        }
+        // ── S3 업로드: DB 저장 완료 후 비동기로 처리 (응답 즉시 반환)
+        asyncImageUploadService.uploadRecipeImages(
+                recipeFolderName,
+                recipeImageBytes, recipeImageContentType, recipeImageKey,
+                rpImageBytesList, rpImageContentTypes, rpImageKeys
+        );
     }
 
     @Override
@@ -342,7 +332,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeSliceResponseDto filterRecipes(RecipeFilterConditionDto condition, int pageNum, UserDetailsImpl user){
         PageRequest pageRequest = PageRequest.of(pageNum, 5, Sort.by(Sort.Direction.DESC, "id"));
-        Slice<Recipe> slice = recipeRepositoryImpl.findAllByFilter(condition, pageRequest);
+        Slice<Recipe> slice = recipeRepository.findAllByFilter(condition, pageRequest);
         List<RecipeReadAllServiceResponseDto> recipes = mappingRecipes(slice, user);
         return new RecipeSliceResponseDto(recipes, slice.hasNext());
     }
