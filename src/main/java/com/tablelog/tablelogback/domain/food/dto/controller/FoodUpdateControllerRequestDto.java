@@ -4,7 +4,7 @@ import com.tablelog.tablelogback.global.enums.FoodUnit;
 
 public record FoodUpdateControllerRequestDto(
         String foodName,
-        FoodUnit foodUnit,
-        Integer cal
+        FoodUnit foodUnit
+//        Double cal
 ) {
 }

@@ -29,16 +29,16 @@ public class Food extends BaseEntity {
     private FoodUnit foodUnit;
 
     @Column(nullable = false)
-    private Integer cal;
+    private Double cal = 0D;
 
     @Builder
-    public Food(final String foodName, final FoodUnit foodUnit, final Integer cal){
+    public Food(final String foodName, final FoodUnit foodUnit, final Double cal){
         this.foodName = foodName;
         this.foodUnit = foodUnit;
         this.cal = cal;
     }
 
-    public void updateFood(String foodName, FoodUnit foodUnit, Integer cal){
+    public void updateFood(String foodName, FoodUnit foodUnit, Double cal){
         this.foodName = foodName;
         this.foodUnit = foodUnit;
         this.cal = cal;

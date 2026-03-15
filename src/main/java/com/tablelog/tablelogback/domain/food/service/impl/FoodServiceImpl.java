@@ -81,7 +81,7 @@ public class FoodServiceImpl implements FoodService {
         }
         Food food = foodRepository.findById(id)
                 .orElseThrow(()->new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
-        food.updateFood(requestDto.foodName(), requestDto.foodUnit(), requestDto.cal());
+        food.updateFood(requestDto.foodName(), requestDto.foodUnit(), 0D);
         foodRepository.save(food);
     }
 
