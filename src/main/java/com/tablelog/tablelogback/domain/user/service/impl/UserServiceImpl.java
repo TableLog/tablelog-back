@@ -278,7 +278,7 @@ public class UserServiceImpl implements UserService {
             s3Provider.delete(user.getProfileImgUrl());
             user.updateProfileImgUrl(null);
         }
-        else {
+        else if (multipartFile != null || !multipartFile.isEmpty()) {
             imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
             user.updateProfileImgUrl(imageName);
         }
