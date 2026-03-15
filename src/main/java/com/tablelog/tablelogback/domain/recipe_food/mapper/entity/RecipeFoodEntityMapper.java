@@ -17,6 +17,6 @@ public interface RecipeFoodEntityMapper {
     @Mapping(source = "recipeFood.id", target = "id")
     @Mapping(source = "recipeFood.foodId", target = "foodId")
     @Mapping(source = "food.foodName", target = "foodName")
-    @Mapping(source = "food.cal", target = "cal")
+//    @Mapping(source = "food.cal", target = "cal")
     RecipeFoodReadAllServiceResponseDto toRecipeFoodReadResponseDto(RecipeFood recipeFood, Food food);
 }

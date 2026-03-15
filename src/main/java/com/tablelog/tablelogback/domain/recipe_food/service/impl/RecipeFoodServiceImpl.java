@@ -52,8 +52,8 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
                 throw new DuplicateRecipeFoodException(RecipeFoodErrorCode.DUPLICATE_RECIPE_FOOD);
         }
         RecipeFood recipeFood = recipeFoodEntityMapper.toRecipeFood(serviceRequestDto, recipe, food.getId());
-        Integer cal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
-        recipe.updateTotalCal(recipe.getTotalCal() + cal);
+//        Double cal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
+//        recipe.updateTotalCal(recipe.getTotalCal() + cal);
         recipeRepository.save(recipe);
         recipeFoodRepository.save(recipeFood);
     }
@@ -91,10 +91,10 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         validateRecipeFood(recipe, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
         Food food = findFood(recipeFood.getFoodId());
-        Integer beforeCal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
-        Integer nowCal = calculateCal(requestDto.recipeFoodUnit(), requestDto.amount(), food);
+//        Double beforeCal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
+//        Double nowCal = calculateCal(requestDto.recipeFoodUnit(), requestDto.amount(), food);
         recipeFood.updateRecipeFood(requestDto.amount(), requestDto.recipeFoodUnit());
-        recipe.updateTotalCal(recipe.getTotalCal() - beforeCal + nowCal);
+//        recipe.updateTotalCal(recipe.getTotalCal() - beforeCal + nowCal);
         recipeRepository.save(recipe);
         recipeFoodRepository.save(recipeFood);
     }
@@ -104,9 +104,9 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         Recipe recipe = findRecipe(recipeId);
         validateRecipeFood(recipe, user);
         RecipeFood recipeFood = findRecipeFood(recipeFoodId);
-        Food food = findFood(recipeFood.getFoodId());
-        Integer cal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
-        recipe.updateTotalCal(recipe.getTotalCal() - cal);
+//        Food food = findFood(recipeFood.getFoodId());
+//        Double cal = calculateCal(recipeFood.getRecipeFoodUnit(), recipeFood.getAmount(), food);
+//        recipe.updateTotalCal(recipe.getTotalCal() - cal);
         recipeRepository.save(recipe);
         recipeFoodRepository.delete(recipeFood);
     }
@@ -135,11 +135,11 @@ public class RecipeFoodServiceImpl implements RecipeFoodService {
         return food;
     }
 
-    private Integer calculateCal(FoodUnit foodUnit, Integer amount, Food food){
-        double userAmountInBase = foodUnit.toBaseUnit(amount);
-        double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
-        double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
-        int cal = (int) (userAmountInBase * caloriePerBaseUnit);
-        return cal;
-    }
+//    private Integer calculateCal(FoodUnit foodUnit, Integer amount, Food food){
+//        double userAmountInBase = foodUnit.toBaseUnit(amount);
+//        double foodUnitToBase = food.getFoodUnit().toBaseUnit(1.0);
+//        double caloriePerBaseUnit = food.getCal() / foodUnitToBase;
+//        int cal = (int) (userAmountInBase * caloriePerBaseUnit);
+//        return cal;
+//    }
 }

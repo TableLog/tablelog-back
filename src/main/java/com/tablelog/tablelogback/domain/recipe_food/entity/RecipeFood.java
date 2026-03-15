@@ -19,7 +19,7 @@ public class RecipeFood extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
-    private Integer amount;
+    private Double amount;
 
     @Column(nullable = false)
     private FoodUnit recipeFoodUnit;
@@ -32,14 +32,14 @@ public class RecipeFood extends BaseEntity {
     private Long foodId;
 
     @Builder
-    public RecipeFood(final Integer amount, final FoodUnit recipeFoodUnit, final Recipe recipe, final Long foodId){
+    public RecipeFood(final Double amount, final FoodUnit recipeFoodUnit, final Recipe recipe, final Long foodId){
         this.amount = amount;
         this.recipeFoodUnit = recipeFoodUnit;
         this.recipe = recipe;
         this.foodId = foodId;
     }
 
-    public void updateRecipeFood(Integer amount, FoodUnit recipeFoodUnit){
+    public void updateRecipeFood(Double amount, FoodUnit recipeFoodUnit){
         this.amount = amount;
         this.recipeFoodUnit = recipeFoodUnit;
     }

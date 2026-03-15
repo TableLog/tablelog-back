@@ -4,10 +4,10 @@ import com.tablelog.tablelogback.global.enums.FoodUnit;
 
 public record RecipeFoodReadAllServiceResponseDto(
         Long id,
-        Integer amount,
+        Double amount,
         FoodUnit recipeFoodUnit,
         Long foodId,
-        String foodName,
-        Integer cal
+        String foodName
+//        Double cal
 ) {
 }
