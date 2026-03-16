@@ -41,6 +41,7 @@ import com.tablelog.tablelogback.global.s3.AsyncImageUploadService;
 import com.tablelog.tablelogback.global.s3.S3Provider;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -53,8 +54,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RecipeServiceImpl implements RecipeService {
@@ -169,12 +172,17 @@ public class RecipeServiceImpl implements RecipeService {
                 .build();
         pointTransactionRepository.save(pointTransaction);
 
-        // ── S3 업로드: DB 저장 완료 후 비동기로 처리 (응답 즉시 반환)
-        asyncImageUploadService.uploadRecipeImages(
-                recipeFolderName,
-                recipeImageBytes, recipeImageContentType, recipeImageKey,
-                rpImageBytesList, rpImageContentTypes, rpImageKeys
-        );
+        // ── S3 업로드 완료 후 응답 (이미지 깨짐 방지)
+        try {
+            CompletableFuture<Void> uploadFuture = asyncImageUploadService.uploadRecipeImages(
+                    recipeFolderName,
+                    recipeImageBytes, recipeImageContentType, recipeImageKey,
+                    rpImageBytesList, rpImageContentTypes, rpImageKeys
+            );
+            uploadFuture.get(); // 업로드 완료될 때까지 대기
+        } catch (Exception e) {
+            log.error("[RecipeService] S3 업로드 실패. error: {}", e.getMessage(), e);
+        }
     }
 
     @Override

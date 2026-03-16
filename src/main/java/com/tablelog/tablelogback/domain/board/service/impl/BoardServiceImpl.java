@@ -23,7 +23,9 @@ import com.tablelog.tablelogback.global.s3.S3Provider;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -35,6 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BoardServiceImpl implements BoardService {
@@ -85,9 +88,15 @@ public class BoardServiceImpl implements BoardService {
                 .build();
         pointTransactionRepository.save(pointTransaction);
 
-        // ── S3 업로드: 비동기 처리
+        // ── S3 업로드 완료 후 응답 (이미지 깨짐 방지)
         if (!imageBytesList.isEmpty()) {
-            asyncImageUploadService.uploadBoardImages(imageBytesList, contentTypes, keys);
+            try {
+                CompletableFuture<Void> uploadFuture =
+                        asyncImageUploadService.uploadBoardImages(imageBytesList, contentTypes, keys);
+                uploadFuture.get(); // 업로드 완료될 때까지 대기
+            } catch (Exception e) {
+                log.error("[BoardService] S3 업로드 실패. error: {}", e.getMessage(), e);
+            }
         }
     }
 

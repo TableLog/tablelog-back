@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -16,10 +17,10 @@ public class AsyncImageUploadService {
 
     /**
      * 레시피 이미지 비동기 업로드
-     * - DB 저장 후 호출하여 클라이언트 응답을 즉시 반환
+     * - CompletableFuture 반환으로 호출부에서 타임아웃 대기 가능
      */
     @Async("s3UploadExecutor")
-    public void uploadRecipeImages(
+    public CompletableFuture<Void> uploadRecipeImages(
             String folderName,
             byte[] mainImageBytes,
             String mainImageContentType,
@@ -43,14 +44,17 @@ public class AsyncImageUploadService {
         } catch (Exception e) {
             log.error("[AsyncImageUploadService] 레시피 이미지 업로드 실패 - folder: {}, error: {}",
                     folderName, e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
      * 게시판 이미지 비동기 업로드
+     * - CompletableFuture 반환으로 호출부에서 타임아웃 대기 가능
      */
     @Async("s3UploadExecutor")
-    public void uploadBoardImages(
+    public CompletableFuture<Void> uploadBoardImages(
             List<byte[]> imageBytesList,
             List<String> contentTypes,
             List<String> keys
@@ -61,6 +65,8 @@ public class AsyncImageUploadService {
             }
         } catch (Exception e) {
             log.error("[AsyncImageUploadService] 게시판 이미지 업로드 실패 - error: {}", e.getMessage(), e);
+            return CompletableFuture.failedFuture(e);
         }
+        return CompletableFuture.completedFuture(null);
     }
 }
