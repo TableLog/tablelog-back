@@ -274,13 +274,17 @@ public class UserServiceImpl implements UserService {
 
         // 프로필 이미지
         String imageName;
-        if((multipartFile == null || multipartFile.isEmpty()) && user.getProfileImgUrl() != null){
-            s3Provider.delete(user.getProfileImgUrl());
-            user.updateProfileImgUrl(null);
-        }
-        else if (multipartFile != null || !multipartFile.isEmpty()) {
+        if (multipartFile != null || !multipartFile.isEmpty()) {
+            // 등록 또는 다른 사진으로 변경
             imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
             user.updateProfileImgUrl(imageName);
+
+        } else if (serviceRequestDto.profileImgUrl() == null || serviceRequestDto.profileImgUrl().isEmpty()) {
+            // 삭제: 파일도 없고, 요청의 profileImgUrl도 없는 경우
+            if (user.getProfileImgUrl() != null) {
+                s3Provider.delete(user.getProfileImgUrl());
+                user.updateProfileImgUrl(null);
+            }
         }
 
         // 마케팅 동의
