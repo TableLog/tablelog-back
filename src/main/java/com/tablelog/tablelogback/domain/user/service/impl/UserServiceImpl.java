@@ -274,7 +274,7 @@ public class UserServiceImpl implements UserService {
 
         // 프로필 이미지
         String imageName;
-        if (multipartFile != null || !multipartFile.isEmpty()) {
+        if (multipartFile != null && !multipartFile.isEmpty()) {
             // 등록 또는 다른 사진으로 변경
             imageName = s3Provider.updateImage(user.getProfileImgUrl(), user.getFolderName(), multipartFile);
             user.updateProfileImgUrl(imageName);
