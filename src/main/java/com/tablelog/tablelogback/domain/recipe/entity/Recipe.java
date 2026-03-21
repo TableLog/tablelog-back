@@ -73,7 +73,7 @@ public class Recipe extends BaseEntity {
     public Recipe(final Long userId, final String title, final String intro, final String folderName,
                   final String imageUrl, final List<RecipeCategory> recipeCategoryList,
                   final RecipePrice price, final CookingTime cookingTime,
-                  final Double totalCal, final Boolean isPaid, final Integer recipePoint
+                  final Boolean isPaid, final Integer recipePoint
     ){
         this.userId = userId;
         this.title = title;
@@ -86,7 +86,7 @@ public class Recipe extends BaseEntity {
         this.star = 0F;
         this.price = price;
         this.cookingTime = cookingTime;
-        this.totalCal = totalCal;
+        this.totalCal = 0D;
         this.isPaid = isPaid;
         this.recipePoint = recipePoint;
         this.reviewCount = 0;
