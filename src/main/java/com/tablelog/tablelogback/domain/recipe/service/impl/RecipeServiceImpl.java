@@ -55,6 +55,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -172,14 +173,13 @@ public class RecipeServiceImpl implements RecipeService {
                 .build();
         pointTransactionRepository.save(pointTransaction);
 
-        // ── S3 업로드 완료 후 응답 (이미지 깨짐 방지)
+        // ── S3 업로드 완료 후 응답 (이미지 깨짐 방지, 최대 15초 대기)
         try {
             CompletableFuture<Void> uploadFuture = asyncImageUploadService.uploadRecipeImages(
-                    recipeFolderName,
                     recipeImageBytes, recipeImageContentType, recipeImageKey,
                     rpImageBytesList, rpImageContentTypes, rpImageKeys
             );
-            uploadFuture.get(); // 업로드 완료될 때까지 대기
+            uploadFuture.get(15, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("[RecipeService] S3 업로드 실패. error: {}", e.getMessage(), e);
         }

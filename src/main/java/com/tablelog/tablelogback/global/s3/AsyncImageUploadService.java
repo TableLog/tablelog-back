@@ -21,7 +21,6 @@ public class AsyncImageUploadService {
      */
     @Async("s3UploadExecutor")
     public CompletableFuture<Void> uploadRecipeImages(
-            String folderName,
             byte[] mainImageBytes,
             String mainImageContentType,
             String mainImageKey,
@@ -30,7 +29,6 @@ public class AsyncImageUploadService {
             List<String> processImageKeys
     ) {
         try {
-            s3Provider.createFolder(folderName);
             if (mainImageBytes != null && mainImageBytes.length > 0) {
                 s3Provider.saveBytes(mainImageBytes, mainImageContentType, mainImageKey);
             }
@@ -42,8 +40,7 @@ public class AsyncImageUploadService {
                 );
             }
         } catch (Exception e) {
-            log.error("[AsyncImageUploadService] 레시피 이미지 업로드 실패 - folder: {}, error: {}",
-                    folderName, e.getMessage(), e);
+            log.error("[AsyncImageUploadService] 레시피 이미지 업로드 실패 - error: {}", e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
         return CompletableFuture.completedFuture(null);

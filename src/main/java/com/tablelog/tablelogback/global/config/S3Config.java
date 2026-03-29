@@ -5,8 +5,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+
+import java.time.Duration;
 
 @Configuration
 public class S3Config {
@@ -22,6 +25,12 @@ public class S3Config {
         return S3Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .httpClient(
+                        UrlConnectionHttpClient.builder()
+                                .connectionTimeout(Duration.ofSeconds(3))   // TCP 연결 타임아웃: 3초
+                                .socketTimeout(Duration.ofSeconds(10))      // 소켓 읽기 타임아웃: 10초
+                                .build()
+                )
                 .build();
     }
 }

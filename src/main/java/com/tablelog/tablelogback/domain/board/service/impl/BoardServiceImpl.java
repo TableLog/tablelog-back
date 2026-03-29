@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -88,12 +89,12 @@ public class BoardServiceImpl implements BoardService {
                 .build();
         pointTransactionRepository.save(pointTransaction);
 
-        // ── S3 업로드 완료 후 응답 (이미지 깨짐 방지)
+        // ── S3 업로드 완료 후 응답 (이미지 깨짐 방지, 최대 15초 대기)
         if (!imageBytesList.isEmpty()) {
             try {
                 CompletableFuture<Void> uploadFuture =
                         asyncImageUploadService.uploadBoardImages(imageBytesList, contentTypes, keys);
-                uploadFuture.get(); // 업로드 완료될 때까지 대기
+                uploadFuture.get(15, TimeUnit.SECONDS);
             } catch (Exception e) {
                 log.error("[BoardService] S3 업로드 실패. error: {}", e.getMessage(), e);
             }
