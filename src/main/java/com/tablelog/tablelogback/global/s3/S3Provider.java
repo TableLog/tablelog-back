@@ -1,5 +1,6 @@
 package com.tablelog.tablelogback.global.s3;
 
+import com.tablelog.tablelogback.global.s3.ImageCompressor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
