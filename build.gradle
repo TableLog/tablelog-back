@@ -64,7 +64,10 @@ dependencies {
     //S3
     implementation platform('software.amazon.awssdk:bom:2.25.7') // 최신 BOM
     implementation 'software.amazon.awssdk:s3'
-    implementation 'software.amazon.awssdk:url-connection-client' // ← 이 줄 추가!
+    implementation 'software.amazon.awssdk:url-connection-client'
+
+    // Image compression
+    implementation 'net.coobird:thumbnailator:0.4.20'
 
     //QueryDSL
     implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"

@@ -22,6 +22,7 @@ import java.util.UUID;
 public class S3Provider {
 
     private final S3Client s3Client;
+    private final ImageCompressor imageCompressor;
     public static final String SEPARATOR = "/";
 
     @Value("${spring.cloud.aws.s3.bucket}")
@@ -32,21 +33,31 @@ public class S3Provider {
 
     /**
      * 파일을 S3에 저장 (key는 호출부에서 전달한 값 그대로 사용)
+     * - 이미지 파일인 경우 업로드 전 자동 리사이즈·압축 처리
      */
     public String saveFile(MultipartFile multipartFile, String imageName) throws IOException {
         if (multipartFile == null || multipartFile.isEmpty()) return null;
         if (imageName == null || imageName.isBlank()) return null;
 
+        String contentType = multipartFile.getContentType();
+        byte[] uploadBytes;
+        String uploadContentType;
+
+        if (contentType != null && contentType.startsWith("image/")) {
+            uploadBytes = imageCompressor.compress(multipartFile.getBytes(), contentType);
+            uploadContentType = "image/jpeg";
+        } else {
+            uploadBytes = multipartFile.getBytes();
+            uploadContentType = contentType;
+        }
+
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(imageName)
-                .contentType(multipartFile.getContentType())
+                .contentType(uploadContentType)
                 .build();
 
-        s3Client.putObject(
-                putRequest,
-                RequestBody.fromInputStream(multipartFile.getInputStream(), multipartFile.getSize())
-        );
+        s3Client.putObject(putRequest, RequestBody.fromBytes(uploadBytes));
 
         return getImagePath(imageName);
     }
@@ -133,17 +144,26 @@ public class S3Provider {
 
     /**
      * byte[] 로 S3에 직접 저장 (MultipartFile 만료 문제 없이 비동기 업로드용)
+     * - 이미지 파일인 경우 업로드 전 자동 리사이즈·압축 처리
      */
     public String saveBytes(byte[] bytes, String contentType, String key) {
         if (bytes == null || bytes.length == 0 || key == null || key.isBlank()) return null;
 
+        // 이미지이면 압축 (JPEG 변환 포함), contentType은 image/jpeg로 통일
+        byte[] uploadBytes = bytes;
+        String uploadContentType = contentType;
+        if (contentType != null && contentType.startsWith("image/")) {
+            uploadBytes = imageCompressor.compress(bytes, contentType);
+            uploadContentType = "image/jpeg";
+        }
+
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                .contentType(contentType)
+                .contentType(uploadContentType)
                 .build();
 
-        s3Client.putObject(putRequest, RequestBody.fromBytes(bytes));
+        s3Client.putObject(putRequest, RequestBody.fromBytes(uploadBytes));
         return getImagePath(key);
     }
 
