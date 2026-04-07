@@ -115,7 +115,6 @@ public class RecipeServiceImpl implements RecipeService {
         }
 //        recipe.updateTotalCal(0D);
         recipeRepository.save(recipe);
-        user.updateRecipeCount(user.getRecipeCount() + 1);
 
         // ── 식재료 N+1 해결: 한 번에 일괄 조회
         List<Long> foodIds = rfRequestDtos.stream()
@@ -125,7 +124,7 @@ public class RecipeServiceImpl implements RecipeService {
         Map<Long, Food> foodMap = foodRepository.findAllById(foodIds).stream()
                 .collect(Collectors.toMap(Food::getId, f -> f));
 
-        Integer totalCal = 0;
+//        Integer totalCal = 0;
         List<RecipeFood> recipeFoods = new ArrayList<>();
         for (RecipeFoodCreateServiceRequestDto rfDto : rfRequestDtos) {
             Food food = Optional.ofNullable(foodMap.get(rfDto.foodId()))
@@ -164,6 +163,8 @@ public class RecipeServiceImpl implements RecipeService {
 
         // ── 포인트 지급
         user.addPointBalance(3000);
+        Long recipeCount = recipeRepository.countByUserId(user.getId());
+        user.updateRecipeCount(recipeCount);
         userRepository.save(user);
         PointTransaction pointTransaction = PointTransaction.builder()
                 .userId(user.getId())
@@ -375,6 +376,10 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         recipeRepository.save(recipe);
+
+        Long recipeCount = recipeRepository.countByUserId(user.getId());
+        user.updateRecipeCount(recipeCount);
+        userRepository.save(user);
     }
 
     @Transactional
@@ -389,7 +394,13 @@ public class RecipeServiceImpl implements RecipeService {
         recipeMemoRepository.deleteAllByRecipeId(id);
         recipeRepository.delete(recipe);
         s3Provider.delete(recipe.getFolderName());
-        user.updateRecipeCount(user.getRecipeCount() - 1);
+
+        Long recipeCount = recipeRepository.countByUserId(user.getId());
+        if(recipeCount < 0){
+            user.updateRecipeCount(0L);
+        } else {
+            user.updateRecipeCount(recipeCount);
+        }
         userRepository.save(user);
     }
 
@@ -404,7 +415,12 @@ public class RecipeServiceImpl implements RecipeService {
         Long writerId = recipe.getUserId();
         User writer = userRepository.findById(writerId)
                 .orElseThrow(() -> new NotFoundUserException(UserErrorCode.NOT_FOUND_USER));
-        writer.updateRecipeCount(writer.getRecipeCount() - 1);
+        Long recipeCount = recipeRepository.countByUserId(writer.getId());
+        if(recipeCount < 0){
+            writer.updateRecipeCount(0L);
+        } else {
+            writer.updateRecipeCount(recipeCount);
+        }
         userRepository.save(writer);
     }
 
