@@ -79,7 +79,8 @@ public class BoardServiceImpl implements BoardService {
         Board board = boardEntityMapper.toBoard(boardRequestDto, imageUrls, user);
         boardRepository.save(board);
         user.addPointBalance(300);
-        user.updateBoardCount(user.getBoardCount() + 1);
+        Long boardCount = boardRepository.countByUser(user.getUserName());
+        user.updateBoardCount(boardCount);
         userRepository.save(user);
         PointTransaction pointTransaction = PointTransaction.builder()
                 .userId(user.getId())
@@ -136,13 +137,14 @@ public class BoardServiceImpl implements BoardService {
                     imageUrls, boardRequestDto.category().toString());
             boardRepository.save(board);
         }
+        Long boardCount = boardRepository.countByUser(user.getUserName());
+        user.updateBoardCount(boardCount);
+        userRepository.save(user);
     }
     @DeleteMapping
     public void deleteBoard(Long board_id, User user){
         Board board = boardRepository.findByIdAndUser(board_id,user.getNickname())
             .orElseThrow(() -> new NotFoundBoardException(BoardErrorCode.NOT_FOUND_BOARD));
-        user.updateBoardCount(user.getBoardCount() - 1);
-        userRepository.save(user);
         if(board.getImage_urls() == null){
             boardRepository.delete(board);
         } else {
@@ -152,6 +154,9 @@ public class BoardServiceImpl implements BoardService {
             }
             boardRepository.delete(board);
         }
+        Long boardCount = boardRepository.countByUser(user.getUserName());
+        user.updateBoardCount(boardCount);
+        userRepository.save(user);
     }
 
     @Override
@@ -300,6 +305,9 @@ public class BoardServiceImpl implements BoardService {
             }
             boardRepository.delete(board);
         }
+        Long boardCount = boardRepository.countByUser(nickname);
+        user.updateBoardCount(boardCount);
+        userRepository.save(user);
     }
 
     @Override
