@@ -79,7 +79,7 @@ public class BoardServiceImpl implements BoardService {
         Board board = boardEntityMapper.toBoard(boardRequestDto, imageUrls, user);
         boardRepository.save(board);
         user.addPointBalance(300);
-        Long boardCount = boardRepository.countByUser(user.getUserName());
+        Long boardCount = boardRepository.countByUser(user.getNickname());
         user.updateBoardCount(boardCount);
         userRepository.save(user);
         PointTransaction pointTransaction = PointTransaction.builder()
@@ -137,7 +137,7 @@ public class BoardServiceImpl implements BoardService {
                     imageUrls, boardRequestDto.category().toString());
             boardRepository.save(board);
         }
-        Long boardCount = boardRepository.countByUser(user.getUserName());
+        Long boardCount = boardRepository.countByUser(user.getNickname());
         user.updateBoardCount(boardCount);
         userRepository.save(user);
     }
@@ -154,7 +154,7 @@ public class BoardServiceImpl implements BoardService {
             }
             boardRepository.delete(board);
         }
-        Long boardCount = boardRepository.countByUser(user.getUserName());
+        Long boardCount = boardRepository.countByUser(user.getNickname());
         user.updateBoardCount(boardCount);
         userRepository.save(user);
     }
