@@ -45,5 +45,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
            OR b.userName LIKE %:keyword%
     """)
     Slice<BoardReadByAdminResponseDto> searchBoardsByUserNameOrNickname(@Param("keyword") String keyword, Pageable pageable);
+
+    Long countByUser(String user);
 }
 
