@@ -3,6 +3,7 @@ package com.tablelog.tablelogback.global.config;
 import com.tablelog.tablelogback.global.jwt.JwtAuthenticationFilter;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
 import com.tablelog.tablelogback.global.security.UserDetailsServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import java.util.List;
 public class WebSecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -39,10 +41,24 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/v1/**").permitAll() // 초기 개발 진행 위해
-                        .requestMatchers( "/","/swagger-ui/**", "/v3/api-docs/**").permitAll()
-//                        .anyRequest().authenticated()
+                        .requestMatchers("/api/v1/**").permitAll()
+                        .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                )
+                .exceptionHandling(ex -> ex
+                        // 진짜 인증 실패(토큰 없음/만료)만 401
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"code\":\"EJ401001\",\"message\":\"토큰이 만료되었습니다.\"}");
+                        })
+                        // 권한 없음은 403
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"code\":\"EJ403001\",\"message\":\"접근 권한이 없습니다.\"}");
+                        })
                 );
+
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -53,7 +69,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(){
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil, userDetailsServiceImpl);
     }
 
@@ -62,15 +78,27 @@ public class WebSecurityConfig {
             CorsConfiguration config = new CorsConfiguration();
             config.setAllowedHeaders(Collections.singletonList("*"));
             config.setAllowedMethods(Collections.singletonList("*"));
-//            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080","http://localhost:5500",
-            "http://localhost:5173",
-            "http://localhost:4173",
-            "https://jiangxy.github.io/"));
+            config.setAllowedOrigins(List.of(
+                    "http://localhost:3000",
+                    "http://localhost:8080",
+                    "http://localhost:5500",
+                    "http://100.82.127.42:8080",
+                    "http://100.82.127.42:3000",
+                    "https://unity-bottle-registry-defensive.trycloudflare.com",
+                    "https://tablelog.n-e.kr",
+                    "wss://tablelog.n-e.kr",
+                    "https://recommended-couples-conventions-hourly.trycloudflare.com",
+                    "http://localhost:5173",
+                    "http://localhost:4173",
+                    "https://jiangxy.github.io/"
+            ));
             config.setMaxAge(3600L);
             config.setAllowCredentials(true);
-            config.setExposedHeaders(List.of("accessToken", "Set-Cookie", "Cookie", "refreshToken",
-                    "Kakao-Access-Token", "Kakao-Refresh-Token", "Google-Access-Token", "Google-Refresh-Token"));
+            config.setExposedHeaders(List.of(
+                    "accessToken", "Set-Cookie", "Cookie", "refreshToken",
+                    "Kakao-Access-Token", "Kakao-Refresh-Token",
+                    "Google-Access-Token", "Google-Refresh-Token"
+            ));
             return config;
         };
     }
