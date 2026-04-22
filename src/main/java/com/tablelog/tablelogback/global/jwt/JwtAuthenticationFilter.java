@@ -32,13 +32,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                  @NonNull FilterChain filterChain)
             throws IOException, ServletException {
         String token = jwtUtil.getTokenFromCookie(request, "accessToken");
+
         if (!StringUtils.hasText(token)) {
             filterChain.doFilter(request, response);
             return;
         }
+
+        // 변경 부분
         if (jwtUtil.validateToken(token)) {
             setAuthentication(token);
+        } else {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":\"EJ401001\",\"message\":\"토큰이 만료되었습니다.\"}");
+            return;
         }
+
         filterChain.doFilter(request, response);
     }
 
