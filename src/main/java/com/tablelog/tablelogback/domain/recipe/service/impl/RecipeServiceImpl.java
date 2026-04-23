@@ -227,7 +227,8 @@ public class RecipeServiceImpl implements RecipeService {
 
         List<RecipeFoodPreviewDto> previewDtos = slice.stream()
                 .map(rf -> {
-                    Food food = foodMap.get(rf.getFoodId());
+                    Food food = Optional.ofNullable(foodMap.get(rf.getFoodId()))
+                            .orElseThrow(() -> new NotFoundFoodException(FoodErrorCode.NOT_FOUND_FOOD));
                     String foodName = food.getFoodName();
 //                    int calorie = rf.getAmount() * food.getCal();
                     Long foodId = rf.getFoodId();
