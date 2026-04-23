@@ -1,5 +1,10 @@
 package com.tablelog.tablelogback.global.jwt;
 
+import com.tablelog.tablelogback.domain.user.entity.User;
+import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtRefreshTokenException;
+import com.tablelog.tablelogback.global.jwt.exception.FailedJwtTokenException;
+import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
+import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import com.tablelog.tablelogback.global.security.UserDetailsServiceImpl;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.core.context.SecurityContext;
@@ -19,12 +24,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Slf4j(topic = "jwt 검증과 인가")
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public void doFilterInternal(@NonNull HttpServletRequest request,
@@ -41,11 +48,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 변경 부분
         if (jwtUtil.validateToken(token)) {
             setAuthentication(token);
-        } else {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":\"EJ401001\",\"message\":\"토큰이 만료되었습니다.\"}");
-            return;
+        }
+        else {
+            String refresh = jwtUtil.getTokenFromCookie(request, "refreshToken");
+            Optional<RefreshToken> optional = refreshTokenRepository.findByRefreshToken(refresh);
+            if (optional.isEmpty()) {
+                jwtUtil.deleteCookie("accessToken", response);
+                jwtUtil.deleteCookie("refreshToken", response);
+                throw new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN);
+            }
+            RefreshToken refreshToken = optional.get();
+            if (!jwtUtil.validateRefreshToken(refreshToken.getRefreshToken())) {
+                jwtUtil.deleteCookie("accessToken", response);
+                jwtUtil.deleteCookie("refreshToken", response);
+                throw new FailedJwtTokenException(JwtErrorCode.FAILED_JWT_TOKEN);
+            }
+
+            // accessToken 갱신
+            String email = jwtUtil.getEmailFromToken(refresh);
+            UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsServiceImpl.loadUserByUsername(email);
+            User user = userDetails.getUser();
+            jwtUtil.deleteCookie("accessToken", response);
+            String newAccessToken = jwtUtil.addTokenToCookie(user, response, "accessToken");
+            log.info("{}의 accessToken 갱신", user.getEmail());
+            setAuthentication(newAccessToken);
         }
 
         filterChain.doFilter(request, response);
