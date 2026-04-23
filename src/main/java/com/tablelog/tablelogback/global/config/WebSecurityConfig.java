@@ -2,11 +2,13 @@ package com.tablelog.tablelogback.global.config;
 
 import com.tablelog.tablelogback.global.jwt.JwtAuthenticationFilter;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
+import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.security.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -27,6 +29,7 @@ import java.util.List;
 public class WebSecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -41,7 +44,11 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/v1/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
+                        .requestMatchers("/api/v1/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/**").authenticated()
                         .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 )
                 .exceptionHandling(ex -> ex
@@ -70,7 +77,7 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil, userDetailsServiceImpl);
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsServiceImpl, refreshTokenRepository);
     }
 
     private CorsConfigurationSource configurationSource() {
