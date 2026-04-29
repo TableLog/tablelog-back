@@ -15,6 +15,8 @@ import com.tablelog.tablelogback.domain.user.repository.UserRepository;
 import com.tablelog.tablelogback.domain.user.service.GoogleService;
 import com.tablelog.tablelogback.domain.user.service.UserService;
 import com.tablelog.tablelogback.global.enums.UserProvider;
+import com.tablelog.tablelogback.global.jwt.exception.ExpiredJwtRefreshTokenException;
+import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import com.tablelog.tablelogback.global.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -147,10 +149,13 @@ public class UserController {
     @Operation(summary = "토큰 갱신", description = "스웨거에서 refreshToken은 빈 칸 하나로 가능")
     @PostMapping("/users/refresh")
     public ResponseEntity<?> refreshAccessToken(
-            @CookieValue("refreshToken") String refreshToken,
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
             @RequestHeader(value = "Social-Refresh-Token", required = false) String socialRefreshToken,
             HttpServletResponse httpServletResponse
     ) throws JacksonException {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new ExpiredJwtRefreshTokenException(JwtErrorCode.EXPIRED_JWT_REFRESH_TOKEN);
+        }
         UserLoginResponseDto responseDto =
                 userService.refreshAccessToken(refreshToken, socialRefreshToken, httpServletResponse);
         User user = userRepository.findByEmail(responseDto.email())

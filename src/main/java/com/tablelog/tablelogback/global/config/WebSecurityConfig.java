@@ -2,6 +2,7 @@ package com.tablelog.tablelogback.global.config;
 
 import com.tablelog.tablelogback.global.jwt.JwtAuthenticationFilter;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
+import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
 import com.tablelog.tablelogback.global.security.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,17 +47,12 @@ public class WebSecurityConfig {
                         .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 )
                 .exceptionHandling(ex -> ex
-                        // 진짜 인증 실패(토큰 없음/만료)만 401
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"code\":\"EJ401001\",\"message\":\"토큰이 만료되었습니다.\"}");
+                            writeAuthError(response, JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN.name(), JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN.getMessage());
                         })
-                        // 권한 없음은 403
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"code\":\"EJ403001\",\"message\":\"접근 권한이 없습니다.\"}");
+                            // 요구사항: 인증이 필요한 API는 403이 아니라 401로 통일
+                            writeAuthError(response, JwtErrorCode.ACCESS_DENIED.name(), JwtErrorCode.ACCESS_DENIED.getMessage());
                         })
                 );
 
@@ -71,6 +68,14 @@ public class WebSecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil, userDetailsServiceImpl);
+    }
+
+    private void writeAuthError(HttpServletResponse response, String name, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(
+            "{\"status\":401,\"name\":\"" + name + "\",\"message\":\"" + message + "\"}"
+        );
     }
 
     private CorsConfigurationSource configurationSource() {
