@@ -163,6 +163,14 @@ public class JwtUtil {
         }
     }
 
+    public String getEmailFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
 
 //    public String getAccessTokenFromHeader(HttpServletRequest request) {
 //        String token = request.getHeader(AUTHORIZATION_HEADER);

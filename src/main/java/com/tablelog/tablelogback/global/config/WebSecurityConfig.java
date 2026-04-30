@@ -2,12 +2,13 @@ package com.tablelog.tablelogback.global.config;
 
 import com.tablelog.tablelogback.global.jwt.JwtAuthenticationFilter;
 import com.tablelog.tablelogback.global.jwt.JwtUtil;
-import com.tablelog.tablelogback.global.jwt.exception.JwtErrorCode;
+import com.tablelog.tablelogback.global.jwt.RefreshTokenRepository;
 import com.tablelog.tablelogback.global.security.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,6 +30,7 @@ import java.util.List;
 public class WebSecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,16 +45,21 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/v1/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
+                        .requestMatchers("/api/v1/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/**").authenticated()
                         .requestMatchers("/", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 )
                 .exceptionHandling(ex -> ex
+                        // 진짜 인증 실패(토큰 없음/만료)만 401
                         .authenticationEntryPoint((request, response, authException) -> {
-                            writeAuthError(response, JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN.name(), JwtErrorCode.EXPIRED_JWT_ACCESS_TOKEN.getMessage());
+                            writeAuthError(HttpServletResponse.SC_UNAUTHORIZED, response,"EJ401001", "토큰이 만료되었습니다.");
                         })
+                        // 권한 없음은 403
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            // 요구사항: 인증이 필요한 API는 403이 아니라 401로 통일
-                            writeAuthError(response, JwtErrorCode.ACCESS_DENIED.name(), JwtErrorCode.ACCESS_DENIED.getMessage());
+                            writeAuthError(HttpServletResponse.SC_FORBIDDEN, response,"EJ403001", "접근 권한이 없습니다.");
                         })
                 );
 
@@ -67,14 +74,14 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil, userDetailsServiceImpl);
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsServiceImpl, refreshTokenRepository);
     }
 
-    private void writeAuthError(HttpServletResponse response, String name, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    private void writeAuthError(int status, HttpServletResponse response, String name, String message) throws IOException {
+        response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(
-            "{\"status\":401,\"name\":\"" + name + "\",\"message\":\"" + message + "\"}"
+                "{\"status\":"+ status + ",\"name\":\"" + name + "\",\"message\":\"" + message + "\"}"
         );
     }
 
